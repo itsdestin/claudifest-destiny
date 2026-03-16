@@ -1,0 +1,121 @@
+# ClaudifestDestiny Bootstrap Installer — Windows
+# Downloads prerequisites and clones the toolkit so Claude Code can finish setup.
+
+Write-Host "===================================" -ForegroundColor Cyan
+Write-Host "  ClaudifestDestiny Installer" -ForegroundColor Cyan
+Write-Host "===================================" -ForegroundColor Cyan
+Write-Host ""
+
+# --- Check for Node.js ---
+$nodeFound = $false
+try {
+    $nodeVersion = & node --version 2>$null
+    if ($LASTEXITCODE -eq 0 -and $nodeVersion) {
+        Write-Host "  Node.js found: $nodeVersion" -ForegroundColor Green
+        $nodeFound = $true
+    }
+} catch {}
+
+if (-not $nodeFound) {
+    Write-Host "  Installing Node.js..." -ForegroundColor Yellow
+    $wingetAvailable = $false
+    try {
+        & winget --version 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) { $wingetAvailable = $true }
+    } catch {}
+
+    if ($wingetAvailable) {
+        winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Host "  Node.js install failed. Please install from https://nodejs.org/" -ForegroundColor Red
+            Write-Host "  Download the LTS version and run the installer."
+            exit 1
+        }
+        # Refresh PATH so node is available in this session
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        Write-Host "  Node.js installed" -ForegroundColor Green
+    } else {
+        Write-Host ""
+        Write-Host "  Please install Node.js from https://nodejs.org/" -ForegroundColor Red
+        Write-Host "  Download the LTS version and run the installer."
+        Write-Host "  Then re-run this script."
+        exit 1
+    }
+}
+
+# --- Check for git ---
+$gitFound = $false
+try {
+    $gitVersion = & git --version 2>$null
+    if ($LASTEXITCODE -eq 0 -and $gitVersion) {
+        Write-Host "  Git found: $gitVersion" -ForegroundColor Green
+        $gitFound = $true
+    }
+} catch {}
+
+if (-not $gitFound) {
+    Write-Host ""
+    Write-Host "  Git is required but not installed." -ForegroundColor Red
+    Write-Host "  Install from https://git-scm.com/download/win" -ForegroundColor Yellow
+    Write-Host "  Or run: winget install Git.Git" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  Install git, then re-run this script."
+    exit 1
+}
+
+# --- Check for Claude Code ---
+$claudeFound = $false
+try {
+    & claude --version 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  Claude Code found" -ForegroundColor Green
+        $claudeFound = $true
+    }
+} catch {}
+
+if (-not $claudeFound) {
+    Write-Host "  Installing Claude Code..." -ForegroundColor Yellow
+    npm install -g @anthropic-ai/claude-code
+    # Refresh PATH
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    try {
+        & claude --version 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  Claude Code installed" -ForegroundColor Green
+        } else {
+            throw "not found"
+        }
+    } catch {
+        Write-Host ""
+        Write-Host "  Claude Code may need a new terminal session." -ForegroundColor Yellow
+        Write-Host "  Close this window, open a new one, and re-run this script."
+        exit 1
+    }
+}
+
+# --- Clone the toolkit ---
+$toolkitDir = Join-Path $HOME ".claude\plugins\claudifest-destiny"
+if (Test-Path $toolkitDir) {
+    Write-Host "  Toolkit already cloned at $toolkitDir" -ForegroundColor Green
+} else {
+    Write-Host "  Cloning toolkit..." -ForegroundColor Yellow
+    $pluginsDir = Join-Path $HOME ".claude\plugins"
+    if (-not (Test-Path $pluginsDir)) { New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null }
+    git clone https://github.com/itsdestin/claudifest-destiny.git $toolkitDir
+    Write-Host "  Toolkit cloned" -ForegroundColor Green
+}
+
+Write-Host ""
+Write-Host "===================================" -ForegroundColor Cyan
+Write-Host "  Ready!" -ForegroundColor Green
+Write-Host "===================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Next steps:"
+Write-Host "  1. Open a terminal (or stay in this one)"
+Write-Host "  2. Type: claude"
+Write-Host "  3. Say: set me up"
+Write-Host ""
+Write-Host "Claude will walk you through the rest — choosing what to"
+Write-Host "install, personalizing your setup, and verifying everything works."
+Write-Host ""
