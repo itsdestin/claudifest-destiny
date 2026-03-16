@@ -1,0 +1,47 @@
+{
+  "description": "Template variables used by the setup wizard to personalize toolkit files. Each variable has a prompt shown to the user during setup, a default value (null = required input), and a list of files where the variable appears.",
+  "variables": {
+    "USER_NAME": {
+      "description": "User's display name — used in encyclopedia headers, journal entries, compiled documents",
+      "used_in": ["life/skills/encyclopedia-compile/SKILL.md", "life/skills/journaling-assistant/SKILL.md", "core/templates/claude-md-fragments/"],
+      "prompt": "What's your name?",
+      "default": null,
+      "required": true
+    },
+    "DRIVE_ROOT": {
+      "description": "Google Drive base path for toolkit data (rclone remote prefix)",
+      "used_in": ["life/skills/google-drive/SKILL.md", "core/hooks/sync-to-drive.sh", "core/hooks/sync-from-drive.sh"],
+      "prompt": "Where should Claude store files on your Google Drive? (e.g., 'Claude')",
+      "default": "Claude",
+      "required": true
+    },
+    "TODOIST_PROJECT": {
+      "description": "Todoist project name for inbox processing",
+      "used_in": ["productivity/skills/inbox-processor/SKILL.md", "productivity/hooks/check-inbox.sh"],
+      "prompt": "What Todoist project should Claude use as your inbox?",
+      "default": "Claude's Inbox",
+      "required": false
+    },
+    "GIT_REMOTE": {
+      "description": "User's personal git remote for config backup",
+      "used_in": ["core/hooks/git-sync.sh"],
+      "prompt": "Do you have a GitHub repo for backing up your Claude config? (leave blank to skip)",
+      "default": null,
+      "required": false
+    },
+    "JOURNAL_DIR": {
+      "description": "Local directory path for journal entries",
+      "used_in": ["life/skills/journaling-assistant/SKILL.md"],
+      "prompt": "Where should journal entries be saved locally?",
+      "default": "journals",
+      "required": false
+    },
+    "ENCYCLOPEDIA_DIR": {
+      "description": "Local cache directory for encyclopedia modular source files",
+      "used_in": ["life/skills/encyclopedia-update/SKILL.md", "life/skills/encyclopedia-compile/SKILL.md", "life/skills/encyclopedia-librarian/SKILL.md", "life/skills/encyclopedia-interviewer/SKILL.md"],
+      "prompt": "Where should encyclopedia files be cached locally?",
+      "default": "encyclopedia",
+      "required": false
+    }
+  }
+}

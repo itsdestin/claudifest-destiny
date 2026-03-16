@@ -1,0 +1,111 @@
+#!/bin/bash
+# PreToolUse hook: blocks writes to tracked files when another active
+# Claude session last modified the file (same-machine concurrency guard).
+
+LOG="$HOME/.claude/backup.log"
+# Use Windows-native path for Node.js compatibility (Git Bash $HOME = /c/Users/... which Node misreads)
+REGISTRY="$HOME/.claude/.write-registry.json"
+
+# Read tool input from stdin
+STDIN_JSON=$(cat)
+FILE_PATH=$(echo "$STDIN_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);console.log(j.tool_input?.file_path||'')}catch{console.log('')}})" 2>/dev/null)
+
+# Normalize backslashes to forward slashes
+FILE_PATH=$(echo "$FILE_PATH" | sed 's|\\|/|g')
+
+# If FILE_PATH is empty, allow (not a file write)
+if [ -z "$FILE_PATH" ]; then
+    exit 0
+fi
+
+# Tracked files filter — same whitelist as git-sync.sh
+if [[ "$FILE_PATH" != *"/memory/"* ]] && \
+   [[ "$FILE_PATH" != *"\\memory\\"* ]] && \
+   [[ "$FILE_PATH" != *"CLAUDE.md"* ]] && \
+   [[ "$FILE_PATH" != *"settings.json"* ]] && \
+   [[ "$FILE_PATH" != *"mcp.json"* ]] && \
+   [[ "$FILE_PATH" != *"git-sync.sh"* ]] && \
+   [[ "$FILE_PATH" != *"session-start.sh"* ]] && \
+   [[ "$FILE_PATH" != *"write-guard.sh"* ]] && \
+   [[ "$FILE_PATH" != *"gws/client_secret.json"* ]] && \
+   [[ "$FILE_PATH" != *"/skills/"* ]] && \
+   [[ "$FILE_PATH" != *"\\skills\\"* ]] && \
+   [[ "$FILE_PATH" != *"installed_plugins.json"* ]] && \
+   [[ "$FILE_PATH" != *"settings.local.json"* ]] && \
+   [[ "$FILE_PATH" != *"statusline.sh"* ]] && \
+   [[ "$FILE_PATH" != *"usage-fetch.js"* ]] && \
+   [[ "$FILE_PATH" != *"/mcp-servers/"* ]] && \
+   [[ "$FILE_PATH" != *"\\mcp-servers\\"* ]] && \
+   [[ "$FILE_PATH" != *"check-inbox.sh"* ]] && \
+   [[ "$FILE_PATH" != *"blocklist.json"* ]] && \
+   [[ "$FILE_PATH" != *"keybindings.json"* ]] && \
+   [[ "$FILE_PATH" != *"/plans/"* ]] && \
+   [[ "$FILE_PATH" != *"\\plans\\"* ]] && \
+   [[ "$FILE_PATH" != *"/specs/"* ]] && \
+   [[ "$FILE_PATH" != *"\\specs\\"* ]] && \
+   [[ "$FILE_PATH" != *"history.jsonl"* ]] && \
+   [[ "$FILE_PATH" != *"RESTORE.md"* ]] && \
+   [[ "$FILE_PATH" != *"README.md"* ]]; then
+    exit 0
+fi
+
+# No registry file yet — allow (first tracked write ever)
+if [ ! -f "$REGISTRY" ]; then
+    exit 0
+fi
+
+# Read registry entry for this file
+ENTRY=$(node -e "
+const fs = require('fs');
+try {
+    const reg = JSON.parse(fs.readFileSync('$REGISTRY', 'utf8'));
+    const e = reg[process.argv[1]];
+    if (e) console.log(JSON.stringify(e));
+    else console.log('');
+} catch { console.log(''); }
+" "$FILE_PATH" 2>/dev/null)
+
+# No registry entry for this file — allow
+if [ -z "$ENTRY" ]; then
+    exit 0
+fi
+
+# Parse registry entry
+REG_PID=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).pid)}catch{console.log('')}})" 2>/dev/null)
+REG_TS=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).ts)}catch{console.log('')}})" 2>/dev/null)
+REG_HASH=$(echo "$ENTRY" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).hash)}catch{console.log('')}})" 2>/dev/null)
+
+# Same-session check — if we're the last writer, allow
+if [ "$REG_PID" = "$PPID" ]; then
+    exit 0
+fi
+
+# Liveness check — if the other session is dead, allow (stale entry)
+# Note: kill -0 doesn't work for Windows PIDs in Git Bash; use tasklist instead
+if ! tasklist //FI "PID eq $REG_PID" //NH 2>/dev/null | grep -q "$REG_PID"; then
+    exit 0
+fi
+
+# Staleness check — compute current file hash vs registry hash
+# Detects third-party modifications (manual edits, other tools) since the registry entry
+BLOCK_REASON="another active Claude session"
+if [ -f "$FILE_PATH" ]; then
+    CURRENT_HASH=$(sha256sum "$FILE_PATH" 2>/dev/null | cut -c1-16)
+    if [ "$CURRENT_HASH" != "$REG_HASH" ]; then
+        BLOCK_REASON="another active Claude session (file also modified externally since their last write)"
+    fi
+fi
+
+# Another active session owns this file — block the write
+# Format timestamp for human-readable message
+WRITE_TIME=$(date -d "@$REG_TS" +"%I:%M%p" 2>/dev/null | sed 's/^0//;s/AM/am/;s/PM/pm/')
+# Fallback for systems where date -d doesn't work
+if [ -z "$WRITE_TIME" ]; then
+    WRITE_TIME="ts:$REG_TS"
+fi
+
+echo "$(date): WRITE BLOCKED: '$FILE_PATH' last modified by PID $REG_PID at $WRITE_TIME — blocking write from PID $PPID ($BLOCK_REASON)" >> "$LOG"
+
+# Exit non-zero to block the write, with message for Claude session
+echo "WRITE BLOCKED: $(basename "$FILE_PATH") was last modified by $BLOCK_REASON (PID $REG_PID) at $WRITE_TIME. Re-read the file to see the current version, then retry your edit."
+exit 1
