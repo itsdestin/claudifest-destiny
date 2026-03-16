@@ -1,0 +1,144 @@
+# System Architecture
+
+This document covers the technical architecture of ClaudifestDestiny for power users and developers who want to understand, extend, or contribute to the system.
+
+## Layer System
+
+The toolkit is organized into four installable layers, each a standalone Claude Code plugin:
+
+```
+claudifest-destiny/
+├── core/           → Foundation (required)
+├── life/           → Personal knowledge system
+├── productivity/   → Task management & communication
+└── modules/        → Optional domain-specific tools
+    ├── elections-notebook/
+    └── jlbc-fiscal-note/
+```
+
+**Dependency rules:**
+- `core` has no dependencies — it's the foundation
+- `life` depends on `core` (uses hooks, specs system, templates)
+- `productivity` depends on `core`
+- `life` and `productivity` are independent of each other
+- Each module in `modules/` is fully independent — its own `plugin.json`, no cross-dependencies
+
+Each layer has a `plugin.json` manifest that Claude Code discovers automatically. Plugins are loaded from `~/.claude/plugins/` or wherever the toolkit is cloned.
+
+## Hooks
+
+Hooks are bash scripts that run automatically in response to Claude Code events. The core layer provides:
+
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `session-start.sh` | SessionStart | Git pull, encyclopedia sync, MCP config extraction, version check, inbox check |
+| `statusline.sh` | Statusline | Renders sync status, model info, context remaining, toolkit version |
+| `git-sync.sh` | PostToolUse | Commits and syncs changes after file modifications |
+| `write-guard.sh` | PreToolUse | Prevents writes to protected paths (specs, live system files) |
+| `contribution-detector.sh` | SessionStart | Detects local toolkit improvements, suggests contributing upstream |
+| `title-update.sh` | PostToolUse | Updates conversation title based on context |
+| `todo-capture.sh` | PostToolUse | Captures TODO items from conversation |
+| `checklist-reminder.sh` | PostToolUse | Reminds about incomplete checklist items |
+| `usage-fetch.js` | PostToolUse | Tracks API usage statistics |
+
+**Hook composition:** If a user already has hooks at the same trigger points, the setup wizard offers to merge logic (preserving both) or let the user choose which to keep. The backup system ensures nothing is lost.
+
+The life layer adds `sync-encyclopedia.sh` (rclone-based Google Drive sync for encyclopedia files).
+
+## Specs System
+
+Specs are structured documentation files that describe features with enough detail that a future Claude session can modify them correctly. They follow a three-tier hierarchy:
+
+1. **User Mandates** — Inviolable rules. Cannot be changed without explicit user approval.
+2. **Design Decisions** — Include rationale. Must be understood before proposing alternatives.
+3. **Implementation Details** — Can be changed freely as long as mandates and decisions are preserved.
+
+Specs live in `specs/` directories within each layer. The meta-spec (`core/specs/specs-system-spec.md`) documents how specs themselves work.
+
+**Naming conventions:**
+- Specs: `{topic}-spec.md` (versioned in frontmatter)
+- Designs: `{topic}-design (MM-DD-YYYY).md`
+- Plans: `{topic}-plan (MM-DD-YYYY).md`
+
+## Encyclopedia Data Model
+
+The life layer's encyclopedia system maintains a living biography through 8 modular source files:
+
+| File | Purpose |
+|------|---------|
+| Core Identity | Permanent facts — name, birth, family |
+| Status Snapshot | Present-tense portrait — current job, living situation, relationships |
+| People Database | All people and groups with tier assignments |
+| Chronicle | Significant life events, chronological |
+| Beliefs and Positions | Political worldview, values, opinions |
+| Predictions | Predictions with outcomes tracking |
+| Open Threads and Goals | Active goals, unresolved threads |
+| Preferences and Reference Data | Lookup data, preferences |
+
+**Compilation:** The `encyclopedia-compile` skill merges all 8 files into a single narrative document. It supports four detail levels (Full, Personal, Professional, Public) that control how much intimate detail appears.
+
+**Sync architecture:** Files are stored in Google Drive (`gdrive:Claude/The Journal/System/`) and cached locally at `~/.claude/encyclopedia/`. The `sync-encyclopedia.sh` hook syncs on session start. The encyclopedia-update skill writes changes back to Drive after user approval.
+
+## Backup and Sync
+
+**Git sync:** The `git-sync.sh` hook commits and pushes changes to a private git remote after file modifications. This provides cross-device sync and version history.
+
+**Google Drive sync:** rclone handles bidirectional sync for encyclopedia files and journal entries. Configured during setup with `rclone config` for Google Drive OAuth.
+
+**Pre-toolkit backup:** Before modifying any existing file, the setup wizard backs up to `~/.claude/backups/pre-toolkit/` with a manifest recording what was changed. The `/toolkit-uninstall` command uses this to restore the original setup.
+
+## Memory System
+
+Claude Code's built-in memory system stores persistent context in `~/.claude/projects/<project-key>/memory/`. The toolkit provides:
+
+- A `MEMORY.md` index template
+- Memory file templates with proper frontmatter (type, name, description)
+- Categories: user, feedback, project, reference
+
+Memory files use YAML frontmatter and markdown content. The index (`MEMORY.md`) maps to individual files — it's a table of contents, not a store.
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/setup` | Interactive setup wizard — installs layers, resolves conflicts, personalizes |
+| `/update` | Version management — fetches tags, shows changelog, merges updates |
+| `/contribute` | Contribution flow — diffs changes, filters private content, creates PR |
+| `/toolkit-uninstall` | Clean removal — restores backups, removes toolkit files |
+
+Commands are markdown files in `commands/` directories. They contain instructions that Claude follows conversationally — no executable code, just structured prompts.
+
+## Agents
+
+**Contribution detector:** A SessionStart hook + agent pair. The hook (`contribution-detector.sh`) runs `git diff` against the installed release tag, filters private content using `.private-manifest`, and tracks suggestion state in `~/.claude/toolkit-state/contribution-tracker.json`. The agent (`agents/contribution-detector/agent.md`) tells Claude how to present contribution suggestions naturally.
+
+## Privacy Architecture
+
+Personal data is protected through multiple layers:
+
+1. **`.private-manifest`** — Gitignore-style patterns for files that should never be shared. Default patterns cover encyclopedia, journal, memory, credentials.
+2. **Write guard** — Hook that prevents accidental writes to protected paths.
+3. **Contribution filter** — The `/contribute` command and contribution detector both exclude private content.
+4. **Setup marker comments** — CLAUDE.md modifications are wrapped in `<!-- CLAUDIFEST-DESTINY BEGIN/END -->` markers for clean removal.
+
+## State Files
+
+The toolkit maintains state in `~/.claude/toolkit-state/`:
+
+| File | Purpose |
+|------|---------|
+| `config.json` | Installed version, selected layers, preferences |
+| `update-status.json` | Cached version check result (current, latest, update_available) |
+| `contribution-tracker.json` | Tracks suggested/declined/contributed file changes |
+
+## Building on Top
+
+**Creating a skill:** Add a `SKILL.md` file in a `skills/<name>/` directory within any layer. The file contains Claude's instructions. Add a spec if the skill has non-obvious behavior.
+
+**Creating a hook:** Add a `.sh` script in the `hooks/` directory. Claude Code auto-discovers hooks from plugins. Use the appropriate event trigger (SessionStart, PreToolUse, PostToolUse, etc.).
+
+**Creating a module:** Create a new directory under `modules/` with its own `plugin.json`. Modules are self-contained — include everything they need.
+
+**Creating a command:** Add a `.md` file in `commands/`. The filename becomes the slash command name. Use YAML frontmatter for the description.
+
+For detailed guidance on each component type, ask Claude: "How do I create a new skill for the toolkit?"
