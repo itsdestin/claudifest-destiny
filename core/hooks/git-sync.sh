@@ -61,7 +61,7 @@ fi
 if [[ -n "$PPID" ]]; then
     CONTENT_HASH=""
     if [[ -f "$FILE_PATH" ]]; then
-        CONTENT_HASH=$(sha256sum "$FILE_PATH" 2>/dev/null | cut -c1-16)
+        CONTENT_HASH=$( (sha256sum "$FILE_PATH" 2>/dev/null || shasum -a 256 "$FILE_PATH" 2>/dev/null) | cut -c1-16)
     fi
     TIMESTAMP=$(date +%s)
 
