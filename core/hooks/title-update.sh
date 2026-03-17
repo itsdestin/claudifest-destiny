@@ -4,7 +4,7 @@
 # since the last topic update (or no topic has been set yet).
 # Uses per-session files so multiple sessions don't clobber each other.
 # Self-throttles by updating the marker when it emits a reminder.
-# Topic files stored in /tmp/claude-topics/ to avoid ~/.claude/ permission issues.
+# Topic files stored in $HOME/.claude/topics/ to avoid ~/.claude/ permission issues.
 
 INPUT=$(cat)
 SESSION_ID=$(echo "$INPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).session_id||'')}catch{console.log('')}})" 2>/dev/null)
@@ -13,7 +13,7 @@ if [ -z "$SESSION_ID" ]; then
     exit 0  # Can't do anything without a session ID
 fi
 
-TOPIC_DIR="/tmp/claude-topics"
+TOPIC_DIR="$HOME/.claude/topics"
 mkdir -p "$TOPIC_DIR"
 
 # Prune topic files older than 7 days (at most once per day)
