@@ -43,7 +43,7 @@ The memory system gives Claude Code persistent context about the user across con
   - `feedback_spec_updates_with_implementation.md` — Read specs at start of work.
   - `feedback_title_case_ui.md` — All UI text must use Title Case.
   - `feedback_research_before_building.md` — Research existing solutions first.
-  - `project_gmail_mcp.md` — Gmail-extended MCP server (DEPRECATED).
+  - `project_gmail_mcp.md` — Gmail-extended MCP server (DEPRECATED; removed from toolkit).
   - `reference_todoist.md` — Todoist API token location and base URL.
   - `reference_gemini_cli.md` — How to launch Gemini CLI.
 - **Read/write mechanism:** Claude Code's built-in auto-memory. Claude reads `MEMORY.md` at session start (via system prompt injection) and can create/edit memory files with standard Write/Edit tools.
