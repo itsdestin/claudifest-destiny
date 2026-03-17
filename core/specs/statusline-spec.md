@@ -1,12 +1,13 @@
 # Statusline & Auto-Title — Spec
 
-**Version:** 1.2
-**Last updated:** 2026-03-16
-**Feature location:** `~/.claude/statusline.sh`, `~/.claude/hooks/title-update.sh`, `~/.claude/hooks/usage-fetch.js`
+**Version:** 1.3
+**Last updated:** 2026-03-17
+**Feature location:** `core/hooks/statusline.sh`, `core/hooks/title-update.sh`, `core/hooks/usage-fetch.js`
+(Installed via symlinks to `~/.claude/hooks/` and `~/.claude/statusline.sh`)
 
 ## Purpose
 
-A real-time information display system for Claude Code sessions. Three components work together: (1) **statusline.sh** renders a multi-line status bar showing the current topic, sync status, model/context info, and API usage limits; (2) **title-update.sh** periodically prompts Claude to set a human-readable topic for the session; (3) **usage-fetch.js** retrieves and caches API usage/rate-limit data from the Anthropic OAuth endpoint.
+A real-time information display system for Claude Code sessions. Three components work together: (1) **statusline.sh** renders a multi-line status bar showing session name, sync status, model/context info, rate limits, and toolkit version; (2) **title-update.sh** periodically prompts Claude to set a human-readable topic for the session; (3) **usage-fetch.js** retrieves and caches API usage/rate-limit data from the Anthropic OAuth endpoint.
 
 ## User Mandates
 
@@ -24,6 +25,9 @@ A real-time information display system for Claude Code sessions. Three component
 | Usage data cached with 5-minute TTL | Keeps statusline snappy while limiting API calls; stale cache served on failure for resilience | No cache (rejected: API call on every statusline render would be slow), longer TTL (rejected: usage data becomes misleading near rate limits) |
 | Node.js for JSON parsing in statusline | Already available in the environment; avoids Python startup overhead for a latency-sensitive path | Python (rejected: slower startup), jq (rejected: not reliably installed on Windows/Git Bash), pure bash (rejected: fragile JSON parsing) |
 | Color thresholds: green/yellow/red at standard breakpoints | Context remaining: <50% yellow, <20% red. Usage: ≥50% yellow, ≥80% red. Intuitive traffic-light pattern. | Single color (rejected: loses at-a-glance urgency signal) |
+| `printf '%b\n'` for all ANSI output | POSIX-portable escape handling. `echo -e` is non-standard and fails in some shells (dash, sh). | `echo -e` (rejected: non-portable), `$'\033[...'` ANSI-C quoting (rejected: less readable) |
+| Cross-platform symlink resolution | Scripts are symlinked from `~/.claude/hooks/` but need to find sibling files at their real location (e.g., `usage-fetch.js`). Uses `readlink -f || realpath || python3` fallback chain. | Bare `BASH_SOURCE[0]` (rejected: returns symlink path, not real path — breaks toolkit-root discovery and sibling file lookup) |
+| macOS Keychain fallback for credentials | Claude Max subscribers on macOS store OAuth tokens in Keychain, not `.credentials.json`. Uses `execFileSync('security', ...)` (safe, no shell injection). | `execSync` with string interpolation (rejected: shell injection surface), file-only (rejected: breaks for all macOS Max subscribers) |
 | Prune topic/marker files older than 7 days, at most once per day | Prevents `/tmp/claude-topics/` from accumulating stale files across sessions without running cleanup on every invocation | No cleanup (rejected: unbounded growth), cleanup on every invocation (rejected: unnecessary filesystem churn) |
 | `hookSpecificOutput` JSON for Auto-Title delivery | Ensures the reminder appears in Claude's context as a system-reminder, not as plain hook output that might be ignored | Plain stdout (rejected: not reliably surfaced to Claude), file-based signaling (rejected: Claude doesn't poll files) |
 
@@ -39,25 +43,28 @@ A real-time information display system for Claude Code sessions. Three component
   └─ Claude writes topic to /tmp/claude-topics/topic-{session_id}
 
 [Statusline render] → statusline.sh
-  ├─ Parses session JSON (model, context %, session_id)
+  ├─ Parses session JSON (session_name, model, context %)
   ├─ Reads ~/.claude/.sync-status for sync display
-  ├─ Calls usage-fetch.js for rate-limit data
-  ├─ Reads /tmp/claude-topics/topic-{session_id} for topic
-  └─ Outputs 2-4 lines with ANSI coloring
+  ├─ Resolves symlinks to find real script location
+  ├─ Calls usage-fetch.js (sibling file) for rate-limit data
+  ├─ Reads toolkit-state/update-status.json for version
+  └─ Outputs 2-5 lines with ANSI coloring via printf %b
 
 [Usage fetch] → usage-fetch.js
   ├─ Checks ~/.claude/.usage-cache.json (5-min TTL)
   ├─ If stale: reads OAuth token from ~/.claude/.credentials.json
+  │   └─ macOS fallback: reads from Keychain via `security` CLI
   ├─ Fetches https://api.anthropic.com/api/oauth/usage
   └─ Writes cache, outputs JSON
 ```
 
-### Output Format (up to 4 lines)
+### Output Format (up to 5 lines)
 
-1. **Topic** (bold) — only shown if topic file exists and is non-empty
+1. **Session name** (bold white) — only shown if session has a name
 2. **Sync status** — colored green/yellow/red based on prefix (OK/WARN/ERR)
 3. **Model + Context** — dim model name, colored context remaining percentage
-4. **Usage** — 5h and 7d utilization with reset times (only if data available)
+4. **Rate limits** — 5h and 7d utilization with reset times, colored by severity (only if data available)
+5. **Toolkit version** — dim when current, yellow when update available
 
 ### File Locations
 
@@ -68,20 +75,33 @@ A real-time information display system for Claude Code sessions. Three component
 | `/tmp/claude-topics/.prune-marker` | Last-prune timestamp | Persistent |
 | `~/.claude/.usage-cache.json` | Cached API usage response | Overwritten every 5 min |
 | `~/.claude/.sync-status` | Written by git-sync.sh | Updated on each backup |
+| `~/.claude/toolkit-state/update-status.json` | Toolkit version check result | Written by session-start.sh |
+| `~/.claude/statusline.log` | Stderr from statusline Node.js calls | Appended; for debugging |
+
+### Cross-Platform Notes
+
+- All ANSI output uses `printf '%b\n'` (not `echo -e`)
+- Symlink resolution uses `readlink -f || realpath || python3` chain
+- File paths passed to Node.js via `process.argv`, never string interpolation
+- Hash computation uses `sha256sum || shasum -a 256` for macOS compatibility
+- Credential resolution: file-based primary, macOS Keychain fallback via `execFileSync`
 
 ## Dependencies
 
-- Depends on: git-sync.sh (writes `.sync-status`), Node.js, Anthropic OAuth credentials (`~/.claude/.credentials.json`), Claude Code session JSON (stdin)
+- Depends on: git-sync.sh (writes `.sync-status`), session-start.sh (writes `update-status.json`), Node.js, Anthropic OAuth credentials (`~/.claude/.credentials.json` or macOS Keychain), Claude Code session JSON (stdin)
 - Depended on by: CLAUDE.md Auto-Title instructions (define Claude's behavior when it sees the reminder)
 
 ## Known Bugs / Issues
 
 - (Fixed in v1.2) **37% miss rate:** Claude ignored Auto-Title reminders during complex tasks. Fixed by switching to Bash (eliminates Read-first friction) and adaptive throttle (2-min nag while untitled, 10-min once titled).
 - (Fixed in v1.2) **"Error writing file":** Write tool requires Read first; Claude frequently skipped the Read step. Fixed by switching to Bash echo.
+- (Fixed in v1.3) **Version never displayed:** Symlinked scripts resolved `BASH_SOURCE[0]` to `~/.claude/hooks/`, not the real file location. Upward walk for `VERSION` never reached the toolkit root. Fixed with cross-platform symlink resolution.
+- (Fixed in v1.3) **Colors not rendering on some shells:** `echo -e` is non-portable. Fixed by switching to `printf '%b\n'`.
+- (Fixed in v1.3) **macOS credential failure:** OAuth tokens stored in Keychain were inaccessible. Fixed with `execFileSync('security', ...)` fallback.
 
 ## Planned Updates
 
-- **Session cost display:** The session JSON may contain cost data — could be added as a 5th statusline row if available
+- **Session cost display:** The session JSON may contain cost data — could be added as a 6th statusline row if available
 - **Configurable throttle interval:** Currently hardcoded to 10 minutes; could be made configurable if sessions vary in pace
 
 ## Change Log
@@ -89,5 +109,6 @@ A real-time information display system for Claude Code sessions. Three component
 | Date | Version | What changed | Type | Approved by | Session |
 |------|---------|-------------|------|-------------|---------|
 | 2026-03-15 | 1.0 | Initial spec | New | — | 118c52ce-0a35-4287-a452-77984243491f |
-| 2026-03-16 | 1.2 | Fixed 37% miss rate and Write tool errors: switched to Bash echo (eliminates Read-first requirement), added adaptive throttle (2-min nag while untitled, 10-min refresh once titled), updated CLAUDE.md instructions | Update | — | |
 | 2026-03-15 | 1.1 | Fixed stale sync-to-drive.sh references to git-sync.sh | Revised | — | |
+| 2026-03-16 | 1.2 | Fixed 37% miss rate and Write tool errors: switched to Bash echo, added adaptive throttle | Update | — | |
+| 2026-03-17 | 1.3 | Session name display, rate limit display, printf %b, symlink resolution, macOS Keychain fallback, sha256sum cross-platform, process.argv for Node paths | Update | — | |
