@@ -137,7 +137,7 @@ $skillsDir = Join-Path $HOME ".claude\skills"
 if (-not (Test-Path $commandsDir)) { New-Item -ItemType Directory -Path $commandsDir -Force | Out-Null }
 if (-not (Test-Path $skillsDir)) { New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null }
 
-$commandSrc = Join-Path $toolkitDir "core\commands\setup.md"
+$commandSrc = Join-Path $toolkitDir "commands\setup.md"
 $commandDst = Join-Path $commandsDir "setup.md"
 $skillSrc = Join-Path $toolkitDir "core\skills\setup-wizard"
 $skillDst = Join-Path $skillsDir "setup-wizard"
