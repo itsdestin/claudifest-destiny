@@ -3,6 +3,12 @@
 # Downloads prerequisites and clones the toolkit so Claude Code can finish setup.
 set -e
 
+# When run via `curl | bash`, stdin is the pipe — not the keyboard.
+# Redirect all interactive input from /dev/tty so prompts work.
+if [[ ! -t 0 ]]; then
+    exec < /dev/tty
+fi
+
 echo "==================================="
 echo "  ClaudifestDestiny Installer"
 echo "==================================="
@@ -47,7 +53,10 @@ else
             echo ""
             if [[ "$REPLY" == "2" ]]; then
                 echo ""
-                echo "  Installing Homebrew (this may ask for your password)..."
+                echo "  Installing Homebrew..."
+                echo "  (If asked for your password, nothing will appear as you type"
+                echo "   — that's normal. Just type it and press Enter.)"
+                echo ""
                 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
                 # Homebrew on Apple Silicon installs to /opt/homebrew
                 if [[ -f /opt/homebrew/bin/brew ]]; then
@@ -67,7 +76,11 @@ else
                     NODE_PKG_URL="https://nodejs.org/dist/v22.15.0/node-v22.15.0.pkg"
                 fi
                 curl -fSL -o /tmp/node-installer.pkg "$NODE_PKG_URL"
-                echo "  Running Node.js installer (this may ask for your password)..."
+                echo "  Running Node.js installer..."
+                echo "  (Your Mac will ask for your password. When you type it,"
+                echo "   nothing will appear on screen — that's normal. Just type"
+                echo "   it and press Enter.)"
+                echo ""
                 sudo installer -pkg /tmp/node-installer.pkg -target /
                 rm -f /tmp/node-installer.pkg
             fi
@@ -80,7 +93,9 @@ else
         fi
     elif [[ "$OS" == "linux" ]]; then
         if command -v apt-get &> /dev/null; then
-            echo "  Using apt to install Node.js (may ask for your password)..."
+            echo "  Using apt to install Node.js..."
+            echo "  (If asked for your password, nothing will appear as you type"
+            echo "   — that's normal. Just type it and press Enter.)"
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
             sudo apt-get install -y nodejs
         elif command -v dnf &> /dev/null; then
