@@ -36,12 +36,47 @@ else
             brew install node
         else
             echo ""
-            echo "  Node.js is required but Homebrew isn't installed."
-            echo "  Option 1: Install Homebrew first — https://brew.sh"
-            echo "  Option 2: Download Node.js directly — https://nodejs.org"
+            echo "  Node.js is required. How would you like to install it?"
             echo ""
-            echo "  Install Node.js, then re-run this script."
-            exit 1
+            echo "  1) Download Node.js directly (simplest — just installs Node)"
+            echo "  2) Install Homebrew first, then use it for Node"
+            echo "     (Homebrew is a package manager — handy if you plan to"
+            echo "      install other developer tools later)"
+            echo ""
+            read -p "  Choose 1 or 2: " -n 1 -r
+            echo ""
+            if [[ "$REPLY" == "2" ]]; then
+                echo ""
+                echo "  Installing Homebrew (this may ask for your password)..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                # Homebrew on Apple Silicon installs to /opt/homebrew
+                if [[ -f /opt/homebrew/bin/brew ]]; then
+                    eval "$(/opt/homebrew/bin/brew shellenv)"
+                elif [[ -f /usr/local/bin/brew ]]; then
+                    eval "$(/usr/local/bin/brew shellenv)"
+                fi
+                echo "  Installing Node.js via Homebrew..."
+                brew install node
+            else
+                echo ""
+                echo "  Downloading Node.js installer..."
+                ARCH="$(uname -m)"
+                if [[ "$ARCH" == "arm64" ]]; then
+                    NODE_PKG_URL="https://nodejs.org/dist/v22.15.0/node-v22.15.0.pkg"
+                else
+                    NODE_PKG_URL="https://nodejs.org/dist/v22.15.0/node-v22.15.0.pkg"
+                fi
+                curl -fSL -o /tmp/node-installer.pkg "$NODE_PKG_URL"
+                echo "  Running Node.js installer (this may ask for your password)..."
+                sudo installer -pkg /tmp/node-installer.pkg -target /
+                rm -f /tmp/node-installer.pkg
+            fi
+            if ! command -v node &> /dev/null; then
+                echo ""
+                echo "  Node.js installation didn't seem to take effect in this session."
+                echo "  Close this terminal, open a new one, and re-run this script."
+                exit 1
+            fi
         fi
     elif [[ "$OS" == "linux" ]]; then
         if command -v apt-get &> /dev/null; then

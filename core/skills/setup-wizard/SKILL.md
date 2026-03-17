@@ -491,3 +491,42 @@ Tip: Run /update anytime to check for toolkit updates.
 ```
 
 Save the final config state to `~/.claude/toolkit-state/config.json` with `setup_completed: true` and `setup_completed_at: <ISO timestamp>`.
+
+### Step 6: Feature request prompt
+
+After the completion message, ask:
+
+```
+One last thing — is there anything you wish this toolkit could do that
+it doesn't yet? A feature, integration, workflow, or quality-of-life
+improvement? I can file it as a feature request on your behalf.
+```
+
+If the user has an idea:
+
+1. Confirm: "Here's what I'd file: **[one-line summary]** — [brief description]. Sound right?"
+2. Once approved, open a GitHub issue:
+   ```bash
+   gh issue create --repo itsdestin/claudifest-destiny \
+     --title "Feature request: <summary>" \
+     --label "enhancement" \
+     --body "$(cat <<'EOF'
+   ## Feature Request
+
+   **Submitted during:** Setup wizard (v<VERSION>)
+   **Layers installed:** <selected layers>
+
+   ### Description
+   <user's description, written in clear language>
+
+   ---
+   *Filed automatically by the ClaudifestDestiny setup wizard on behalf of a new user.*
+   EOF
+   )"
+   ```
+3. If `gh` is not installed or not authenticated, offer two alternatives:
+   - "I can copy a pre-filled issue URL to your clipboard so you can submit it in the browser."
+   - "Or I can save it to `~/.claude/toolkit-state/pending-feature-requests.json` and you can submit it later with `/contribute`."
+4. Show the issue URL if created, and say: "Thanks — that helps make the toolkit better for everyone."
+
+If the user declines or has no ideas, just say: "No worries! You can always file one later at https://github.com/itsdestin/claudifest-destiny/issues or ask me to do it for you."
