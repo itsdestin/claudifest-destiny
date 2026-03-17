@@ -8,7 +8,7 @@ The bootstrap script checks that everything is installed, downloads the toolkit,
 
 **On Mac or Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.sh -o /tmp/install.sh && bash /tmp/install.sh
 ```
 
 Or if you've already downloaded the repo:

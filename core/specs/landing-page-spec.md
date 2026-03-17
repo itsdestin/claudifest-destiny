@@ -35,7 +35,7 @@ Icons are Unicode characters in teal badge containers. Below: dependency note wi
 
 ### 3. Install
 - Tab toggle between Mac/Linux and Windows (ARIA tab roles)
-- Mac/Linux: `curl -fsSL https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.sh | bash`
+- Mac/Linux: `curl -fsSL https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.sh -o /tmp/install.sh && bash /tmp/install.sh`
 - Windows: `powershell -ExecutionPolicy Bypass -c "iwr -useb https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.ps1 -OutFile install.ps1; .\install.ps1"`
 - Copy button on each command block
 - "Then open Claude Code in your terminal and say **set me up**"

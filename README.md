@@ -36,7 +36,7 @@ Or use the bootstrap script (installs prerequisites too):
 
 **Mac/Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.sh -o /tmp/install.sh && bash /tmp/install.sh
 ```
 
 **Windows (PowerShell):**

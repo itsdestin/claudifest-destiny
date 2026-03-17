@@ -608,7 +608,7 @@
         <div class="install-panel active" id="panel-mac" role="tabpanel">
           <p class="install-step"><strong>Open Terminal:</strong> Press <kbd>Cmd</kbd> + <kbd>Space</kbd> to open Spotlight, type <strong>Terminal</strong>, and press Enter. A window with a blinking cursor will appear.</p>
           <p class="install-step-label">Paste this and press Enter:</p>
-          <div class="install-cmd" id="cmd-mac"><span class="prompt">$ </span>curl -fsSL https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.sh | bash<button class="copy-btn" onclick="copyCmd('mac')">Copy</button></div>
+          <div class="install-cmd" id="cmd-mac"><span class="prompt">$ </span>curl -fsSL https://raw.githubusercontent.com/itsdestin/claudifest-destiny/master/bootstrap/install.sh -o /tmp/install.sh && bash /tmp/install.sh<button class="copy-btn" onclick="copyCmd('mac')">Copy</button></div>
         </div>
         <div class="install-panel" id="panel-win" role="tabpanel">
           <p class="install-step"><strong>Open Windows Terminal:</strong> Press the <kbd>Windows</kbd> key, type <strong>Terminal</strong>, and press Enter. A window with a blinking cursor will appear.</p>

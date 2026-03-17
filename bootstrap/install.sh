@@ -4,10 +4,8 @@
 set -e
 
 # When run via `curl | bash`, stdin is the pipe — not the keyboard.
-# Redirect all interactive input from /dev/tty so prompts work.
-if [[ ! -t 0 ]]; then
-    exec < /dev/tty
-fi
+# We use /dev/tty for interactive reads so prompts still work.
+# (We do NOT use `exec < /dev/tty` because that kills the curl pipe.)
 
 echo "==================================="
 echo "  ClaudifestDestiny Installer"
@@ -27,7 +25,7 @@ if [[ "$OS" == "windows" ]]; then
     echo "  powershell -ExecutionPolicy Bypass -File install.ps1"
     echo ""
     echo "Or if you're in Git Bash and want to continue, that works too."
-    read -p "Continue in bash? (y/N) " -n 1 -r
+    read -p "Continue in bash? (y/N) " -n 1 -r < /dev/tty
     echo ""
     [[ ! $REPLY =~ ^[Yy]$ ]] && exit 0
 fi
@@ -49,7 +47,7 @@ else
             echo "     (Homebrew is a package manager — handy if you plan to"
             echo "      install other developer tools later)"
             echo ""
-            read -p "  Choose 1 or 2: " -n 1 -r
+            read -p "  Choose 1 or 2: " -n 1 -r < /dev/tty
             echo ""
             if [[ "$REPLY" == "2" ]]; then
                 echo ""
