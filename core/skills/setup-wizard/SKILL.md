@@ -403,35 +403,87 @@ Read the CLAUDE.md fragment templates from `<toolkit_root>/core/templates/claude
 <!-- claudifest:installed-skills:end -->
 ```
 
-### Step 5: Register the toolkit plugin
+### Step 5: Register toolkit components
 
-Claude Code does not auto-discover plugins from `~/.claude/plugins/`. The toolkit must be explicitly registered so it loads on every future session without `--plugin-dir`.
+Claude Code auto-discovers skills from `~/.claude/skills/`, commands from `~/.claude/commands/`, and hooks from `settings.json`. Register the toolkit by symlinking its components into these standard locations — the same pattern the bootstrap installer already uses for the setup wizard.
 
-Register the root plugin (which includes core) by adding it to `~/.claude/settings.json` under `enabledPlugins`. Read the file first (create it if missing), then add:
+**Important:** `enabledPlugins` in `settings.json` only works for marketplace plugins (`"name@marketplace": true`). It does NOT support local path-based registration. Always use symlinks for local toolkit components.
 
-```json
-{
-  "enabledPlugins": {
-    "claudifest-destiny": "/path/to/toolkit"
-  }
-}
+#### 5a: Symlink skills
+
+For each selected layer, symlink every skill directory into `~/.claude/skills/`:
+
+```bash
+mkdir -p ~/.claude/skills
+
+# Core skills (always)
+ln -sf "$TOOLKIT_ROOT/core/skills/setup-wizard" ~/.claude/skills/setup-wizard
+
+# Life skills (if Life layer selected)
+for skill in encyclopedia-compile encyclopedia-interviewer encyclopedia-librarian encyclopedia-update google-drive journaling-assistant; do
+  ln -sf "$TOOLKIT_ROOT/life/skills/$skill" ~/.claude/skills/$skill
+done
+
+# Productivity skills (if Productivity layer selected)
+for skill in inbox-processor skill-creator; do
+  ln -sf "$TOOLKIT_ROOT/productivity/skills/$skill" ~/.claude/skills/$skill
+done
+
+# Module skills (if individual modules selected)
+# Elections Notebook:
+ln -sf "$TOOLKIT_ROOT/modules/elections-notebook/skills/elections-notebook" ~/.claude/skills/elections-notebook
+# JLBC Fiscal Note:
+ln -sf "$TOOLKIT_ROOT/modules/jlbc-fiscal-note/skills/jlbc-fiscal-note" ~/.claude/skills/jlbc-fiscal-note
 ```
 
-Use the actual `toolkit_root` path detected in Phase 1. Preserve any existing settings in the file.
+Only run the blocks for layers the user selected in Phase 3.
 
-For additional layers the user selected (life, productivity, modules), register each as a separate plugin entry pointing to its subdirectory:
+#### 5b: Symlink commands
 
-```json
-{
-  "enabledPlugins": {
-    "claudifest-destiny": "/path/to/toolkit",
-    "claudifest-destiny-life": "/path/to/toolkit/life",
-    "claudifest-destiny-productivity": "/path/to/toolkit/productivity"
-  }
-}
+```bash
+mkdir -p ~/.claude/commands
+
+# Core commands (always)
+for cmd in setup.md contribute.md toolkit-uninstall.md update.md; do
+  ln -sf "$TOOLKIT_ROOT/core/commands/$cmd" ~/.claude/commands/$cmd
+done
 ```
 
-After writing, confirm: "Toolkit registered — from now on you can just run `claude` and everything will be loaded automatically."
+#### 5c: Symlink hooks
+
+```bash
+mkdir -p ~/.claude/hooks
+
+# Core hooks (always — skip any the user chose to "keep yours" in Phase 2)
+for hook in checklist-reminder.sh git-sync.sh session-start.sh statusline.sh title-update.sh todo-capture.sh write-guard.sh; do
+  ln -sf "$TOOLKIT_ROOT/core/hooks/$hook" ~/.claude/hooks/$hook
+done
+
+# Life hooks (if Life layer selected)
+ln -sf "$TOOLKIT_ROOT/life/hooks/sync-encyclopedia.sh" ~/.claude/hooks/sync-encyclopedia.sh
+```
+
+#### 5d: Register hooks in settings.json
+
+Hooks must also be registered in `~/.claude/settings.json` under the `hooks` key so Claude Code invokes them at the right trigger points. Read the existing `settings.json` (create it if missing), then merge the toolkit's hook registrations into the `hooks` object. Preserve any existing hook entries the user chose to keep in Phase 2.
+
+Refer to the hook scripts themselves for the correct trigger point (`SessionStart`, `PreToolUse`, `PostToolUse`, `Stop`, `UserPromptSubmit`) and matcher pattern for each hook.
+
+#### 5e: Verify symlinks
+
+After creating all symlinks, verify each one resolves correctly:
+
+```bash
+for link in ~/.claude/skills/*/SKILL.md; do
+  if [ ! -e "$link" ]; then
+    echo "BROKEN: $link"
+  fi
+done
+```
+
+If any symlinks are broken (target doesn't exist), report them to the user and offer to retry. Common causes: the toolkit was moved after cloning, or a layer directory is missing.
+
+After verification, confirm: "Toolkit registered — all skills, commands, and hooks are linked. From now on just run `claude` and everything loads automatically."
 
 ### Step 6: Configure MCP servers (if applicable)
 
@@ -459,6 +511,9 @@ Run a health check on everything that was installed.
 - [ ] Toolkit root directory exists and contains `VERSION`
 - [ ] `~/.claude/CLAUDE.md` exists and contains toolkit sections
 - [ ] Hook scripts in `core/hooks/` are present and executable
+- [ ] All expected symlinks in `~/.claude/skills/` resolve (not broken)
+- [ ] All expected symlinks in `~/.claude/commands/` resolve (not broken)
+- [ ] Hooks are registered in `~/.claude/settings.json` under the `hooks` key
 
 ### Step 2: Life checks (if installed)
 
