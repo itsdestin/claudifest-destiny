@@ -1,6 +1,6 @@
 # ClaudifestDestiny Toolkit — Spec
 
-**Version:** 1.0
+**Version:** 1.1
 **Last updated:** 2026-03-16
 **Feature location:** `~/.claude/plugins/claudifest-destiny/` (toolkit root)
 
@@ -60,14 +60,19 @@ Skills, commands, and hooks are registered via symlinks into Claude Code's auto-
 | Skills | `{layer}/skills/{name}/` | `~/.claude/skills/{name}` |
 | Commands | `core/commands/{name}.md` | `~/.claude/commands/{name}.md` |
 | Hooks | `{layer}/hooks/{name}.sh` | `~/.claude/hooks/{name}.sh` |
+| Statusline | `core/hooks/statusline.sh` | `~/.claude/statusline.sh` (NOT in hooks/) |
 
-Hook trigger-point registration is written to `~/.claude/settings.json` under the `hooks` key.
+Hook trigger-point registration is written to `~/.claude/settings.json` under the `hooks` key. The statusline is **not** a hook — it requires a separate `statusLine` config entry in `settings.json`:
+
+```json
+{ "statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh" } }
+```
 
 ### 3. Layers and Components
 
 | Layer | Skills | Commands | Hooks | MCP Servers |
 |-------|--------|----------|-------|-------------|
-| Core | setup-wizard | setup, contribute, toolkit-uninstall, update | checklist-reminder, git-sync, session-start, statusline, title-update, todo-capture, write-guard | — |
+| Core | setup-wizard | setup, contribute, toolkit-uninstall, update | checklist-reminder, git-sync, session-start, title-update, todo-capture, write-guard + statusline (separate config) | — |
 | Life | encyclopedia-compile, encyclopedia-interviewer, encyclopedia-librarian, encyclopedia-update, google-drive, journaling-assistant | — | sync-encyclopedia | — |
 | Productivity | inbox-processor, skill-creator | — | — | todoist, gmessages |
 | Elections Notebook | elections-notebook | — | — | — |
@@ -117,4 +122,5 @@ The toolkit was developed on a Windows desktop with MCP servers configured local
 
 | Date | Version | What changed | Type |
 |------|---------|-------------|------|
+| 2026-03-16 | 1.1 | Statusline is not a hook — documented as separate component type with own config entry in settings.json. gh CLI upgraded to strongly recommended. | Update |
 | 2026-03-16 | 1.0 | Initial spec — documents install flow, registration mechanism, dependency chain, and known MCP gaps | New |
