@@ -62,7 +62,7 @@ if [[ -n "$SESSION_NAME" ]]; then
     LEFT_PLAIN="$SESSION_NAME"
 else
     LEFT_ANSI_CONTENT="$SYNC_DISPLAY"
-    LEFT_PLAIN=$(printf '%b' "$SYNC_DISPLAY" | sed 's/\x1b\[[0-9;]*[A-Za-z]//g')
+    LEFT_PLAIN=$(printf '%b' "$SYNC_DISPLAY" | sed $'s/\033\\[[0-9;]*[A-Za-z]//g')
 fi
 
 ANNOUNCEMENT_FRAGMENT=""
