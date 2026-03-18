@@ -59,6 +59,9 @@ Then type:
 
 Claude will walk you through the rest. Here's what to expect:
 
+### 0. Prior Use Check
+Claude asks whether you've used DestinClaude before. If you're coming from another device with a backup on GitHub or Google Drive, say yes and choose your backup source — Claude will restore your data and skip the setup steps that aren't needed. If this is your first time, say no and continue normally.
+
 ### 1. Environment Check
 Claude scans your computer to see what's already installed and configured. This takes a few seconds.
 
