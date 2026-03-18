@@ -148,11 +148,7 @@ fi
 
 # --- Announcement fetch (background) ---
 if command -v node &>/dev/null; then
-    ANNOUNCE_SCRIPT_REAL="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null \
-        || realpath "${BASH_SOURCE[0]}" 2>/dev/null \
-        || python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "${BASH_SOURCE[0]}" 2>/dev/null \
-        || echo "${BASH_SOURCE[0]}")"
-    ANNOUNCEMENT_FETCH="$(dirname "$ANNOUNCE_SCRIPT_REAL")/announcement-fetch.js"
+    ANNOUNCEMENT_FETCH="$(dirname "$SCRIPT_REAL")/announcement-fetch.js"
     if [[ -f "$ANNOUNCEMENT_FETCH" ]]; then
         nohup node "$ANNOUNCEMENT_FETCH" >/dev/null 2>&1 &
     fi

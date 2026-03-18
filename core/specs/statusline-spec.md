@@ -65,12 +65,12 @@ A real-time information display system for Claude Code sessions. Three component
   ├─ Fetches https://raw.githubusercontent.com/itsdestin/destinclaude/master/announcements.txt
   ├─ Parses message + optional YYYY-MM-DD expiry prefix (zero-padded only)
   └─ Writes ~/.claude/.announcement-cache.json atomically (tmp → rename)
+```
 
 **Announcements subsystem:**
 - `session-start.sh` launches `announcement-fetch.js` in the background on every session start
 - `announcement-fetch.js` fetches the raw GitHub file, parses message + optional expiry, writes `~/.claude/.announcement-cache.json` atomically
 - `statusline.sh` reads the cache on every render via a single `node -e` call; displays a bold yellow `★ message` fragment right-aligned on line 1 if the message is present, not expired, and cache is < 7 days old
-```
 
 ### Output Format (up to 5 lines)
 
