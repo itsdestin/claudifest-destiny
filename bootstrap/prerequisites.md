@@ -47,7 +47,7 @@ After checking prerequisites, the script downloads the toolkit itself:
 
 ## After the Script
 
-The script ends by telling you to open Claude Code and say "set me up." From there, Claude walks you through choosing which toolkit features you want, personalizing your setup, and making sure everything works. You're in control the whole time.
+The script ends by launching Claude Code automatically and starting the setup wizard. The first thing Claude will ask is whether you've used DestinClaude before — if you're restoring from another device, say yes and choose your backup source. If this is your first time, say no and Claude will walk you through choosing which toolkit features you want, personalizing your setup, and making sure everything works. You're in control the whole time.
 
 ## Uninstalling
 
