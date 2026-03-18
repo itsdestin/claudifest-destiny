@@ -685,6 +685,42 @@
     margin-bottom: 6px;
   }
 
+  .integration-tag[data-desc] {
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .integration-tag[data-desc]:hover {
+    border-color: var(--border-accent);
+  }
+
+  .integration-tag.active {
+    background: var(--accent-subtle);
+    border-color: var(--accent);
+  }
+
+  .integration-desc {
+    display: none;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .integration-desc.visible {
+    display: block;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .integration-desc-name {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
   /* --- RESPONSIVE --- */
   @media (max-width: 768px) {
     .hero { padding: 48px 0 0; }
@@ -772,26 +808,27 @@
         <h3 class="integrations-title">Available Integrations</h3>
         <p class="integrations-intro">DestinClaude is designed to link with all of the following services:</p>
         <div class="integrations-tags">
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="">Google Drive</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/6/66/Google_Docs_2020_Logo.svg" alt="">Google Docs</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/a/ae/Google_Sheets_2020_Logo.svg" alt="">Google Sheets</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/1/16/Google_Slides_2020_Logo.svg" alt="">Google Slides</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" alt="">Google Calendar</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" alt="">Gmail</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/0/05/Google_Messages_logo.svg" alt="">Google Messages</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://cdn.simpleicons.org/imessage" alt="">iMessage</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://cdn.simpleicons.org/icloud" alt="">iCloud</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_Notes_icon.svg" alt="">Apple Notes</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://aroundsketch.com/Apple-App-Icons/App-Icon/Apple/Reminders/@SVG.svg" alt="">Apple Reminders</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Apple_Calendar_%28iOS%29.svg" alt="">Apple Calendar</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg" alt="">Apple Mail</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://cdn.simpleicons.org/todoist" alt="">Todoist</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://cdn.simpleicons.org/github" alt="">GitHub</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" alt="">Chrome</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/5/52/Safari_browser_logo.svg" alt="">Safari</span>
-          <span class="integration-tag"><img class="tag-icon" src="https://www.google.com/s2/favicons?domain=canva.com&sz=32" alt="">Canva</span>
+          <span class="integration-tag" data-desc="Your personal cloud vault. DestinClaude automatically backs up journal entries, your Encyclopedia, and all system files to Google Drive — keeping everything safe and synced across sessions."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="">Google Drive</span>
+          <span class="integration-tag" data-desc="Create, read, and edit documents. DestinClaude can draft cover letters, memos, reports, and other documents directly in Google Docs."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/6/66/Google_Docs_2020_Logo.svg" alt="">Google Docs</span>
+          <span class="integration-tag" data-desc="Create and analyze spreadsheets. DestinClaude can build trackers, organize data, and work with structured information in Google Sheets."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/a/ae/Google_Sheets_2020_Logo.svg" alt="">Google Sheets</span>
+          <span class="integration-tag" data-desc="Create and edit presentations. DestinClaude can build slide decks and visual presentations in Google Slides."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/1/16/Google_Slides_2020_Logo.svg" alt="">Google Slides</span>
+          <span class="integration-tag" data-desc="Read and create events. Mention an appointment in conversation and DestinClaude can put it on your calendar. Screenshot a flyer and the event gets scheduled automatically."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" alt="">Google Calendar</span>
+          <span class="integration-tag" data-desc="Search, read, and draft emails. DestinClaude can find messages in your inbox, read threads, and compose replies — all without leaving the terminal."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" alt="">Gmail</span>
+          <span class="integration-tag" data-desc="Read and send text messages. DestinClaude can read your SMS and RCS conversations and send texts on your behalf through Google Messages."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/0/05/Google_Messages_logo.svg" alt="">Google Messages</span>
+          <span class="integration-tag" data-desc="Read and send iMessages. DestinClaude can access your Apple Messages conversations and send texts through iMessage."><img class="tag-icon" src="https://cdn.simpleicons.org/imessage" alt="">iMessage</span>
+          <span class="integration-tag" data-desc="Your personal cloud vault for Apple users. DestinClaude backs up journal entries, your Encyclopedia, and all system files to iCloud Drive."><img class="tag-icon" src="https://cdn.simpleicons.org/icloud" alt="">iCloud</span>
+          <span class="integration-tag" data-desc="Create and access notes. DestinClaude can read your existing Apple Notes and create new ones for quick reference and capture."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_Notes_icon.svg" alt="">Apple Notes</span>
+          <span class="integration-tag" data-desc="Create and manage reminders. DestinClaude can add items to your Apple Reminders lists and help you keep track of things to do."><img class="tag-icon" src="https://aroundsketch.com/Apple-App-Icons/App-Icon/Apple/Reminders/@SVG.svg" alt="">Apple Reminders</span>
+          <span class="integration-tag" data-desc="Read and create events. Mention an appointment in conversation and DestinClaude can put it on your calendar. Screenshot a flyer and the event gets scheduled automatically."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Apple_Calendar_%28iOS%29.svg" alt="">Apple Calendar</span>
+          <span class="integration-tag" data-desc="Search, read, and draft emails. DestinClaude can find messages, read threads, and compose replies through Apple Mail."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg" alt="">Apple Mail</span>
+          <span class="integration-tag" data-desc="Your task command center. DestinClaude manages your task list, processes inbox items captured from your phone, creates tasks from conversations, and helps you stay on top of priorities."><img class="tag-icon" src="https://cdn.simpleicons.org/todoist" alt="">Todoist</span>
+          <span class="integration-tag" data-desc="Receive toolkit updates and sync your configuration. GitHub keeps your DestinClaude installation current with the latest features and fixes."><img class="tag-icon" src="https://cdn.simpleicons.org/github" alt="">GitHub</span>
+          <span class="integration-tag" data-desc="Browse the web hands-free. DestinClaude can navigate websites, fill out forms, take screenshots, and interact with web pages through Chrome."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" alt="">Chrome</span>
+          <span class="integration-tag" data-desc="Browse the web hands-free. DestinClaude can navigate websites, fill out forms, take screenshots, and interact with web pages through Safari."><img class="tag-icon" src="https://upload.wikimedia.org/wikipedia/commons/5/52/Safari_browser_logo.svg" alt="">Safari</span>
+          <span class="integration-tag" data-desc="Create and edit designs. DestinClaude can generate graphics, edit presentations, and work with visual content directly in Canva."><img class="tag-icon" src="https://www.google.com/s2/favicons?domain=canva.com&sz=32" alt="">Canva</span>
           <span class="integration-tag soon">More coming soon...</span>
         </div>
+        <div class="integration-desc" id="integration-desc"></div>
         <p class="prereq-note"><strong>NOTE:</strong> Some integrations require account authorization or additional setup. While you may link any of these services at any time, I strongly encourage registering them during the initial installation with the built-in setup wizard if prompted.</p>
         <p class="prereq-note"><strong>If you want to know more about how to use integrations, just ask Claude!</strong></p>
       </div>
@@ -938,6 +975,29 @@
       btn.classList.toggle('open');
       btn.nextElementSibling.classList.toggle('open');
     }
+
+    // Integration descriptions
+    document.querySelectorAll('.integration-tag[data-desc]').forEach(tag => {
+      tag.addEventListener('click', () => {
+        const desc = document.getElementById('integration-desc');
+        const name = tag.textContent.trim();
+        const text = tag.getAttribute('data-desc');
+        if (tag.classList.contains('active')) {
+          tag.classList.remove('active');
+          desc.classList.remove('visible');
+          return;
+        }
+        document.querySelectorAll('.integration-tag.active').forEach(t => t.classList.remove('active'));
+        tag.classList.add('active');
+        desc.textContent = '';
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'integration-desc-name';
+        nameSpan.textContent = name + ': ';
+        desc.appendChild(nameSpan);
+        desc.appendChild(document.createTextNode(text));
+        desc.classList.add('visible');
+      });
+    });
 
     // Copy command
     function copyCmd(platform) {
