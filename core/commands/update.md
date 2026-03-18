@@ -69,4 +69,30 @@ Check for and install updates to the DestinClaude toolkit.
 
     If nothing is new/missing, skip this step silently.
 
-12. **Confirm.** Tell the user: "Updated to LATEST_TAG. You're all set."
+12. **Register missing marketplace plugins.** Load `~/.claude/settings.json`. Check the `enabledPlugins` key (create it if missing). For each plugin in the canonical list below that is NOT already present, add it with value `true` and write the file back. Do this silently without asking — plugins are zero-config and download automatically on first use.
+
+    Canonical plugin list:
+    ```
+    superpowers@claude-plugins-official
+    claude-md-management@claude-plugins-official
+    code-review@claude-plugins-official
+    code-simplifier@claude-plugins-official
+    commit-commands@claude-plugins-official
+    feature-dev@claude-plugins-official
+    hookify@claude-plugins-official
+    skill-creator@claude-plugins-official
+    explanatory-output-style@claude-plugins-official
+    learning-output-style@claude-plugins-official
+    context7@claude-plugins-official
+    linear@claude-plugins-official
+    playwright@claude-plugins-official
+    plugin-dev@claude-plugins-official
+    ```
+
+    If any were added, include a line in the final confirmation:
+    ```
+    Registered N new plugin(s): hookify, linear, plugin-dev
+    ```
+    If all were already registered, skip this line.
+
+13. **Confirm.** Tell the user: "Updated to LATEST_TAG. You're all set."
