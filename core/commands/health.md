@@ -28,6 +28,7 @@ Run a lightweight health check on the installed toolkit. This is the same verifi
    - [ ] Hooks are registered in `~/.claude/settings.json`
    - [ ] Statusline is configured in `~/.claude/settings.json`
    - [ ] `~/.claude/statusline.sh` exists and resolves
+   - [ ] All 14 marketplace plugins present in `~/.claude/settings.json` `enabledPlugins`
 
    **Life (if installed):**
    - [ ] `rclone lsd gdrive:` succeeds (Google Drive connected)
@@ -39,7 +40,35 @@ Run a lightweight health check on the installed toolkit. This is the same verifi
    - [ ] gmessages binary exists (if Google Messages was set up)
    - [ ] imessages server responds (if iMessage was set up, macOS only)
 
-4. **MCP availability check.** Read `<toolkit_root>/core/mcp-manifest.json`. Load the registered MCP servers from `~/.claude.json` (under `mcpServers`). For each manifest entry:
+4. **Marketplace plugin check.** Load `~/.claude/settings.json`. Check the `enabledPlugins` key. For each plugin in the canonical list below that is NOT already present, add it with value `true` and write the file back — no prompt needed.
+
+   Canonical plugin list:
+   ```
+   superpowers@claude-plugins-official
+   claude-md-management@claude-plugins-official
+   code-review@claude-plugins-official
+   code-simplifier@claude-plugins-official
+   commit-commands@claude-plugins-official
+   feature-dev@claude-plugins-official
+   hookify@claude-plugins-official
+   skill-creator@claude-plugins-official
+   explanatory-output-style@claude-plugins-official
+   learning-output-style@claude-plugins-official
+   context7@claude-plugins-official
+   linear@claude-plugins-official
+   playwright@claude-plugins-official
+   plugin-dev@claude-plugins-official
+   ```
+
+   In the health report, show each plugin as OK or ADDED:
+   ```
+   Marketplace Plugins:
+     superpowers .......................... OK
+     commit-commands ...................... ADDED
+     ...
+   ```
+
+5. **MCP availability check.** Read `<toolkit_root>/core/mcp-manifest.json`. Load the registered MCP servers from `~/.claude.json` (under `mcpServers`). For each manifest entry:
    - Skip if `platform` doesn't match the current platform (skip `platform: "all"` entries that are `auto: false` — those require setup steps)
    - Skip if already registered in `~/.claude.json`
    - Otherwise: flag as **available but not registered**
@@ -63,7 +92,7 @@ Run a lightweight health check on the installed toolkit. This is the same verifi
 
    For `auto: false` MCPs that are missing, show: "[name] — [setup_note]. Run `/setup-wizard` to configure it."
 
-5. **Report results.** Show a clean pass/fail summary:
+6. **Report results.** Show a clean pass/fail summary:
 
    ```
    Toolkit Health Check
@@ -86,10 +115,13 @@ Run a lightweight health check on the installed toolkit. This is the same verifi
      Todoist ............................. OK
      Google Messages ..................... OK
 
+   Marketplace Plugins:
+     [per step 4 above]
+
    MCP Servers:
-     [per manifest check above]
+     [per step 5 above]
    ```
 
-6. **If anything failed:** Show "These items need attention:" with specific, plain-English guidance on how to fix each one. Offer to fix automatically where possible. For issues that require re-running setup, suggest: "You can fix this by running `/setup-wizard` — it's safe to run again and won't change your existing settings."
+7. **If anything failed:** Show "These items need attention:" with specific, plain-English guidance on how to fix each one. Offer to fix automatically where possible. For issues that require re-running setup, suggest: "You can fix this by running `/setup-wizard` — it's safe to run again and won't change your existing settings."
 
-7. **If everything passed:** Show: "Everything looks good! All [N] checks passed."
+8. **If everything passed:** Show: "Everything looks good! All [N] checks passed."
