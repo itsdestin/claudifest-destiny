@@ -1760,7 +1760,7 @@
     function getPreferredTheme() {
       var stored = localStorage.getItem('dc-theme');
       if (stored) return stored;
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      return 'dark';
     }
 
     function applyTheme(theme) {
