@@ -335,6 +335,11 @@ Write `comfort_level` to `~/.claude/toolkit-state/config.json` (create the file/
 
 Before installing anything, understand what's already on the user's system.
 
+> **Comfort-level adaptation:**
+> - **Beginner:** After presenting findings in Step 4, add plain-language explanations of what each item means (e.g., "Skills are like specialized instructions that teach Claude how to do specific things").
+> - **Intermediate:** No change — present findings normally.
+> - **Power user:** Run Steps 1–3 silently. Only present Step 4 findings if conflicts are detected. If no conflicts, say: "Clean slate — moving on." and proceed without waiting for acknowledgment.
+
 ### Step 1: Detect the platform
 
 Run this in Bash to detect the OS:
@@ -399,6 +404,11 @@ If Phase 1 found no existing setup, skip to Phase 3.
 
 For each conflict discovered in Phase 1, resolve it conversationally with the user. **Always back up before modifying anything.**
 
+> **Comfort-level adaptation:**
+> - **Beginner:** For each conflict, explain what it means and why it matters in plain language. Recommend a safe default for each conflict and explain why it's safe.
+> - **Intermediate:** No change.
+> - **Power user:** If no conflicts exist, skip Phase 2 entirely without mentioning it. If conflicts exist, present them tersely in a table format and ask for resolution.
+
 ### Step 1: Create backup directory
 
 ```bash
@@ -455,6 +465,11 @@ If any existing MCP server names match toolkit servers (e.g., `gmessages`, `imes
 ## Phase 3: Layer Selection
 
 Present the installable layers and let the user choose.
+
+> **Comfort-level adaptation:**
+> - **Beginner:** Keep the full layer explanations. After presenting, recommend: "If you're not sure, I'd suggest the full install — you can always remove things later."
+> - **Intermediate:** No change.
+> - **Power user:** Skip the layer explanation block. Instead say: "Installing all layers (Core, Life, Productivity). Good?" If the user confirms, proceed. If they want to customize, fall back to option 4 (individual selection) without the explanatory text.
 
 ### Step 1: Explain the layers
 
@@ -517,6 +532,11 @@ Summarize: "You chose to install [list of selected layers]. Now I'll make sure y
 ## Phase 4: Dependency Installation
 
 Install external tools required by the selected layers. For each dependency, follow this pattern:
+
+> **Comfort-level adaptation:**
+> - **Beginner:** Before installing each tool, explain what it is and why the toolkit needs it (e.g., "Git is a tool that tracks changes to files — like an undo history for your whole computer").
+> - **Intermediate:** No change.
+> - **Power user:** Install all dependencies silently. After all installs complete, show a single summary table of what was installed and its status (OK / already installed / FAILED). Only pause for user input if something fails.
 
 1. Check if already installed
 2. If missing, explain what it is and why it's needed (plain language)
