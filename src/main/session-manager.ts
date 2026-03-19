@@ -1,5 +1,6 @@
-import * as pty from 'node-pty';
+import { fork, spawn, ChildProcess } from 'child_process';
 import { randomUUID } from 'crypto';
+import path from 'path';
 import { SessionInfo } from '../shared/types';
 import { EventEmitter } from 'events';
 
@@ -11,7 +12,7 @@ export interface CreateSessionOpts {
 
 interface ManagedSession {
   info: SessionInfo;
-  pty: pty.IPty;
+  worker: ChildProcess;
 }
 
 export class SessionManager extends EventEmitter {
@@ -24,14 +25,13 @@ export class SessionManager extends EventEmitter {
       args.push('--dangerously-skip-permissions');
     }
 
-    const claudePath = 'claude'; // assumes claude is in PATH
-
-    const ptyProcess = pty.spawn(claudePath, args, {
-      name: 'xterm-256color',
-      cols: 120,
-      rows: 30,
-      cwd: opts.cwd,
-      env: { ...process.env },
+    // Spawn a separate Node.js process for node-pty so it uses Node's
+    // native binary instead of Electron's (which requires electron-rebuild).
+    // We use spawn with 'node' (system Node) + IPC channel instead of fork()
+    // because fork() uses Electron's Node.js which has the same ABI mismatch.
+    const workerPath = path.join(__dirname, 'pty-worker.js');
+    const worker = spawn('node', [workerPath], {
+      stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
     });
 
     const info: SessionInfo = {
@@ -44,20 +44,40 @@ export class SessionManager extends EventEmitter {
       createdAt: Date.now(),
     };
 
-    const session: ManagedSession = { info, pty: ptyProcess };
+    const session: ManagedSession = { info, worker };
     this.sessions.set(id, session);
 
-    ptyProcess.onData((data: string) => {
-      this.emit('pty-output', id, data);
+    worker.on('message', (msg: any) => {
+      switch (msg.type) {
+        case 'data':
+          this.emit('pty-output', id, msg.data);
+          break;
+        case 'exit':
+          if (!this.sessions.has(id)) return;
+          const exitingSession = this.sessions.get(id)!;
+          exitingSession.info.status = 'destroyed';
+          this.emit('session-exit', id, msg.exitCode);
+          this.sessions.delete(id);
+          break;
+      }
     });
 
-    ptyProcess.onExit(({ exitCode }) => {
-      // Guard: skip if session was already explicitly destroyed
+    worker.on('exit', () => {
       if (!this.sessions.has(id)) return;
       const exitingSession = this.sessions.get(id)!;
       exitingSession.info.status = 'destroyed';
-      this.emit('session-exit', id, exitCode);
+      this.emit('session-exit', id, 0);
       this.sessions.delete(id);
+    });
+
+    // Tell the worker to spawn claude
+    worker.send({
+      type: 'spawn',
+      command: 'claude',
+      args,
+      cwd: opts.cwd,
+      cols: 120,
+      rows: 30,
     });
 
     return info;
@@ -68,21 +88,22 @@ export class SessionManager extends EventEmitter {
     if (!session) return false;
     session.info.status = 'destroyed';
     this.sessions.delete(id);
-    session.pty.kill();
+    session.worker.send({ type: 'kill' });
+    session.worker.disconnect();
     return true;
   }
 
   sendInput(id: string, text: string): boolean {
     const session = this.sessions.get(id);
     if (!session) return false;
-    session.pty.write(text);
+    session.worker.send({ type: 'input', data: text });
     return true;
   }
 
   resizeSession(id: string, cols: number, rows: number): boolean {
     const session = this.sessions.get(id);
     if (!session) return false;
-    session.pty.resize(cols, rows);
+    session.worker.send({ type: 'resize', cols, rows });
     return true;
   }
 

@@ -5,9 +5,9 @@
   "main": "dist/main/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && npm run dev:main\"",
-    "dev:main": "tsc -p tsconfig.json && electron .",
+    "dev:main": "tsc -p tsconfig.json && cp src/main/pty-worker.js dist/main/pty-worker.js && electron .",
     "dev:renderer": "vite src/renderer",
-    "build": "tsc && vite build src/renderer && electron-builder",
+    "build": "tsc && cp src/main/pty-worker.js dist/main/pty-worker.js && vite build src/renderer && electron-builder",
     "test": "vitest"
   },
   "keywords": [],

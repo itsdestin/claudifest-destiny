@@ -1,24 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SessionManager } from '../src/main/session-manager';
 
-// Captured callbacks for each spawned PTY
-let capturedOnData: ((data: string) => void) | null = null;
-let capturedOnExit: ((event: { exitCode: number }) => void) | null = null;
+// Mock child_process.fork to return a fake worker
+const mockWorker = {
+  send: vi.fn(),
+  on: vi.fn(),
+  disconnect: vi.fn(),
+  kill: vi.fn(),
+};
 
-// Mock node-pty
-vi.mock('node-pty', () => ({
-  spawn: vi.fn(() => ({
-    pid: 12345,
-    onData: vi.fn((cb: (data: string) => void) => {
-      capturedOnData = cb;
-    }),
-    onExit: vi.fn((cb: (event: { exitCode: number }) => void) => {
-      capturedOnExit = cb;
-    }),
-    write: vi.fn(),
-    kill: vi.fn(),
-    resize: vi.fn(),
-  })),
+vi.mock('child_process', () => ({
+  fork: vi.fn(() => mockWorker),
+  spawn: vi.fn(() => mockWorker),
 }));
 
 describe('SessionManager', () => {
@@ -26,8 +19,9 @@ describe('SessionManager', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    capturedOnData = null;
-    capturedOnExit = null;
+    mockWorker.on = vi.fn();
+    mockWorker.send = vi.fn();
+    mockWorker.disconnect = vi.fn();
     manager = new SessionManager();
   });
 
@@ -64,59 +58,56 @@ describe('SessionManager', () => {
     expect(sessions).toHaveLength(0);
   });
 
-  it('spawns claude with --dangerously-skip-permissions when requested', async () => {
-    const pty = await import('node-pty');
+  it('sends spawn with --dangerously-skip-permissions when requested', () => {
     manager.createSession({ name: 'skip', cwd: '/tmp', skipPermissions: true });
 
-    const spawnCall = (pty.spawn as any).mock.calls[0];
-    const args: string[] = spawnCall[1];
-    expect(args).toContain('--dangerously-skip-permissions');
+    const spawnMsg = mockWorker.send.mock.calls[0][0];
+    expect(spawnMsg.type).toBe('spawn');
+    expect(spawnMsg.args).toContain('--dangerously-skip-permissions');
   });
 
-  it('emits pty-output event when PTY produces data', () => {
-    const info = manager.createSession({ name: 'test', cwd: '/tmp', skipPermissions: false });
+  it('emits pty-output when worker sends data', () => {
+    manager.createSession({ name: 'test', cwd: '/tmp', skipPermissions: false });
 
-    const listener = vi.fn();
-    manager.on('pty-output', listener);
+    const messageHandler = mockWorker.on.mock.calls.find(
+      (c: any) => c[0] === 'message'
+    )?.[1];
 
-    // Invoke the captured onData callback to simulate PTY output
-    expect(capturedOnData).not.toBeNull();
-    capturedOnData!('hello world');
+    const received: string[] = [];
+    manager.on('pty-output', (_id: string, data: string) => received.push(data));
 
-    expect(listener).toHaveBeenCalledOnce();
-    expect(listener).toHaveBeenCalledWith(info.id, 'hello world');
+    messageHandler({ type: 'data', data: 'hello world' });
+    expect(received).toEqual(['hello world']);
   });
 
-  it('emits session-exit event when PTY exits', () => {
-    const info = manager.createSession({ name: 'test', cwd: '/tmp', skipPermissions: false });
+  it('emits session-exit when worker reports exit', () => {
+    manager.createSession({ name: 'test', cwd: '/tmp', skipPermissions: false });
 
-    const listener = vi.fn();
-    manager.on('session-exit', listener);
+    const messageHandler = mockWorker.on.mock.calls.find(
+      (c: any) => c[0] === 'message'
+    )?.[1];
 
-    // Invoke the captured onExit callback to simulate PTY exit
-    expect(capturedOnExit).not.toBeNull();
-    capturedOnExit!({ exitCode: 0 });
+    const exits: string[] = [];
+    manager.on('session-exit', (id: string) => exits.push(id));
 
-    expect(listener).toHaveBeenCalledOnce();
-    expect(listener).toHaveBeenCalledWith(info.id, 0);
-
-    // Session should have been removed from the map
+    messageHandler({ type: 'exit', exitCode: 0 });
+    expect(exits).toHaveLength(1);
     expect(manager.listSessions()).toHaveLength(0);
   });
 
-  it('does not emit session-exit if session was already destroyed', () => {
-    const info = manager.createSession({ name: 'test', cwd: '/tmp', skipPermissions: false });
+  it('does not emit session-exit after explicit destroy', () => {
+    manager.createSession({ name: 'test', cwd: '/tmp', skipPermissions: false });
 
-    const listener = vi.fn();
-    manager.on('session-exit', listener);
+    const exitHandler = mockWorker.on.mock.calls.find(
+      (c: any) => c[0] === 'exit'
+    )?.[1];
 
-    // Explicitly destroy first
-    manager.destroySession(info.id);
+    manager.destroySession(manager.listSessions()[0].id);
 
-    // Now fire the PTY exit callback — guard should prevent double-emit
-    expect(capturedOnExit).not.toBeNull();
-    capturedOnExit!({ exitCode: 0 });
+    const exits: string[] = [];
+    manager.on('session-exit', (id: string) => exits.push(id));
 
-    expect(listener).not.toHaveBeenCalled();
+    exitHandler();
+    expect(exits).toHaveLength(0);
   });
 });
