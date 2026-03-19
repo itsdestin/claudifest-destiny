@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { SessionInfo } from '../shared/types';
 import { EventEmitter } from 'events';
 
-interface CreateSessionOpts {
+export interface CreateSessionOpts {
   name: string;
   cwd: string;
   skipPermissions: boolean;
@@ -52,6 +52,10 @@ export class SessionManager extends EventEmitter {
     });
 
     ptyProcess.onExit(({ exitCode }) => {
+      // Guard: skip if session was already explicitly destroyed
+      if (!this.sessions.has(id)) return;
+      const exitingSession = this.sessions.get(id)!;
+      exitingSession.info.status = 'destroyed';
       this.emit('session-exit', id, exitCode);
       this.sessions.delete(id);
     });
@@ -62,8 +66,9 @@ export class SessionManager extends EventEmitter {
   destroySession(id: string): boolean {
     const session = this.sessions.get(id);
     if (!session) return false;
-    session.pty.kill();
+    session.info.status = 'destroyed';
     this.sessions.delete(id);
+    session.pty.kill();
     return true;
   }
 
