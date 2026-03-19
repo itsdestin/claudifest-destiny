@@ -88,7 +88,7 @@ fi
 if [[ -n "$TOOLKIT_ROOT" && -d "$TOOLKIT_ROOT/core/hooks" ]]; then
     _REFRESHED=0
     # Canonical list of toolkit-owned hooks — ONLY these get overwritten
-    for _h in checklist-reminder.sh contribution-detector.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh write-guard.sh; do
+    for _h in checklist-reminder.sh contribution-detector.sh done-sound.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh write-guard.sh; do
         if [[ -f "$TOOLKIT_ROOT/core/hooks/$_h" ]]; then
             if [[ ! -f "$CLAUDE_DIR/hooks/$_h" ]] || ! diff -q "$CLAUDE_DIR/hooks/$_h" "$TOOLKIT_ROOT/core/hooks/$_h" >/dev/null 2>&1; then
                 cp -f "$TOOLKIT_ROOT/core/hooks/$_h" "$CLAUDE_DIR/hooks/$_h" 2>/dev/null && _REFRESHED=$((_REFRESHED + 1))
@@ -215,6 +215,16 @@ _PS_BACKEND=""
 if [[ -f "$CONFIG_FILE" ]] && command -v node &>/dev/null; then
     _PS_BACKEND=$(node -e "try{const c=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));console.log(c.PERSONAL_SYNC_BACKEND||'none')}catch{console.log('none')}" "$CONFIG_FILE" 2>/dev/null) || _PS_BACKEND="none"
 fi
+# Auto-detect Drive backend: if flag is unset but rclone+gdrive work, self-heal the config
+if [[ -z "$_PS_BACKEND" || "$_PS_BACKEND" == "none" ]]; then
+    if command -v rclone &>/dev/null && rclone lsd "gdrive:$DRIVE_ROOT/Backup/" &>/dev/null; then
+        _PS_BACKEND="drive"
+        # Self-heal: write the flag so this detection doesn't repeat every session
+        if [[ -f "$CONFIG_FILE" ]] && command -v node &>/dev/null; then
+            node -e "const fs=require('fs');try{const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));c.PERSONAL_SYNC_BACKEND='drive';fs.writeFileSync(process.argv[1],JSON.stringify(c,null,2)+'\n')}catch{}" "$CONFIG_FILE" 2>/dev/null
+        fi
+    fi
+fi
 if [[ -z "$_PS_BACKEND" || "$_PS_BACKEND" == "none" ]]; then
     echo "PERSONAL:NOT_CONFIGURED" >> "$WARNINGS_FILE"
 else
@@ -275,10 +285,11 @@ if [[ -n "$TOOLKIT_ROOT" && -f "$TOOLKIT_ROOT/VERSION" ]]; then
     LATEST=${LATEST_TAG#v}
 
     # Semver-aware comparison: only flag update if LATEST is strictly newer than CURRENT
+    # Uses node for portable semver compare (sort -V is GNU-only, fails on macOS stock)
     UPDATE_AVAILABLE=false
     if [[ -n "$LATEST" && "$CURRENT" != "$LATEST" ]]; then
-        _NEWER=$(printf '%s\n' "$CURRENT" "$LATEST" | sort -V | tail -1)
-        if [[ "$_NEWER" == "$LATEST" ]]; then
+        _IS_NEWER=$(node -e "const[a,b]=[process.argv[1],process.argv[2]].map(v=>v.split('.').map(Number));console.log((a[0]-b[0]||a[1]-b[1]||a[2]-b[2])<0?'yes':'no')" "$CURRENT" "$LATEST" 2>/dev/null) || _IS_NEWER="no"
+        if [[ "$_IS_NEWER" == "yes" ]]; then
             UPDATE_AVAILABLE=true
         fi
     fi

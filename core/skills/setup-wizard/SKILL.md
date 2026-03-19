@@ -113,7 +113,7 @@ if [[ -n "$OLD_HOME" && "$OLD_HOME" != "$NORM_HOME" ]]; then
     find ~/.claude -type f \( -name "*.md" -o -name "*.sh" -o -name "*.json" \) \
         -not -path "*/.git/*" -not -path "*/node_modules/*" \
         -exec grep -l "$OLD_HOME" {} \; | while read -r file; do
-        sed -i "s|$OLD_HOME|$NORM_HOME|g" "$file"
+        sed "s|$OLD_HOME|$NORM_HOME|g" "$file" > "$file.tmp" && mv "$file.tmp" "$file"
     done
     echo "  Updated path references: $OLD_HOME → $NORM_HOME"
 fi
@@ -122,7 +122,7 @@ if [[ -n "$OLD_SLUG" && "$OLD_SLUG" != "$CURRENT_SLUG" ]]; then
     find ~/.claude -type f \( -name "*.md" -o -name "*.sh" -o -name "*.json" \) \
         -not -path "*/.git/*" -not -path "*/node_modules/*" \
         -exec grep -l "$OLD_SLUG" {} \; | while read -r file; do
-        sed -i "s|$OLD_SLUG|$CURRENT_SLUG|g" "$file"
+        sed "s|$OLD_SLUG|$CURRENT_SLUG|g" "$file" > "$file.tmp" && mv "$file.tmp" "$file"
     done
     echo "  Updated slug references: $OLD_SLUG → $CURRENT_SLUG"
 fi

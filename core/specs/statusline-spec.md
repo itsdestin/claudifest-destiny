@@ -1,6 +1,6 @@
 # Statusline & Auto-Title — Spec
 
-**Version:** 1.6
+**Version:** 1.7
 **Last updated:** 2026-03-18
 **Feature location:** `core/hooks/statusline.sh`, `core/hooks/title-update.sh`, `core/hooks/usage-fetch.js`, `core/hooks/announcement-fetch.js`
 (Installed via symlinks to `~/.claude/hooks/` and `~/.claude/statusline.sh`)
@@ -75,10 +75,10 @@ A real-time information display system for Claude Code sessions. Four components
 
 ### Output Format (up to 5 lines)
 
-1. **Session name / sync status** (bold white / colored) + optional right-aligned **announcement** (bold yellow `★ message`) — announcement only shown if cache is present, not expired, and not stale (< 7 days)
-2. **Sync status** — colored green/yellow/red based on prefix (OK/WARN/ERR)
+1. **Session name** (bold white) + optional right-aligned **announcement** (bold yellow `★ message`) — if no `session_id` present, falls back to showing sync status on line 1 instead. When `session_id` exists but no session name or topic file, defaults to **"New Session"**.
+2. **Sync status + warnings** — sync status colored green/yellow/red based on prefix (OK/WARN/ERR), followed by optional severity-tagged warnings from `~/.claude/.sync-warnings` (written by `session-start.sh`). Red warnings use `DANGER:` prefix, yellow warnings use `WARN:` prefix. A dim `/sync for info` hint is appended when warnings are present. Warning types: `OFFLINE` (red), `PERSONAL:NOT_CONFIGURED` (red), `PERSONAL:STALE` (yellow), `SKILLS:*` (red), `PROJECTS:*` (red).
 3. **Model + Context** — dim model name, colored context remaining percentage
-4. **Rate limits** — 5h and 7d utilization with reset times, colored by severity (only if data available)
+4. **Rate limits** — 5h and 7d utilization with reset times, each independently colored by its own utilization (green <50%, yellow 50-79%, red ≥80%)
 5. **Toolkit version** — dim when current, yellow when update available
 
 ### File Locations
@@ -91,6 +91,7 @@ A real-time information display system for Claude Code sessions. Four components
 | `~/.claude/.usage-cache.json` | Cached API usage response | Overwritten every 5 min |
 | `~/.claude/.announcement-cache.json` | Written by announcement-fetch.js; read by statusline.sh on every render | Overwritten on each session start |
 | `~/.claude/.sync-status` | Written by git-sync.sh | Updated on each backup |
+| `~/.claude/.sync-warnings` | Sync health warnings written by session-start.sh | Reset each session start |
 | `~/.claude/toolkit-state/update-status.json` | Toolkit version check result | Written by session-start.sh |
 | `~/.claude/statusline.log` | Stderr from statusline Node.js calls | Appended; for debugging |
 
@@ -130,6 +131,7 @@ A real-time information display system for Claude Code sessions. Four components
 | 2026-03-15 | 1.1 | Fixed stale sync-to-drive.sh references to git-sync.sh | Revised | — | |
 | 2026-03-16 | 1.2 | Fixed 37% miss rate and Write tool errors: switched to Bash echo, added adaptive throttle | Update | — | |
 | 2026-03-17 | 1.3 | Session name display, rate limit display, printf %b, symlink resolution, macOS Keychain fallback, sha256sum cross-platform, process.argv for Node paths | Update | — | |
-| 2026-03-18 | 1.5 | Aligned spec with v1.1.1 security fix: all `/tmp/claude-topics/` references updated to `~/.claude/topics/`. Updated mandate, design decision rationale, data flow, and file locations table. Updated component count to four (added announcement-fetch.js). | Update | Destin | |
 | 2026-03-18 | 1.4 | Announcements subsystem: session-start background fetch + statusline right-aligned display | Update | — | |
+| 2026-03-18 | 1.5 | Aligned spec with v1.1.1 security fix: all `/tmp/claude-topics/` references updated to `~/.claude/topics/`. Updated mandate, design decision rationale, data flow, and file locations table. Updated component count to four (added announcement-fetch.js). | Update | Destin | |
 | 2026-03-18 | 1.6 | Fixed copy-based install breakage: replaced symlink-only sibling discovery with config-based `toolkit_root` lookup + symlink fallback. Added utility scripts to setup wizard install list. Added hook refresh step and post-update verification to `/update` command. | Update | Destin | |
+| 2026-03-19 | 1.7 | Documented sync warnings subsystem (`.sync-warnings` file, DANGER/WARN severity prefixes, warning types, `/sync for info` hint). Documented "New Session" default fallback behavior. Documented independent rate limit coloring. Added `.sync-warnings` to file locations table. Fixed changelog version ordering (1.4/1.5 were swapped). | Update | Destin | |
