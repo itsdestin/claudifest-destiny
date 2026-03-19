@@ -106,12 +106,12 @@ fi
 WARNINGS_FILE="$HOME/.claude/.sync-warnings"
 WARN_PARTS=""
 if [[ -f "$WARNINGS_FILE" ]]; then
-    _WARN_SEP="${DIM} | ${RESET}${YELLOW}"
+    _WARN_SEP="${RESET}${DIM} | ${RESET}${YELLOW}"
     while IFS= read -r _LINE; do
         case "$_LINE" in
             PERSONAL:NOT_CONFIGURED) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_WARN_SEP}}Personal Data Not Backed Up" ;;
             PERSONAL:STALE) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_WARN_SEP}}Personal Sync Stale (>24h)" ;;
-            SKILLS:*) _SKILLS="${_LINE#SKILLS:}"; WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_WARN_SEP}}Unbackedup Skills: ${_SKILLS}" ;;
+            SKILLS:*) _SKILLS="${_LINE#SKILLS:}"; WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_WARN_SEP}}Skills Not Backed Up: ${_SKILLS}" ;;
             PROJECTS:*) _PCOUNT="${_LINE#PROJECTS:}"; WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_WARN_SEP}}${_PCOUNT} Unsynced Project(s)" ;;
         esac
     done < "$WARNINGS_FILE"
