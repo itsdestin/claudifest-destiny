@@ -55,7 +55,7 @@ BASENAME=$(basename "$FILE_PATH")
 if ! git diff --cached --quiet 2>/dev/null; then
     # --no-gpg-sign approved for auto-commits (hook-generated, not user-authored)
     git commit -m "auto: $BASENAME" --no-gpg-sign 2>/dev/null || true
-    echo "OK: Changes Synced" > "$CLAUDE_DIR/.sync-status"
+    echo "OK: System Changes Synced" > "$CLAUDE_DIR/.sync-status"
 fi
 
 # --- Write registry update (for write-guard) ---
@@ -140,7 +140,7 @@ if [[ "$SHOULD_PUSH" == "true" ]]; then
                 _DR=$(node -e "try{const c=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(c.DRIVE_ROOT)console.log(c.DRIVE_ROOT)}catch{}" "$CLAUDE_DIR/toolkit-state/config.json" 2>/dev/null)
                 [[ -n "$_DR" ]] && _DRIVE_ROOT="$_DR"
             fi
-            TIMESTAMP_FOLDER=$(date +"(%m-%d-%Y @ %I%M%P)")
+            TIMESTAMP_FOLDER=$(date +"(%m-%d-%Y @ %I%M%p)")
             ARCHIVE_BASE="gdrive:$_DRIVE_ROOT/Backup/$TIMESTAMP_FOLDER"
             {
                 rclone copy "$CLAUDE_DIR/specs/" "$ARCHIVE_BASE/specs/" 2>/dev/null
@@ -155,7 +155,7 @@ if [[ "$SHOULD_PUSH" == "true" ]]; then
 
         # Update push marker and sync status
         date +%s > "$PUSH_MARKER"
-        echo "OK: Changes Synced" > "$CLAUDE_DIR/.sync-status"
+        echo "OK: System Changes Synced" > "$CLAUDE_DIR/.sync-status"
 
         # Restore stashed changes on success path
         if [[ "$STASHED" == "true" ]]; then

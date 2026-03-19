@@ -111,11 +111,11 @@ if [[ -f "$WARNINGS_FILE" ]]; then
     _SEP_W="${RESET}${DIM} | ${RESET}${YELLOW}"
     while IFS= read -r _LINE; do
         case "$_LINE" in
-            OFFLINE) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}No Internet Connection${RESET}" ;;
-            PERSONAL:NOT_CONFIGURED) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}No Sync Act. for Personal Data${RESET}" ;;
-            PERSONAL:STALE) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_W}}${YELLOW}No Recent Personal Sync (>24h)${RESET}" ;;
-            SKILLS:*) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}Unsynced Skills${RESET}" ;;
-            PROJECTS:*) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}Projects Excluded From Sync${RESET}" ;;
+            OFFLINE) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}DANGER: No Internet Connection${RESET}" ;;
+            PERSONAL:NOT_CONFIGURED) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}DANGER: No Sync Act. for Personal Data${RESET}" ;;
+            PERSONAL:STALE) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_W}}${YELLOW}WARN: No Recent Personal Sync (>24h)${RESET}" ;;
+            SKILLS:*) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}DANGER: Unsynced Skills${RESET}" ;;
+            PROJECTS:*) WARN_PARTS="${WARN_PARTS:+$WARN_PARTS${_SEP_D}}${RED}DANGER: Projects Excluded From Sync${RESET}" ;;
         esac
     done < "$WARNINGS_FILE"
 fi

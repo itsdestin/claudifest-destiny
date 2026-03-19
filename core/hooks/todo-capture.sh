@@ -29,7 +29,7 @@ response=$(curl -s -w "\n%{http_code}" -X POST \
     '{content: $content, project_id: $project}')" 2>/dev/null)
 
 http_code=$(echo "$response" | tail -1)
-body=$(echo "$response" | head -n -1)
+body=$(echo "$response" | sed '$d')
 
 if [[ "$http_code" =~ ^2 ]]; then
   # Success — tell Claude it's handled, resume previous work

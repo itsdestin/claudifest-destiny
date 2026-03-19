@@ -23,8 +23,9 @@ if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 CURRENT=$(cat VERSION 2>/dev/null | tr -d '[:space:]')
-NEWER=$(printf '%s\n' "$CURRENT" "$VERSION" | sort -V | tail -1)
-if [[ "$NEWER" != "$VERSION" || "$CURRENT" == "$VERSION" ]]; then
+# Portable semver comparison via node (sort -V is GNU-only, fails on macOS)
+_IS_NEWER=$(node -e "const[a,b]=[process.argv[1],process.argv[2]].map(v=>v.split('.').map(Number));console.log((a[0]-b[0]||a[1]-b[1]||a[2]-b[2])<0?'yes':'no')" "$CURRENT" "$VERSION" 2>/dev/null) || _IS_NEWER="no"
+if [[ "$_IS_NEWER" != "yes" ]]; then
     echo "Error: v$VERSION is not newer than current v$CURRENT"
     exit 1
 fi
@@ -46,12 +47,12 @@ echo "Releasing v$VERSION (currently v$CURRENT)"
 # 1. Bump VERSION
 echo "$VERSION" > VERSION
 
-# 2. Bump plugin.json
-sed -i "s/\"version\": \"$CURRENT\"/\"version\": \"$VERSION\"/" plugin.json
+# 2. Bump plugin.json (portable: temp file instead of sed -i which differs on macOS)
+sed "s/\"version\": \"$CURRENT\"/\"version\": \"$VERSION\"/" plugin.json > plugin.json.tmp && mv plugin.json.tmp plugin.json
 
-# 3. Add CHANGELOG header
+# 3. Add CHANGELOG header (portable: awk instead of GNU-only sed 0,/ADDR/ syntax)
 TODAY=$(date +%Y-%m-%d)
-sed -i "0,/^## /{s|^## |## v$VERSION ($TODAY)\n\n_(fill in release notes)_\n\n## |}" CHANGELOG.md
+awk -v ver="$VERSION" -v today="$TODAY" 'BEGIN{done=0} /^## / && !done {printf "## v%s (%s)\n\n_(fill in release notes)_\n\n", ver, today; done=1} {print}' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
 
 # 4. Commit, tag, push
 git add VERSION plugin.json CHANGELOG.md
