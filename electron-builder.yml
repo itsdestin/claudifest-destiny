@@ -1,0 +1,11 @@
+appId: com.destinclaude.desktop
+productName: Claude Desktop
+directories:
+  output: release
+  buildResources: build
+win:
+  target: nsis
+files:
+  - dist/**/*
+  - node_modules/**/*
+  - package.json
