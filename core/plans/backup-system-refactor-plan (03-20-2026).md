@@ -65,69 +65,43 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLKIT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Collect skills (directory names under each layer's skills/)
-SKILLS='[]'
-for LAYER_DIR in "$TOOLKIT_ROOT"/core/skills "$TOOLKIT_ROOT"/life/skills "$TOOLKIT_ROOT"/productivity/skills; do
-    [[ ! -d "$LAYER_DIR" ]] && continue
-    for SKILL_DIR in "$LAYER_DIR"/*/; do
-        [[ ! -d "$SKILL_DIR" ]] && continue
-        SKILL_NAME=$(basename "$SKILL_DIR")
-        SKILLS=$(node -e "const s=$SKILLS; s.push('$SKILL_NAME'); console.log(JSON.stringify(s))")
-    done
-done
-
-# Collect hooks (*.sh files under each layer's hooks/, excluding backends/)
-HOOKS='[]'
-for LAYER_DIR in "$TOOLKIT_ROOT"/core/hooks "$TOOLKIT_ROOT"/life/hooks "$TOOLKIT_ROOT"/productivity/hooks; do
-    [[ ! -d "$LAYER_DIR" ]] && continue
-    for HOOK_FILE in "$LAYER_DIR"/*.sh; do
-        [[ ! -f "$HOOK_FILE" ]] && continue
-        HOOK_NAME=$(basename "$HOOK_FILE")
-        HOOKS=$(node -e "const h=$HOOKS; h.push('$HOOK_NAME'); console.log(JSON.stringify(h))")
-    done
-done
-
-# Collect commands (*.md files under core/commands/)
-COMMANDS='[]'
-for CMD_FILE in "$TOOLKIT_ROOT"/core/commands/*.md; do
-    [[ ! -f "$CMD_FILE" ]] && continue
-    CMD_NAME=$(basename "$CMD_FILE")
-    COMMANDS=$(node -e "const c=$COMMANDS; c.push('$CMD_NAME'); console.log(JSON.stringify(c))")
-done
-
-# Collect utility scripts (*.js files under core/hooks/)
-UTILITY_SCRIPTS='[]'
-for UTIL_FILE in "$TOOLKIT_ROOT"/core/hooks/*.js; do
-    [[ ! -f "$UTIL_FILE" ]] && continue
-    UTIL_NAME=$(basename "$UTIL_FILE")
-    UTILITY_SCRIPTS=$(node -e "const u=$UTILITY_SCRIPTS; u.push('$UTIL_NAME'); console.log(JSON.stringify(u))")
-done
-
-# Collect specs (*.md files under core/specs/)
-SPECS='[]'
-for SPEC_FILE in "$TOOLKIT_ROOT"/core/specs/*.md; do
-    [[ ! -f "$SPEC_FILE" ]] && continue
-    SPEC_NAME=$(basename "$SPEC_FILE")
-    SPECS=$(node -e "const s=$SPECS; s.push('$SPEC_NAME'); console.log(JSON.stringify(s))")
-done
-
-# Read current version
+# Single node invocation to scan all directories and produce manifest (m3 fix)
 VERSION="unknown"
 [[ -f "$TOOLKIT_ROOT/VERSION" ]] && VERSION=$(cat "$TOOLKIT_ROOT/VERSION" | tr -d '[:space:]')
 
-# Write manifest
 node -e "
+const fs = require('fs');
+const path = require('path');
+const root = '$TOOLKIT_ROOT';
+
+function listDirs(dir) {
+    try {
+        return fs.readdirSync(dir).filter(f =>
+            fs.statSync(path.join(dir, f)).isDirectory());
+    } catch(e) { return []; }
+}
+function listFiles(dir, ext) {
+    try {
+        return fs.readdirSync(dir).filter(f =>
+            f.endsWith(ext) && fs.statSync(path.join(dir, f)).isFile());
+    } catch(e) { return []; }
+}
+
+const layers = ['core', 'life', 'productivity'];
+const skills = [];
+const hooks = [];
+for (const layer of layers) {
+    skills.push(...listDirs(path.join(root, layer, 'skills')));
+    hooks.push(...listFiles(path.join(root, layer, 'hooks'), '.sh'));
+}
+const commands = listFiles(path.join(root, 'core', 'commands'), '.md');
+const utility_scripts = listFiles(path.join(root, 'core', 'hooks'), '.js');
+const specs = listFiles(path.join(root, 'core', 'specs'), '.md');
+
 const manifest = {
-  version: '$VERSION',
-  generated_at: new Date().toISOString(),
-  owned_files: {
-    skills: $SKILLS,
-    hooks: $HOOKS,
-    commands: $COMMANDS,
-    utility_scripts: $UTILITY_SCRIPTS,
-    specs: $SPECS,
-    templates: ['claude-md-fragments/*']
-  }
+    version: '$VERSION',
+    generated_at: new Date().toISOString(),
+    owned_files: { skills, hooks, commands, utility_scripts, specs, templates: ['claude-md-fragments/*'] }
 };
 console.log(JSON.stringify(manifest, null, 2));
 " > "$TOOLKIT_ROOT/plugin-manifest.json"
@@ -619,8 +593,9 @@ read_config() {
     if [[ -f "$CONFIG_FILE" ]]; then
         local VAL
         VAL=$(node -e "
+            const fs = require('fs');
             try {
-                const c = require('$CONFIG_FILE');
+                const c = JSON.parse(fs.readFileSync('$CONFIG_FILE', 'utf8'));
                 // Support old key names (D10 migration)
                 const migrations = {
                     'primary_backend': ['PERSONAL_SYNC_BACKEND'],
@@ -721,7 +696,7 @@ classify_file() {
             local IS_TOOLKIT
             IS_TOOLKIT=$(node -e "
                 try {
-                    const m = require('$MANIFEST_FILE');
+                    const m = JSON.parse(require('fs').readFileSync('$MANIFEST_FILE', 'utf8'));
                     console.log(m.owned_files.skills.includes('$SKILL_NAME') ? 'yes' : 'no');
                 } catch(e) { console.log('no'); }
             " 2>/dev/null)
@@ -740,7 +715,7 @@ classify_file() {
             local IS_TOOLKIT
             IS_TOOLKIT=$(node -e "
                 try {
-                    const m = require('$MANIFEST_FILE');
+                    const m = JSON.parse(require('fs').readFileSync('$MANIFEST_FILE', 'utf8'));
                     const all = [...(m.owned_files.hooks||[]), ...(m.owned_files.utility_scripts||[])];
                     console.log(all.includes('$HOOK_NAME') ? 'yes' : 'no');
                 } catch(e) { console.log('no'); }
@@ -893,7 +868,7 @@ update_registry() {
     local FILE_PATH="$1"
     local CONTENT_HASH
     if [[ -f "$FILE_PATH" ]]; then
-        CONTENT_HASH=$(sha256sum "$FILE_PATH" 2>/dev/null | head -c 16 || echo "unknown")
+        CONTENT_HASH=$(sha256sum "$FILE_PATH" 2>/dev/null | head -c 16 || shasum -a 256 "$FILE_PATH" 2>/dev/null | head -c 16 || echo "unknown")
     else
         CONTENT_HASH="deleted"
     fi
@@ -906,7 +881,7 @@ update_registry() {
         try { reg = JSON.parse(fs.readFileSync(path, 'utf8')); } catch(e) {}
         reg[filePath] = {
             pid: $PPID,
-            timestamp: Date.now(),
+            timestamp: Math.floor(Date.now() / 1000),
             content_hash: '$CONTENT_HASH'
         };
         fs.writeFileSync(path, JSON.stringify(reg, null, 2));
@@ -999,12 +974,11 @@ if [[ "$MODE" == "push" ]]; then
 
     # Handle user extensions — check if user has approved this extension
     if [[ "$CLASSIFICATION" == "extension" ]]; then
-        local EXT_NAME
         EXT_NAME=$(basename "$(dirname "$FILE_PATH")")
-        local APPROVED
         APPROVED=$(node -e "
+            const fs = require('fs');
             try {
-                const c = require('$CONFIG_FILE');
+                const c = JSON.parse(fs.readFileSync('$CONFIG_FILE', 'utf8'));
                 const exts = c.user_extensions || {};
                 const skills = exts.skills || [];
                 const hooks = exts.hooks || [];
@@ -1021,18 +995,29 @@ if [[ "$MODE" == "push" ]]; then
     [[ -z "$CANONICAL" ]] && exit 0
 
     # Special handling: config.json → extract user-choice keys only
+    TEMP_CHOICES=""
     if [[ "$CANONICAL" == "config/user-choices.json" ]]; then
         TEMP_CHOICES=$(mktemp)
         extract_user_choices "$FILE_PATH" "$TEMP_CHOICES" || exit 0
         FILE_PATH="$TEMP_CHOICES"
-        trap "rm -f '$TEMP_CHOICES'" EXIT
     fi
+
+    # Cleanup function for combined trap (C4 fix: avoid overlapping traps)
+    _cleanup_push() {
+        release_lock 2>/dev/null
+        [[ -n "$TEMP_CHOICES" ]] && rm -f "$TEMP_CHOICES" 2>/dev/null
+    }
 
     # Primary backend push (debounced)
     if [[ "$PRIMARY_BACKEND" != "none" ]]; then
         if check_debounce "$PRIMARY_BACKEND"; then
             acquire_lock || exit 0
-            trap "release_lock" EXIT
+            trap "_cleanup_push" EXIT
+
+            # M7: Ensure backup-schema.json exists at backup root
+            if [[ -f "$SCHEMA_FILE" ]]; then
+                push_to_backend "$PRIMARY_BACKEND" "$SCHEMA_FILE" "backup-schema.json" 2>/dev/null || true
+            fi
 
             if push_to_backend "$PRIMARY_BACKEND" "$FILE_PATH" "$CANONICAL"; then
                 update_debounce "$PRIMARY_BACKEND"
@@ -1101,17 +1086,15 @@ if [[ "$MODE" == "pull" ]]; then
 
     # Check for schema migration
     if [[ -f "$TEMP_DIR/backup-schema.json" ]]; then
-        local BACKUP_VERSION
-        BACKUP_VERSION=$(node -e "try{console.log(require('$TEMP_DIR/backup-schema.json').schema_version)}catch(e){console.log(0)}" 2>/dev/null)
-        local CURRENT_VERSION
-        CURRENT_VERSION=$(node -e "try{console.log(require('$SCHEMA_FILE').schema_version)}catch(e){console.log(1)}" 2>/dev/null)
+        BACKUP_VERSION=$(node -e "const fs=require('fs');try{console.log(JSON.parse(fs.readFileSync('$TEMP_DIR/backup-schema.json','utf8')).schema_version)}catch(e){console.log(0)}" 2>/dev/null)
+        CURRENT_VERSION=$(node -e "const fs=require('fs');try{console.log(JSON.parse(fs.readFileSync('$SCHEMA_FILE','utf8')).schema_version)}catch(e){console.log(1)}" 2>/dev/null)
 
         if [[ "$BACKUP_VERSION" -lt "$CURRENT_VERSION" ]]; then
             log_msg "Migrating backup schema v$BACKUP_VERSION → v$CURRENT_VERSION"
-            local V=$BACKUP_VERSION
+            V=$BACKUP_VERSION
             while [[ $V -lt $CURRENT_VERSION ]]; do
-                local NEXT=$((V+1))
-                local MIGRATION="$TOOLKIT_ROOT/core/migrations/v${V}-to-v${NEXT}.sh"
+                NEXT=$((V+1))
+                MIGRATION="$TOOLKIT_ROOT/core/migrations/v${V}-to-v${NEXT}.sh"
                 if [[ -f "$MIGRATION" ]]; then
                     bash "$MIGRATION" "$TEMP_DIR" || {
                         log_msg "ERROR: Migration v${V}→v${NEXT} failed — aborting pull"
@@ -1361,6 +1344,11 @@ Old keys are removed after migration."
 Insert after the TOOLKIT_ROOT resolution block (after line ~33 in session-start.sh):
 
 ```bash
+# --- Log helper (M6: session-start doesn't have log_msg) ---
+_log_backup() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [session-start] $1" >> "$CLAUDE_DIR/backup.log"
+}
+
 # --- Toolkit integrity check (D4) ---
 verify_toolkit_integrity() {
     local TR="$1"
@@ -1390,7 +1378,7 @@ verify_toolkit_integrity() {
 
 # Run integrity check
 if [[ -n "$TOOLKIT_ROOT" ]] && ! verify_toolkit_integrity "$TOOLKIT_ROOT"; then
-    log_msg "Toolkit integrity check failed — attempting auto-recovery"
+    _log_backup "Toolkit integrity check failed — attempting auto-recovery"
 
     # Determine repo URL
     REPO_URL="https://github.com/destinclaude/destinclaude.git"
@@ -1405,13 +1393,13 @@ if [[ -n "$TOOLKIT_ROOT" ]] && ! verify_toolkit_integrity "$TOOLKIT_ROOT"; then
     fi
 
     if verify_toolkit_integrity "$TOOLKIT_ROOT"; then
-        log_msg "Toolkit auto-recovered successfully"
+        _log_backup "Toolkit auto-recovered successfully"
         # Re-register symlinks/hooks
         # (Uses the same logic as setup wizard Phase 5 Step 5)
-        echo '{"hookSpecificOutput":{"message":"Your DestinClaude toolkit was missing or damaged and has been automatically restored. All your personal data is untouched."}}' >&3 2>/dev/null || true
+        echo '{"hookSpecificOutput": "Your DestinClaude toolkit was missing or damaged and has been automatically restored. All your personal data is untouched."}' >&2
     else
-        log_msg "ERROR: Toolkit auto-recovery failed"
-        echo '{"hookSpecificOutput":{"message":"Warning: Your DestinClaude toolkit could not be restored automatically. Run /setup-wizard when you are back online."}}' >&3 2>/dev/null || true
+        _log_backup "ERROR: Toolkit auto-recovery failed"
+        echo '{"hookSpecificOutput": "Warning: Your DestinClaude toolkit could not be restored automatically. Run /setup-wizard when you are back online."}' >&2
     fi
 fi
 ```
@@ -1469,7 +1457,25 @@ _BACKEND=$(read_config "primary_backend" "")
 [[ -z "$_BACKEND" ]] && _BACKEND=$(read_config "PERSONAL_SYNC_BACKEND" "")
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Update stale-sync marker path (m2)**
+
+In the sync health check section, update the stale sync detection to read from the new per-backend marker instead of the old `.personal-sync-marker`:
+
+```bash
+# Replace:
+#   MARKER_FILE="$CLAUDE_DIR/toolkit-state/.personal-sync-marker"
+# With:
+MARKER_FILE="$CLAUDE_DIR/.push-marker-${_BACKEND}"
+```
+
+- [ ] **Step 4: Update auto-refresh hook list (m1)**
+
+In the hook auto-refresh section (~line 91 of session-start.sh), update the list of toolkit hooks to refresh:
+- Remove: `git-sync.sh`, `personal-sync.sh`
+- Add: `backup-engine.sh`
+- Add: copy `backends/` directory alongside engine
+
+- [ ] **Step 5: Commit**
 
 ```bash
 git add core/hooks/session-start.sh
@@ -1744,11 +1750,27 @@ at release time."
 - Delete: `core/hooks/personal-sync.sh`
 - Modify: `core/skills/setup-wizard/SKILL.md` (hook registration in Phase 5)
 
-- [ ] **Step 1: Delete old scripts**
+- [ ] **Step 1: Delete old scripts from plugin repo**
 
 ```bash
 git rm core/hooks/git-sync.sh
 git rm core/hooks/personal-sync.sh
+```
+
+- [ ] **Step 1b: Clean up standalone drive-archive.sh (m5)**
+
+`drive-archive.sh` lives at `~/.claude/hooks/drive-archive.sh` (outside the plugin repo). Add a note in the setup wizard or session-start to detect and remove this orphaned file on next run:
+
+```bash
+# In session-start.sh, after hook refresh:
+# Remove orphaned drive-archive.sh from old backup system
+[[ -f "$CLAUDE_DIR/hooks/drive-archive.sh" ]] && rm -f "$CLAUDE_DIR/hooks/drive-archive.sh"
+```
+
+Also remove the old `git-sync.sh` and `personal-sync.sh` copies/symlinks from `~/.claude/hooks/`:
+```bash
+[[ -f "$CLAUDE_DIR/hooks/git-sync.sh" ]] && rm -f "$CLAUDE_DIR/hooks/git-sync.sh"
+[[ -f "$CLAUDE_DIR/hooks/personal-sync.sh" ]] && rm -f "$CLAUDE_DIR/hooks/personal-sync.sh"
 ```
 
 - [ ] **Step 2: Update hook registration in setup wizard**
@@ -1795,6 +1817,8 @@ Removes git-sync.sh and personal-sync.sh. Updates setup wizard to
 register backup-engine.sh as the single PostToolUse hook. Installs
 backend drivers directory alongside engine."
 ```
+
+**D9 gap note:** The current `git-sync.sh` handles git commit/push for external projects (e.g., `~/claude-mobile/`). The new backup engine does NOT take over this responsibility per design decision D9. External projects continue using their own independent git workflows. If the user was relying on `git-sync.sh` to auto-commit external projects, they need to set up their own hooks or use git's own mechanisms. The setup wizard should mention this during migration, and the `/restore` command should offer to re-register external projects in the `backup_registry` for statusline tracking.
 
 ---
 
