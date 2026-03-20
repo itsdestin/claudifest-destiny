@@ -68,7 +68,7 @@ Check for and install updates to the DestinClaude toolkit.
 
    ```bash
    # Core hooks (canonical list — ONLY these get overwritten)
-   for hook in checklist-reminder.sh git-sync.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
+   for hook in checklist-reminder.sh backup-engine.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
      $LINK_CMD "$TOOLKIT_ROOT/core/hooks/$hook" ~/.claude/hooks/$hook
    done
 
@@ -164,7 +164,7 @@ Check for and install updates to the DestinClaude toolkit.
 
     ```bash
     STALE=""
-    for f in checklist-reminder.sh git-sync.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
+    for f in checklist-reminder.sh backup-engine.sh session-start.sh title-update.sh todo-capture.sh write-guard.sh; do
       if [ -f ~/.claude/hooks/$f ] && [ -f "$TOOLKIT_ROOT/core/hooks/$f" ]; then
         if ! diff -q ~/.claude/hooks/$f "$TOOLKIT_ROOT/core/hooks/$f" >/dev/null 2>&1; then
           STALE="$STALE $f"
@@ -203,7 +203,7 @@ Check for and install updates to the DestinClaude toolkit.
     |------|---------|---------|
     | `session-start.sh` | `SessionStart` | `startup` |
     | `write-guard.sh` | `PreToolUse` | `Write\|Edit` |
-    | `git-sync.sh` | `PostToolUse` | `Write\|Edit` |
+    | `backup-engine.sh` | `PostToolUse` | `Write\|Edit` |
     | `title-update.sh` | `PostToolUse` | `.*` |
     | `todo-capture.sh` | `UserPromptSubmit` | `.*` |
     | `checklist-reminder.sh` | `Stop` | `.*` |
@@ -232,7 +232,7 @@ Check for and install updates to the DestinClaude toolkit.
       session-start.sh .................. OK
       statusline.sh ..................... OK
       title-update.sh ................... OK
-      git-sync.sh ....................... OK
+      backup-engine.sh ....................... OK
       announcement-fetch.js ............. OK
       usage-fetch.js .................... OK
 
@@ -240,7 +240,7 @@ Check for and install updates to the DestinClaude toolkit.
       Session Naming .................... OK
         └─ title-update.sh registered at PostToolUse, topic dir exists
       Sync Status ....................... OK
-        └─ git-sync.sh registered at PostToolUse, .sync-status exists
+        └─ backup-engine.sh registered at PostToolUse, .sync-status exists
       Announcements ..................... OK
         └─ announcement-fetch.js reachable, cache file exists
       Version / Update Warning .......... OK
@@ -257,7 +257,7 @@ Check for and install updates to the DestinClaude toolkit.
 
     1. **Session Naming:** `title-update.sh` exists in `~/.claude/hooks/`, registered as `PostToolUse` in settings.json, `~/.claude/topics/` directory exists or can be created.
 
-    2. **Sync Status:** `git-sync.sh` exists in `~/.claude/hooks/`, registered as `PostToolUse` for `Write|Edit` in settings.json, `~/.claude/.sync-status` file exists (OK if missing — gets created on first write).
+    2. **Sync Status:** `backup-engine.sh` exists in `~/.claude/hooks/`, registered as `PostToolUse` for `Write|Edit` in settings.json, `~/.claude/.sync-status` file exists (OK if missing — gets created on first write).
 
     3. **Announcements:** `announcement-fetch.js` exists and is reachable (check `~/.claude/hooks/announcement-fetch.js` OR resolve via `toolkit_root` in config). Cache file `~/.claude/.announcement-cache.json` exists (OK if missing — gets created on first session start).
 

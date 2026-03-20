@@ -51,7 +51,7 @@ Then show hooks:
 
 ```
 HOOKS (run automatically — you don't need to do anything)
-    git-sync ............ Backs up your config after every file change
+    backup-engine ....... Backs up your personal data after every file change
     session-start ....... Syncs encyclopedia + checks inbox on startup
     write-guard ......... Prevents file conflicts between sessions
     statusline .......... Shows model, context %, sync status at bottom of screen
