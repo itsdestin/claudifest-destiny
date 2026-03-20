@@ -5,17 +5,19 @@ declare global {
   interface Window {
     claude: {
       session: {
-        create: (opts: { name: string; cwd: string; skipPermissions: boolean }) => Promise<any>;
+        create: (opts: { name: string; cwd: string; skipPermissions: boolean; cols?: number; rows?: number }) => Promise<any>;
         destroy: (sessionId: string) => Promise<boolean>;
         list: () => Promise<any[]>;
         sendInput: (sessionId: string, text: string) => void;
+        resize: (sessionId: string, cols: number, rows: number) => void;
       };
       on: {
-        sessionCreated: (cb: (info: any) => void) => void;
-        sessionDestroyed: (cb: (id: string) => void) => void;
-        ptyOutput: (cb: (sessionId: string, data: string) => void) => void;
-        hookEvent: (cb: (event: any) => void) => void;
+        sessionCreated: (cb: (info: any) => void) => (...args: any[]) => void;
+        sessionDestroyed: (cb: (id: string) => void) => (...args: any[]) => void;
+        ptyOutput: (cb: (sessionId: string, data: string) => void) => (...args: any[]) => void;
+        hookEvent: (cb: (event: any) => void) => (...args: any[]) => void;
       };
+      off: (channel: string, handler: (...args: any[]) => void) => void;
       removeAllListeners: (channel: string) => void;
     };
   }
@@ -31,14 +33,14 @@ export function usePtyOutput(
   useEffect(() => {
     if (!sessionId) return;
 
-    window.claude.on.ptyOutput((sid, data) => {
+    const handler = window.claude.on.ptyOutput((sid, data) => {
       if (sid === sessionId) {
         cbRef.current(data);
       }
     });
 
     return () => {
-      window.claude.removeAllListeners('pty:output');
+      window.claude.off('pty:output', handler);
     };
   }, [sessionId]);
 }

@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* xterm.js needs explicit height to fill its container */
+.xterm {
+  height: 100%;
+}
+
+.xterm-viewport {
+  height: 100% !important;
+}
+
+.xterm-screen {
+  height: 100%;
+}

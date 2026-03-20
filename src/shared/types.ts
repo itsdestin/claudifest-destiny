@@ -21,6 +21,7 @@ export const IPC = {
   SESSION_CREATE: 'session:create',
   SESSION_DESTROY: 'session:destroy',
   SESSION_INPUT: 'session:input',
+  SESSION_RESIZE: 'session:resize',
   SESSION_LIST: 'session:list',
   // Main -> Renderer
   SESSION_CREATED: 'session:created',

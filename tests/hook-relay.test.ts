@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { HookRelay } from '../src/main/hook-relay';
+import { randomUUID } from 'crypto';
 
 describe('HookRelay', () => {
   let relay: HookRelay;
 
   beforeEach(() => {
-    relay = new HookRelay();
+    // Use a unique pipe name per test to avoid EADDRINUSE
+    const pipeName = `\\\\.\\pipe\\claude-desktop-hooks-test-${randomUUID()}`;
+    relay = new HookRelay(pipeName);
   });
 
   afterEach(() => {
@@ -17,13 +20,10 @@ describe('HookRelay', () => {
     expect(relay.isRunning()).toBe(true);
   });
 
-  it('parses incoming hook JSON and emits events', async () => {
-    await relay.start();
-
+  it('parses incoming hook JSON and emits events via simulateEvent', async () => {
     const events: any[] = [];
     relay.on('hook-event', (event) => events.push(event));
 
-    // Simulate a hook event arriving on the pipe
     const hookPayload = JSON.stringify({
       hook_event_name: 'PostToolUse',
       session_id: 'test-session',

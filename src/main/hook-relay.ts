@@ -2,11 +2,17 @@ import net from 'net';
 import { EventEmitter } from 'events';
 import { HookEvent } from '../shared/types';
 
-const PIPE_NAME = '\\\\.\\pipe\\claude-desktop-hooks';
+const DEFAULT_PIPE_NAME = '\\\\.\\pipe\\claude-desktop-hooks';
 
 export class HookRelay extends EventEmitter {
   private server: net.Server | null = null;
   private running = false;
+  private pipeName: string;
+
+  constructor(pipeName?: string) {
+    super();
+    this.pipeName = pipeName || DEFAULT_PIPE_NAME;
+  }
 
   private parseHookPayload(data: string): HookEvent {
     const parsed = JSON.parse(data);
@@ -44,7 +50,7 @@ export class HookRelay extends EventEmitter {
         });
       });
 
-      this.server.listen(PIPE_NAME, () => {
+      this.server.listen(this.pipeName, () => {
         this.running = true;
         resolve();
       });

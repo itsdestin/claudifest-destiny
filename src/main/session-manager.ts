@@ -8,6 +8,8 @@ export interface CreateSessionOpts {
   name: string;
   cwd: string;
   skipPermissions: boolean;
+  cols?: number;
+  rows?: number;
 }
 
 interface ManagedSession {
@@ -76,8 +78,8 @@ export class SessionManager extends EventEmitter {
       command: 'claude',
       args,
       cwd: opts.cwd,
-      cols: 120,
-      rows: 30,
+      cols: opts.cols || 80,
+      rows: opts.rows || 24,
     });
 
     return info;

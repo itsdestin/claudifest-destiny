@@ -7,25 +7,24 @@ export default function App() {
   const sessionCounter = useRef(0);
 
   useEffect(() => {
-    window.claude.on.sessionCreated((info) => {
+    const createdHandler = window.claude.on.sessionCreated((info) => {
       setSessions((prev) => [...prev, info]);
       setSessionId(info.id);
     });
 
-    window.claude.on.sessionDestroyed((id) => {
+    const destroyedHandler = window.claude.on.sessionDestroyed((id) => {
       setSessions((prev) => prev.filter((s) => s.id !== id));
       setSessionId((curr) => (curr === id ? null : curr));
     });
 
-    // Log hook events to console for now (Phase 2 will render them)
-    window.claude.on.hookEvent((event) => {
+    const hookHandler = window.claude.on.hookEvent((event) => {
       console.log('[Hook Event]', event.type, event);
     });
 
     return () => {
-      window.claude.removeAllListeners('session:created');
-      window.claude.removeAllListeners('session:destroyed');
-      window.claude.removeAllListeners('hook:event');
+      window.claude.off('session:created', createdHandler);
+      window.claude.off('session:destroyed', destroyedHandler);
+      window.claude.off('hook:event', hookHandler);
     };
   }, []);
 
@@ -39,19 +38,19 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen bg-gray-950 text-gray-200 flex">
+    <div style={{ display: 'flex', width: '100vw', height: '100vh', background: '#030712', color: '#e5e7eb' }}>
       {/* Sidebar */}
-      <div className="w-14 bg-gray-900 flex flex-col items-center py-3 gap-3 border-r border-gray-800">
+      <div style={{ width: 56, background: '#111827', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 0', gap: 12, borderRight: '1px solid #1f2937', flexShrink: 0 }}>
         {sessions.map((s) => (
           <button
             key={s.id}
             onClick={() => setSessionId(s.id)}
-            className={
-              'w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ' +
-              (sessionId === s.id
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700')
-            }
+            style={{
+              width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 'bold', border: 'none', cursor: 'pointer',
+              background: sessionId === s.id ? '#4f46e5' : '#1f2937',
+              color: sessionId === s.id ? '#fff' : '#9ca3af',
+            }}
             title={s.name}
           >
             {s.name.charAt(0).toUpperCase()}
@@ -59,7 +58,10 @@ export default function App() {
         ))}
         <button
           onClick={createSession}
-          className="w-10 h-10 rounded-lg bg-gray-800 text-gray-400 hover:bg-gray-700 flex items-center justify-center text-xl"
+          style={{
+            width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20, border: 'none', cursor: 'pointer', background: '#1f2937', color: '#9ca3af',
+          }}
           title="New Session"
         >
           +
@@ -67,16 +69,24 @@ export default function App() {
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col p-2">
-        {sessionId ? (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {sessions.length > 0 && sessionId ? (
           <>
-            <div className="h-10 flex items-center px-3 text-sm text-gray-400 border-b border-gray-800 mb-2">
+            <div style={{ height: 40, display: 'flex', alignItems: 'center', padding: '0 12px', fontSize: 14, color: '#9ca3af', borderBottom: '1px solid #1f2937', flexShrink: 0 }}>
               {sessions.find((s) => s.id === sessionId)?.name || 'Session'}
             </div>
-            <TerminalView key={sessionId} sessionId={sessionId} />
+            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+              {sessions.map((s) => (
+                <TerminalView
+                  key={s.id}
+                  sessionId={s.id}
+                  visible={s.id === sessionId}
+                />
+              ))}
+            </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500">
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
             Click + to start a new Claude session
           </div>
         )}

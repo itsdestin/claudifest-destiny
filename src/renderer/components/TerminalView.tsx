@@ -1,14 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
+import { Unicode11Addon } from '@xterm/addon-unicode11';
+import { WebglAddon } from '@xterm/addon-webgl';
 import '@xterm/xterm/css/xterm.css';
 import { usePtyOutput } from '../hooks/useIpc';
 
 interface Props {
   sessionId: string;
+  visible: boolean;
 }
 
-export default function TerminalView({ sessionId }: Props) {
+export default function TerminalView({ sessionId, visible }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -17,6 +20,7 @@ export default function TerminalView({ sessionId }: Props) {
     if (!containerRef.current) return;
 
     const terminal = new Terminal({
+      allowProposedApi: true,
       cursorBlink: true,
       fontSize: 14,
       fontFamily: "'Cascadia Code', 'Fira Code', monospace",
@@ -29,12 +33,40 @@ export default function TerminalView({ sessionId }: Props) {
     });
 
     const fitAddon = new FitAddon();
+    const unicode11 = new Unicode11Addon();
     terminal.loadAddon(fitAddon);
+    terminal.loadAddon(unicode11);
+    terminal.unicode.activeVersion = '11';
     terminal.open(containerRef.current);
-    fitAddon.fit();
+
+    // WebGL renderer must be loaded after open() — eliminates grid-line
+    // artifacts from the DOM renderer's sub-pixel rounding issues
+    try {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => webgl.dispose());
+      terminal.loadAddon(webgl);
+    } catch {
+      // Falls back to DOM renderer if WebGL unavailable
+    }
 
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
+
+    // Fit terminal to container and sync dimensions to PTY
+    const fitAndSync = () => {
+      try {
+        fitAddon.fit();
+        const dims = fitAddon.proposeDimensions();
+        if (dims && dims.cols && dims.rows) {
+          window.claude.session.resize(sessionId, dims.cols, dims.rows);
+        }
+      } catch {
+        // Ignore fit errors during teardown
+      }
+    };
+
+    // Initial fit with delay to ensure container is laid out
+    const timer = setTimeout(fitAndSync, 100);
 
     // Send user keyboard input to PTY
     terminal.onData((data) => {
@@ -42,14 +74,37 @@ export default function TerminalView({ sessionId }: Props) {
     });
 
     // Resize handler
-    const onResize = () => fitAddon.fit();
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', fitAndSync);
+
+    // Observe container size changes
+    const resizeObserver = new ResizeObserver(() => fitAndSync());
+    resizeObserver.observe(containerRef.current);
 
     return () => {
-      window.removeEventListener('resize', onResize);
+      clearTimeout(timer);
+      window.removeEventListener('resize', fitAndSync);
+      resizeObserver.disconnect();
       terminal.dispose();
     };
-  }, []);
+  }, [sessionId]);
+
+  // Re-fit when visibility changes
+  useEffect(() => {
+    if (visible && fitAddonRef.current) {
+      const timer = setTimeout(() => {
+        try {
+          fitAddonRef.current!.fit();
+          const dims = fitAddonRef.current!.proposeDimensions();
+          if (dims && dims.cols && dims.rows) {
+            window.claude.session.resize(sessionId, dims.cols, dims.rows);
+          }
+        } catch {
+          // Ignore
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, sessionId]);
 
   // Write PTY output to terminal
   usePtyOutput(sessionId, (data) => {
@@ -59,7 +114,17 @@ export default function TerminalView({ sessionId }: Props) {
   return (
     <div
       ref={containerRef}
-      className="flex-1 bg-[#0d1117] rounded-lg overflow-hidden"
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: '#0d1117',
+        borderRadius: 8,
+        overflow: 'hidden',
+        display: visible ? 'block' : 'none',
+      }}
     />
   );
 }

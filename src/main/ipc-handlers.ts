@@ -37,6 +37,11 @@ export function registerIpcHandlers(
     sessionManager.sendInput(sessionId, text);
   });
 
+  // PTY resize (fire-and-forget)
+  ipcMain.on(IPC.SESSION_RESIZE, (_event, sessionId: string, cols: number, rows: number) => {
+    sessionManager.resizeSession(sessionId, cols, rows);
+  });
+
   // Forward PTY output to renderer
   sessionManager.on('pty-output', (sessionId: string, data: string) => {
     send(IPC.PTY_OUTPUT, sessionId, data);
