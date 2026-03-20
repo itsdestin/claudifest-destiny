@@ -186,7 +186,7 @@ try {
     const d = new Date();
     const today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     if (cache.expires && cache.expires < today) process.exit(0);
-    process.stdout.write('\x1b[2m| \x1b[0m\x1b[1;33m\u2605 ' + cache.message + '\x1b[0m');
+    process.stdout.write('\x1b[2m| \x1b[0m\x1b[1;93m\u2605 ' + cache.message + '\x1b[0m');
 } catch (_) {}
 " "$CACHE_FILE" 2>/dev/null) || ANNOUNCEMENT_FRAGMENT=""
 fi
