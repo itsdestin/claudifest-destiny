@@ -29,6 +29,10 @@ export interface GameState {
   winLine: [number, number][] | null;
   chatMessages: ChatMessage[];
   panelOpen: boolean;
+  /** Incoming challenge from another player */
+  challengeFrom: string | null;
+  /** Outgoing challenge was declined */
+  challengeDeclinedBy: string | null;
 }
 
 export type GameAction =
@@ -44,7 +48,10 @@ export type GameAction =
   | { type: 'OPPONENT_DISCONNECTED' }
   | { type: 'TOGGLE_PANEL' }
   | { type: 'RETURN_TO_LOBBY' }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'CHALLENGE_RECEIVED'; from: string }
+  | { type: 'CHALLENGE_DECLINED'; by: string }
+  | { type: 'CLEAR_CHALLENGE' };
 
 export function createInitialGameState(): GameState {
   return {
@@ -64,5 +71,7 @@ export function createInitialGameState(): GameState {
     winLine: null,
     chatMessages: [],
     panelOpen: false,
+    challengeFrom: null,
+    challengeDeclinedBy: null,
   };
 }

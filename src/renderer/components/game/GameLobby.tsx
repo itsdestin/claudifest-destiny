@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGameState, useGameDispatch } from '../../state/game-context';
+import BrailleSpinner from '../BrailleSpinner';
 import { LEADERBOARD_URL } from '../../game/config';
 
 interface LeaderboardEntry {
@@ -18,6 +19,8 @@ interface Props {
     sendChat: (text: string) => void;
     requestRematch: () => void;
     leaveGame: () => void;
+    challengePlayer: (target: string) => void;
+    respondToChallenge: (from: string, accept: boolean) => void;
   };
 }
 
@@ -106,6 +109,7 @@ function SetupScreen({ connection }: Props) {
 
 function LobbyScreen({ connection }: Props) {
   const state = useGameState();
+  const dispatch = useGameDispatch();
   const [joinCode, setJoinCode] = useState('');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
@@ -130,6 +134,39 @@ function LobbyScreen({ connection }: Props) {
           <span className="text-xs text-gray-500">{myStats.wins}W / {myStats.losses}L</span>
         )}
       </div>
+
+      {/* Incoming challenge */}
+      {state.challengeFrom && (
+        <div className="px-3 py-2 border-b border-gray-800 bg-indigo-950/50">
+          <p className="text-sm text-gray-200 mb-2">
+            <span className="font-medium text-[#66AAFF]">{state.challengeFrom}</span> wants to play!
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { connection.respondToChallenge(state.challengeFrom!, true); dispatch({ type: 'CLEAR_CHALLENGE' }); }}
+              className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs font-medium rounded-lg py-1.5 transition-colors"
+            >
+              Accept
+            </button>
+            <button
+              onClick={() => { connection.respondToChallenge(state.challengeFrom!, false); dispatch({ type: 'CLEAR_CHALLENGE' }); }}
+              className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-medium rounded-lg py-1.5 transition-colors"
+            >
+              Decline
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Challenge declined notification */}
+      {state.challengeDeclinedBy && (
+        <div className="px-3 py-2 border-b border-gray-800">
+          <p className="text-xs text-gray-400">
+            <span className="text-gray-300">{state.challengeDeclinedBy}</span> declined your challenge.
+            <button onClick={() => dispatch({ type: 'CLEAR_CHALLENGE' })} className="text-[#66AAFF] ml-1">Dismiss</button>
+          </p>
+        </div>
+      )}
 
       {/* Create / Join */}
       <div className="px-3 py-3 border-b border-gray-800 flex flex-col gap-2">
@@ -167,12 +204,19 @@ function LobbyScreen({ connection }: Props) {
           <p className="text-xs text-gray-600 italic">No one else online yet</p>
         ) : (
           <ul className="flex flex-col gap-1">
-            {state.onlineUsers.map((user) => (
+            {state.onlineUsers.filter((u) => u.username !== state.username).map((user) => (
               <li key={user.username} className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full shrink-0 ${user.status === 'idle' ? 'bg-green-400' : 'bg-yellow-400'}`} />
-                <span className="text-sm text-gray-300 truncate">{user.username}</span>
-                {user.status === 'in-game' && (
+                <span className="text-sm text-gray-300 truncate flex-1">{user.username}</span>
+                {user.status === 'in-game' ? (
                   <span className="text-[10px] text-yellow-500 ml-auto">in game</span>
+                ) : (
+                  <button
+                    onClick={() => connection.challengePlayer(user.username)}
+                    className="text-[10px] text-[#66AAFF] hover:text-[#88CCFF] ml-auto transition-colors"
+                  >
+                    Challenge
+                  </button>
                 )}
               </li>
             ))}
@@ -239,8 +283,7 @@ function WaitingScreen({ connection }: Props) {
       </div>
 
       <div className="flex flex-col items-center gap-2">
-        {/* Spinner */}
-        <div className="w-8 h-8 rounded-full border-2 border-gray-300 border-t-transparent animate-spin" />
+        <BrailleSpinner size="lg" />
         <p className="text-sm text-gray-400">Waiting for opponent...</p>
       </div>
 

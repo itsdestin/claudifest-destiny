@@ -62,6 +62,12 @@ export function useGameConnection() {
         case 'opponent:disconnected':
           dispatch({ type: 'OPPONENT_DISCONNECTED' });
           break;
+        case 'challenge:received':
+          dispatch({ type: 'CHALLENGE_RECEIVED', from: msg.from });
+          break;
+        case 'challenge:declined':
+          dispatch({ type: 'CHALLENGE_DECLINED', by: msg.by });
+          break;
       }
     };
 
@@ -125,6 +131,8 @@ export function useGameConnection() {
   const sendChat = useCallback((text: string) => sendMessage({ type: 'chat', text }), [sendMessage]);
   const requestRematch = useCallback(() => sendMessage({ type: 'rematch' }), [sendMessage]);
   const leaveGame = useCallback(() => sendMessage({ type: 'leave' }), [sendMessage]);
+  const challengePlayer = useCallback((target: string) => sendMessage({ type: 'challenge', target }), [sendMessage]);
+  const respondToChallenge = useCallback((from: string, accept: boolean) => sendMessage({ type: 'challenge:respond', from, accept }), [sendMessage]);
 
-  return { register, authenticate, createGame, joinGame, makeMove, sendChat, requestRematch, leaveGame };
+  return { register, authenticate, createGame, joinGame, makeMove, sendChat, requestRematch, leaveGame, challengePlayer, respondToChallenge };
 }

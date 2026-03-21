@@ -13,6 +13,9 @@ interface Props {
     makeMove: (column: number) => void;
     sendChat: (text: string) => void;
     requestRematch: () => void;
+    leaveGame: () => void;
+    challengePlayer: (target: string) => void;
+    respondToChallenge: (from: string, accept: boolean) => void;
   };
 }
 

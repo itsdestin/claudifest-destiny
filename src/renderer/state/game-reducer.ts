@@ -86,6 +86,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastMove: null,
       };
 
+    case 'CHALLENGE_RECEIVED':
+      return { ...state, challengeFrom: action.from, panelOpen: true };
+
+    case 'CHALLENGE_DECLINED':
+      return { ...state, challengeDeclinedBy: action.by };
+
+    case 'CLEAR_CHALLENGE':
+      return { ...state, challengeFrom: null, challengeDeclinedBy: null };
+
     case 'RESET':
       return createInitialGameState();
 

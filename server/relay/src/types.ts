@@ -5,7 +5,9 @@ export type ClientMessage =
   | { type: 'move'; column: number }
   | { type: 'chat'; text: string }
   | { type: 'rematch' }
-  | { type: 'leave' };
+  | { type: 'leave' }
+  | { type: 'challenge'; target: string }
+  | { type: 'challenge:respond'; from: string; accept: boolean };
 
 export type ServerMessage =
   | { type: 'authenticated'; success: boolean }
@@ -16,7 +18,9 @@ export type ServerMessage =
   | { type: 'game:over'; winner: 'red' | 'yellow' | 'draw'; line?: [number, number][] }
   | { type: 'chat:message'; from: string; text: string }
   | { type: 'error'; message: string }
-  | { type: 'opponent:disconnected' };
+  | { type: 'opponent:disconnected' }
+  | { type: 'challenge:received'; from: string }
+  | { type: 'challenge:declined'; by: string };
 
 export interface ConnectedUser {
   username: string;

@@ -310,6 +310,79 @@ function handleLeave(ws: WebSocket): void {
   broadcastPresence();
 }
 
+// Pending challenges: challenger username -> room code
+const pendingChallenges = new Map<string, string>();
+
+function handleChallenge(ws: WebSocket, msg: { type: 'challenge'; target: string }): void {
+  const username = socketUser.get(ws);
+  if (!username) {
+    send(ws, { type: 'error', message: 'Not authenticated' });
+    return;
+  }
+
+  const target = msg.target;
+  if (target === username) {
+    send(ws, { type: 'error', message: 'Cannot challenge yourself' });
+    return;
+  }
+  if (!presence.isOnline(target)) {
+    send(ws, { type: 'error', message: 'Player is not online' });
+    return;
+  }
+
+  // Create a room for the challenge
+  const code = rooms.createRoom(username);
+  pendingChallenges.set(username, code);
+
+  // Send challenge to target
+  sendToUser(target, { type: 'challenge:received', from: username });
+}
+
+function handleChallengeResponse(ws: WebSocket, msg: { type: 'challenge:respond'; from: string; accept: boolean }): void {
+  const username = socketUser.get(ws);
+  if (!username) {
+    send(ws, { type: 'error', message: 'Not authenticated' });
+    return;
+  }
+
+  const code = pendingChallenges.get(msg.from);
+  pendingChallenges.delete(msg.from);
+
+  if (!code) {
+    send(ws, { type: 'error', message: 'No pending challenge from this player' });
+    return;
+  }
+
+  const room = rooms.getRoom(code);
+  if (!room) {
+    send(ws, { type: 'error', message: 'Challenge room expired' });
+    return;
+  }
+
+  if (!msg.accept) {
+    // Declined — destroy room, notify challenger
+    rooms.destroyRoom(code);
+    sendToUser(msg.from, { type: 'challenge:declined', by: username });
+    return;
+  }
+
+  // Accepted — join the room and start the game
+  const result = joinRoom(room, username);
+  if (!result.success) {
+    send(ws, { type: 'error', message: result.error ?? 'Cannot join room' });
+    rooms.destroyRoom(code);
+    return;
+  }
+
+  rooms.addUserToRoom(code, username);
+  presence.setStatus(username, 'in-game');
+  presence.setStatus(msg.from, 'in-game');
+
+  sendToUser(msg.from, { type: 'game:start', board: room.board, you: 'red', opponent: username });
+  send(ws, { type: 'game:start', board: room.board, you: 'yellow', opponent: msg.from });
+  broadcastPresence();
+}
+
 // ─── Disconnect logic ────────────────────────────────────────────────────────
 
 function handleDisconnect(ws: WebSocket): void {
@@ -384,6 +457,12 @@ wss.on('connection', (ws: WebSocket) => {
         break;
       case 'leave':
         handleLeave(ws);
+        break;
+      case 'challenge':
+        handleChallenge(ws, msg);
+        break;
+      case 'challenge:respond':
+        handleChallengeResponse(ws, msg);
         break;
       default:
         send(ws, { type: 'error', message: 'Unknown message type' });
