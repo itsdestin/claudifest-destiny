@@ -1,19 +1,26 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeImage } from 'electron';
 import path from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { SessionManager } from './session-manager';
 import { HookRelay } from './hook-relay';
 import { registerIpcHandlers } from './ipc-handlers';
 import { IPC } from '../shared/types';
-import { startGameServers, stopGameServers } from './game-servers';
+
+const execFileAsync = promisify(execFile);
 
 let mainWindow: BrowserWindow | null = null;
 const sessionManager = new SessionManager();
 const hookRelay = new HookRelay();
 
 function createWindow() {
+  const iconPath = path.join(__dirname, '../../assets/icon.png');
+  const icon = nativeImage.createFromPath(iconPath);
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -27,7 +34,7 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  registerIpcHandlers(ipcMain, sessionManager, mainWindow);
+  registerIpcHandlers(ipcMain, sessionManager, mainWindow, hookRelay);
 
   // Forward hook events to renderer
   hookRelay.on('hook-event', (event) => {
@@ -52,15 +59,20 @@ app.whenReady().then(async () => {
     console.error('Failed to start hook relay:', e);
   }
 
-  // Start Connect 4 game servers (leaderboard + relay)
-  const projectRoot = path.join(__dirname, '..', '..');
-  startGameServers(projectRoot);
+  ipcMain.handle('github:auth', async () => {
+    try {
+      const { stdout: token } = await execFileAsync('gh', ['auth', 'token']);
+      const { stdout: username } = await execFileAsync('gh', ['api', 'user', '--jq', '.login']);
+      return { token: token.trim(), username: username.trim() };
+    } catch {
+      return null;
+    }
+  });
 
   createWindow();
 });
 
 app.on('window-all-closed', () => {
-  stopGameServers();
   sessionManager.destroyAll();
   hookRelay.stop();
   app.quit();

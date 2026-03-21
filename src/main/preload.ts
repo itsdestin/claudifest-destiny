@@ -12,6 +12,10 @@ const IPC = {
   SESSION_DESTROYED: 'session:destroyed',
   PTY_OUTPUT: 'pty:output',
   HOOK_EVENT: 'hook:event',
+  SESSION_RENAMED: 'session:renamed',
+  DIALOG_OPEN_FILE: 'dialog:open-file',
+  DIALOG_OPEN_FOLDER: 'dialog:open-folder',
+  CLIPBOARD_SAVE_IMAGE: 'clipboard:save-image',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -47,9 +51,23 @@ contextBridge.exposeInMainWorld('claude', {
       ipcRenderer.on(IPC.HOOK_EVENT, handler);
       return handler;
     },
+    sessionRenamed: (cb: (sessionId: string, name: string) => void) => {
+      const handler = (_e: IpcRendererEvent, sid: string, name: string) => cb(sid, name);
+      ipcRenderer.on(IPC.SESSION_RENAMED, handler);
+      return handler;
+    },
+  },
+  dialog: {
+    openFile: (): Promise<string[]> =>
+      ipcRenderer.invoke(IPC.DIALOG_OPEN_FILE),
+    openFolder: (): Promise<string | null> =>
+      ipcRenderer.invoke(IPC.DIALOG_OPEN_FOLDER),
+    saveClipboardImage: (): Promise<string | null> =>
+      ipcRenderer.invoke(IPC.CLIPBOARD_SAVE_IMAGE),
   },
   off: (channel: string, handler: (...args: any[]) => void) =>
     ipcRenderer.removeListener(channel, handler),
   removeAllListeners: (channel: string) =>
     ipcRenderer.removeAllListeners(channel),
+  getGitHubAuth: () => ipcRenderer.invoke('github:auth'),
 });
