@@ -63,11 +63,18 @@ export function recordResult(
   loser: string,
   isDraw: boolean,
 ): void {
-  if (isDraw) {
-    db.prepare('UPDATE players SET draws = draws + 1 WHERE username = ?').run(winner);
-    db.prepare('UPDATE players SET draws = draws + 1 WHERE username = ?').run(loser);
-  } else {
-    db.prepare('UPDATE players SET wins = wins + 1 WHERE username = ?').run(winner);
-    db.prepare('UPDATE players SET losses = losses + 1 WHERE username = ?').run(loser);
-  }
+  const run = db.transaction(() => {
+    if (isDraw) {
+      const r1 = db.prepare('UPDATE players SET draws = draws + 1 WHERE username = ?').run(winner);
+      const r2 = db.prepare('UPDATE players SET draws = draws + 1 WHERE username = ?').run(loser);
+      if (r1.changes === 0) throw new Error(`Player not found: ${winner}`);
+      if (r2.changes === 0) throw new Error(`Player not found: ${loser}`);
+    } else {
+      const r1 = db.prepare('UPDATE players SET wins = wins + 1 WHERE username = ?').run(winner);
+      const r2 = db.prepare('UPDATE players SET losses = losses + 1 WHERE username = ?').run(loser);
+      if (r1.changes === 0) throw new Error(`Player not found: ${winner}`);
+      if (r2.changes === 0) throw new Error(`Player not found: ${loser}`);
+    }
+  });
+  run();
 }

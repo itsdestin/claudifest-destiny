@@ -65,6 +65,10 @@ describe('recordResult', () => {
     expect(getPlayer(db, 'alice')!.draws).toBe(1);
     expect(getPlayer(db, 'bob')!.draws).toBe(1);
   });
+
+  it('throws when a player does not exist', () => {
+    expect(() => recordResult(db, 'ghost', 'nobody', false)).toThrow();
+  });
 });
 
 describe('getLeaderboard', () => {
