@@ -4,7 +4,8 @@ export type ClientMessage =
   | { type: 'join'; code: string }
   | { type: 'move'; column: number }
   | { type: 'chat'; text: string }
-  | { type: 'rematch' };
+  | { type: 'rematch' }
+  | { type: 'leave' };
 
 export type ServerMessage =
   | { type: 'authenticated'; success: boolean }

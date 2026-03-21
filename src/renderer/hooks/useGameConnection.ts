@@ -111,6 +111,7 @@ export function useGameConnection() {
   const makeMove = useCallback((column: number) => sendMessage({ type: 'move', column }), [sendMessage]);
   const sendChat = useCallback((text: string) => sendMessage({ type: 'chat', text }), [sendMessage]);
   const requestRematch = useCallback(() => sendMessage({ type: 'rematch' }), [sendMessage]);
+  const leaveGame = useCallback(() => sendMessage({ type: 'leave' }), [sendMessage]);
 
-  return { register, authenticate, createGame, joinGame, makeMove, sendChat, requestRematch };
+  return { register, authenticate, createGame, joinGame, makeMove, sendChat, requestRematch, leaveGame };
 }

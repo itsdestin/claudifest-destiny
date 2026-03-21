@@ -1,15 +1,26 @@
 import React from 'react';
 import { useGameState, useGameDispatch } from '../../state/game-context';
-import { useGameConnection } from '../../hooks/useGameConnection';
 import GameLobby from './GameLobby';
 import ConnectFourBoard from './ConnectFourBoard';
 import GameChat from './GameChat';
 import GameOverlay from './GameOverlay';
 
-export default function GamePanel() {
+interface Props {
+  connection: {
+    register: (username: string, password: string) => Promise<boolean>;
+    authenticate: (username: string, password: string) => void;
+    createGame: () => void;
+    joinGame: (code: string) => void;
+    makeMove: (column: number) => void;
+    sendChat: (text: string) => void;
+    requestRematch: () => void;
+    leaveGame: () => void;
+  };
+}
+
+export default function GamePanel({ connection }: Props) {
   const state = useGameState();
   const dispatch = useGameDispatch();
-  const connection = useGameConnection();
   const isPlaying = state.screen === 'playing' || state.screen === 'game-over';
 
   return (

@@ -59,7 +59,7 @@ async function reportResult(winner: string, loser: string, draw: boolean): Promi
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-shared-secret': SHARED_SECRET,
+        'Authorization': `Bearer ${SHARED_SECRET}`,
       },
       body: JSON.stringify({ winner, loser, draw }),
     });
@@ -261,6 +261,28 @@ function handleRematchRequest(ws: WebSocket): void {
   }
 }
 
+function handleLeave(ws: WebSocket): void {
+  const username = socketUser.get(ws);
+  if (!username) {
+    send(ws, { type: 'error', message: 'Not authenticated' });
+    return;
+  }
+
+  const room = rooms.getUserRoom(username);
+  if (room) {
+    const opponent = room.players.red === username ? room.players.yellow : room.players.red;
+    if (opponent && room.status === 'playing') {
+      sendToUser(opponent, { type: 'opponent:disconnected' });
+      reportResult(opponent, username, false);
+      presence.setStatus(opponent, 'idle');
+    }
+    rooms.destroyRoom(room.code);
+  }
+
+  presence.setStatus(username, 'idle');
+  broadcastPresence();
+}
+
 // ─── Disconnect logic ────────────────────────────────────────────────────────
 
 function handleDisconnect(ws: WebSocket): void {
@@ -332,6 +354,9 @@ wss.on('connection', (ws: WebSocket) => {
         break;
       case 'rematch':
         handleRematchRequest(ws);
+        break;
+      case 'leave':
+        handleLeave(ws);
         break;
       default:
         send(ws, { type: 'error', message: 'Unknown message type' });

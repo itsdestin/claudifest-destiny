@@ -8,6 +8,7 @@ import { ChatProvider, useChatDispatch, useChatState } from './state/chat-contex
 import { GameProvider, useGameState, useGameDispatch } from './state/game-context';
 import { hookEventToAction } from './state/hook-dispatcher';
 import { usePromptDetector } from './hooks/usePromptDetector';
+import { useGameConnection } from './hooks/useGameConnection';
 
 type ViewMode = 'chat' | 'terminal';
 
@@ -22,6 +23,7 @@ function AppInner() {
   const dispatch = useChatDispatch();
   const gameState = useGameState();
   const gameDispatch = useGameDispatch();
+  const gameConnection = useGameConnection();
 
   useEffect(() => {
     const createdHandler = window.claude.on.sessionCreated((info) => {
@@ -143,7 +145,7 @@ function AppInner() {
       </div>
 
       {/* Game panel (conditional) */}
-      {gameState.panelOpen && <GamePanel />}
+      {gameState.panelOpen && <GamePanel connection={gameConnection} />}
     </div>
   );
 }

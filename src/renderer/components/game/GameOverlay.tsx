@@ -10,6 +10,7 @@ interface Props {
     makeMove: (column: number) => void;
     sendChat: (text: string) => void;
     requestRematch: () => void;
+    leaveGame: () => void;
   };
 }
 
@@ -51,7 +52,7 @@ export default function GameOverlay({ connection }: Props) {
           Rematch
         </button>
         <button
-          onClick={() => dispatch({ type: 'RETURN_TO_LOBBY' })}
+          onClick={() => { connection.leaveGame(); dispatch({ type: 'RETURN_TO_LOBBY' }); }}
           className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg py-2 transition-colors"
         >
           Back to Lobby

@@ -3,7 +3,7 @@ import { GameState, GameAction, createInitialGameState } from './game-types';
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'SET_USERNAME':
-      return { ...state, username: action.username, screen: 'lobby' };
+      return { ...state, username: action.username };
 
     case 'CONNECTION_STATUS':
       return { ...state, connected: action.connected };

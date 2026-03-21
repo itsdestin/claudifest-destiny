@@ -16,6 +16,7 @@ interface Props {
     makeMove: (column: number) => void;
     sendChat: (text: string) => void;
     requestRematch: () => void;
+    leaveGame: () => void;
   };
 }
 
@@ -179,7 +180,7 @@ function LobbyScreen({ connection }: Props) {
   );
 }
 
-function WaitingScreen() {
+function WaitingScreen({ connection }: Props) {
   const state = useGameState();
   const dispatch = useGameDispatch();
   const code = state.roomCode ?? '';
@@ -221,7 +222,7 @@ function WaitingScreen() {
       </div>
 
       <button
-        onClick={() => dispatch({ type: 'RETURN_TO_LOBBY' })}
+        onClick={() => { connection.leaveGame(); dispatch({ type: 'RETURN_TO_LOBBY' }); }}
         className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
       >
         Cancel
@@ -233,7 +234,7 @@ function WaitingScreen() {
 export default function GameLobby({ connection }: Props) {
   const state = useGameState();
 
-  if (state.screen === 'waiting') return <WaitingScreen />;
+  if (state.screen === 'waiting') return <WaitingScreen connection={connection} />;
   if (state.screen === 'lobby') return <LobbyScreen connection={connection} />;
   return <SetupScreen connection={connection} />;
 }
