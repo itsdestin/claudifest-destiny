@@ -60,6 +60,7 @@ export function handleMove(room: Room, username: string, column: number): MoveRe
 }
 
 export function handleRematch(room: Room, username: string): RematchResult {
+  if (room.status !== 'finished') return { ready: false };
   room.rematchVotes.add(username);
 
   if (room.rematchVotes.size < 2) {
