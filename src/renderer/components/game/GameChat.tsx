@@ -3,7 +3,7 @@ import { useGameState } from '../../state/game-context';
 
 interface Props {
   connection: {
-    register: (username: string, password: string) => Promise<boolean>;
+    register: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
     authenticate: (username: string, password: string) => void;
     createGame: () => void;
     joinGame: (code: string) => void;
@@ -79,7 +79,7 @@ export default function GameChat({ connection }: Props) {
           onKeyDown={handleKeyDown}
           placeholder="Say something..."
           maxLength={200}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-200 placeholder-gray-500 outline-none focus:border-indigo-500 transition-colors"
+          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-200 placeholder-gray-500 outline-none focus:border-gray-400 transition-colors"
         />
       </div>
     </div>

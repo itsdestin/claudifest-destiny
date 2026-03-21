@@ -7,7 +7,7 @@ import GameOverlay from './GameOverlay';
 
 interface Props {
   connection: {
-    register: (username: string, password: string) => Promise<boolean>;
+    register: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
     authenticate: (username: string, password: string) => void;
     createGame: () => void;
     joinGame: (code: string) => void;

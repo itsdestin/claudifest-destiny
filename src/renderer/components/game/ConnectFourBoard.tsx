@@ -6,7 +6,7 @@ const ROWS = 6;
 
 interface Props {
   connection: {
-    register: (username: string, password: string) => Promise<boolean>;
+    register: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
     authenticate: (username: string, password: string) => void;
     createGame: () => void;
     joinGame: (code: string) => void;
@@ -59,7 +59,7 @@ export default function ConnectFourBoard({ connection }: Props) {
         </div>
         <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${
           canMove
-            ? 'bg-indigo-900/50 text-indigo-300'
+            ? 'bg-gray-700/50 text-gray-300'
             : 'bg-gray-800 text-gray-500'
         }`}>
           {isPlaying ? (canMove ? 'Your turn' : `${state.turn}'s turn`) : ''}

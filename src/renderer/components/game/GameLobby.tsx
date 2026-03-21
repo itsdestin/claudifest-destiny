@@ -10,7 +10,7 @@ interface LeaderboardEntry {
 
 interface Props {
   connection: {
-    register: (username: string, password: string) => Promise<boolean>;
+    register: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
     authenticate: (username: string, password: string) => void;
     createGame: () => void;
     joinGame: (code: string) => void;
@@ -40,9 +40,9 @@ function SetupScreen({ connection }: Props) {
       // or set authError on failure (handled via state.authError below)
     } else {
       setLoading(true);
-      const ok = await connection.register(username.trim(), password.trim());
-      if (!ok) {
-        setError('Username already taken. Try a different one.');
+      const result = await connection.register(username.trim(), password.trim());
+      if (!result.ok) {
+        setError(result.error || 'Registration failed');
       }
       setLoading(false);
     }
@@ -57,6 +57,9 @@ function SetupScreen({ connection }: Props) {
         </div>
         <h2 className="text-lg font-bold text-gray-200">Connect Four</h2>
         <p className="text-xs text-gray-500 text-center">Play against other Claude users in real time</p>
+        {!state.connected && (
+          <p className="text-xs text-yellow-500 text-center mt-1">Connecting to game server...</p>
+        )}
       </div>
 
       {/* Form */}
@@ -67,14 +70,14 @@ function SetupScreen({ connection }: Props) {
           onChange={(e) => setUsername(e.target.value)}
           placeholder={isLogin ? 'Username' : 'Pick a username'}
           maxLength={20}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-indigo-500 transition-colors"
+          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-gray-400 transition-colors"
         />
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={isLogin ? 'Password' : 'Choose a password'}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-indigo-500 transition-colors"
+          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-gray-400 transition-colors"
         />
         {error && (
           <p className="text-xs text-red-400">{error}</p>
@@ -85,7 +88,7 @@ function SetupScreen({ connection }: Props) {
         <button
           type="submit"
           disabled={loading || !username.trim() || !password.trim()}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg py-2 transition-colors"
+          className="w-full bg-gray-300 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-gray-950 text-sm font-medium rounded-lg py-2 transition-colors"
         >
           {loading ? 'Getting started...' : isLogin ? 'Log In' : 'Get Started'}
         </button>
@@ -132,7 +135,7 @@ function LobbyScreen({ connection }: Props) {
       <div className="px-3 py-3 border-b border-gray-800 flex flex-col gap-2">
         <button
           onClick={() => connection.createGame()}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg py-2 transition-colors"
+          className="w-full bg-gray-300 hover:bg-gray-200 text-gray-950 text-sm font-medium rounded-lg py-2 transition-colors"
         >
           Create Game
         </button>
@@ -143,7 +146,7 @@ function LobbyScreen({ connection }: Props) {
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             placeholder="Room code"
             maxLength={6}
-            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-indigo-500 transition-colors uppercase tracking-widest"
+            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-gray-400 transition-colors uppercase tracking-widest"
           />
           <button
             onClick={() => { if (joinCode.trim()) connection.joinGame(joinCode.trim()); }}
@@ -187,7 +190,7 @@ function LobbyScreen({ connection }: Props) {
             {leaderboard.map((entry, i) => (
               <li key={entry.username} className="flex items-center gap-2 text-xs">
                 <span className="text-gray-600 w-4 text-right">{i + 1}.</span>
-                <span className={`truncate flex-1 ${entry.username === state.username ? 'text-indigo-400 font-medium' : 'text-gray-300'}`}>
+                <span className={`truncate flex-1 ${entry.username === state.username ? 'text-[#66AAFF] font-medium' : 'text-gray-300'}`}>
                   {entry.username}
                 </span>
                 <span className="text-gray-500 shrink-0">{entry.wins}W</span>
@@ -229,7 +232,7 @@ function WaitingScreen({ connection }: Props) {
         </div>
         <button
           onClick={copyCode}
-          className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+          className="text-xs text-[#66AAFF] hover:text-[#88CCFF] transition-colors"
         >
           {copied ? 'Copied!' : 'Copy Code'}
         </button>
@@ -237,7 +240,7 @@ function WaitingScreen({ connection }: Props) {
 
       <div className="flex flex-col items-center gap-2">
         {/* Spinner */}
-        <div className="w-8 h-8 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-gray-300 border-t-transparent animate-spin" />
         <p className="text-sm text-gray-400">Waiting for opponent...</p>
       </div>
 

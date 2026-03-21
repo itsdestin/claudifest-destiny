@@ -98,17 +98,25 @@ export function useGameConnection() {
     sendMessage({ type: 'authenticate', username, password });
   }, [sendMessage]);
 
-  const register = useCallback(async (username: string, password: string): Promise<boolean> => {
-    const res = await fetch(`${LEADERBOARD_URL}/players`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    if (res.status === 201) {
-      authenticate(username, password);
-      return true;
+  const register = useCallback(async (username: string, password: string): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const res = await fetch(`${LEADERBOARD_URL}/players`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (res.status === 201) {
+        authenticate(username, password);
+        return { ok: true };
+      }
+      if (res.status === 409) {
+        return { ok: false, error: 'Username already taken' };
+      }
+      const body = await res.json().catch(() => ({}));
+      return { ok: false, error: body.error || 'Registration failed' };
+    } catch {
+      return { ok: false, error: 'Cannot reach game server. Is it running?' };
     }
-    return false;
   }, [authenticate]);
 
   const createGame = useCallback(() => sendMessage({ type: 'create' }), [sendMessage]);

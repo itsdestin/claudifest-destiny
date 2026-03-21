@@ -3,7 +3,7 @@ import { useGameState, useGameDispatch } from '../../state/game-context';
 
 interface Props {
   connection: {
-    register: (username: string, password: string) => Promise<boolean>;
+    register: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
     authenticate: (username: string, password: string) => void;
     createGame: () => void;
     joinGame: (code: string) => void;
@@ -47,7 +47,7 @@ export default function GameOverlay({ connection }: Props) {
       <div className="flex flex-col gap-2 w-40">
         <button
           onClick={() => connection.requestRematch()}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg py-2 transition-colors"
+          className="w-full bg-gray-300 hover:bg-gray-200 text-gray-950 text-sm font-medium rounded-lg py-2 transition-colors"
         >
           Rematch
         </button>
