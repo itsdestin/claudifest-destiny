@@ -119,7 +119,7 @@ skill-creator/
 ## Dependencies
 
 - **Depends on:** Python 3 (for all scripts), `claude` CLI (`claude -p` for description optimization), subagent capability (for parallel test runs, grading, blind comparison — gracefully degrades without), browser/display (for viewer — falls back to `--static` HTML or inline presentation).
-- **Depended on by:** All other skills benefit from this skill during their creation and iteration lifecycle. Referenced in CLAUDE.md skill table. The `encyclopedia-update`, `encyclopedia-compile`, `journaling-assistant`, `encyclopedia-librarian`, `jlbc-fiscal-note`, `google-drive`, `destins-writing-voice`, and `elections-notebook` skills were (or can be) developed and refined through this workflow.
+- **Depended on by:** All other skills benefit from this skill during their creation and iteration lifecycle. Referenced in CLAUDE.md skill table. The `encyclopedia-update`, `encyclopedia-compile`, `journaling-assistant`, `encyclopedia-librarian`, `google-drive`, and `destins-writing-voice` skills were (or can be) developed and refined through this workflow.
 
 ## Known Bugs / Issues
 
