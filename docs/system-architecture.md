@@ -176,6 +176,16 @@ Personal data is protected through multiple layers:
 3. **Contribution filter** — The `/contribute` command and contribution detector both exclude private content.
 4. **Setup marker comments** — CLAUDE.md modifications are wrapped in `<!-- DESTINCLAUDE BEGIN/END -->` markers for clean removal.
 
+## DestinCode Desktop App
+
+An Electron + React GUI that wraps Claude Code CLI. Located at `desktop/` in the toolkit repo.
+
+- **Main process** (`desktop/src/main/`) — SessionManager (PTY pool, multi-session), HookRelay (named pipe/Unix socket server for hook events), IPC handlers
+- **Renderer** (`desktop/src/renderer/`) — Terminal view (xterm.js), chat view (message bubbles, tool cards), command drawer (skill discovery), Connect 4 multiplayer game
+- **Hook scripts** (`desktop/hook-scripts/`) — Relay scripts that forward Claude Code hook events to the desktop app via named pipe
+- **Build** — Cross-platform via electron-builder (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`); CI build workflow at `.github/workflows/build.yml`
+- **Install** — Optional, offered during setup-wizard Phase 5b or bootstrap; runs `desktop/scripts/install-app.sh`
+
 ## State Files
 
 The toolkit maintains state in `~/.claude/toolkit-state/`:
@@ -185,15 +195,17 @@ The toolkit maintains state in `~/.claude/toolkit-state/`:
 | `config.json` | Installed version, selected layers, preferences |
 | `update-status.json` | Cached version check result (current, latest, update_available) |
 | `contribution-tracker.json` | Tracks suggested/declined/contributed file changes |
+| `destintip-state.json` | Tracks session count and tip rotation state for DestinTip system |
 
 ## CI/CD
 
-Two GitHub Actions workflows handle versioning and releases:
+Three GitHub Actions workflows handle versioning, releases, and builds:
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `auto-tag.yml` | Push to `master` that changes `plugin.json` | Detects version bump, creates and pushes a `vX.Y.Z` git tag |
 | `release.yml` | Push of a `v*` tag | Extracts the matching section from `CHANGELOG.md` and creates a GitHub Release |
+| `build.yml` | Push of a `v*` tag | Builds cross-platform DestinCode desktop app installers (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`) |
 
 **Release flow:** Bump the `version` field in `plugin.json` → push to master → `auto-tag.yml` creates the tag → tag push triggers `release.yml` → GitHub Release published with changelog notes. No manual tagging needed.
 
