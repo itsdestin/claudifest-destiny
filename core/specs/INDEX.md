@@ -9,6 +9,7 @@ All feature specifications. Skill specs live in their skill folder; system specs
 | System Architecture | system | core/specs/system-architecture-spec.md | 1.2 |
 | Backup & Sync | system | core/specs/backup-system-spec.md | 4.0 |
 | Write Guard | system | core/specs/write-guard-spec.md | 1.2 |
+| Worktree Guard | system | core/specs/worktree-guard-spec.md | 1.0 |
 | Memory System | system | core/specs/memory-system-spec.md | 1.1 |
 | Personal Data Sync | system | core/specs/personal-sync-spec.md | 2.0 |
 | Statusline | system | core/specs/statusline-spec.md | 1.10 |
