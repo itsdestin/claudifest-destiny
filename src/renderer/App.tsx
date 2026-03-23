@@ -4,6 +4,7 @@ import ChatView from './components/ChatView';
 import HeaderBar from './components/HeaderBar';
 import InputBar from './components/InputBar';
 import StatusBar from './components/StatusBar';
+import ErrorBoundary from './components/ErrorBoundary';
 import GamePanel from './components/game/GamePanel';
 import { ChatProvider, useChatDispatch, useChatState } from './state/chat-context';
 import { GameProvider, useGameState, useGameDispatch } from './state/game-context';
@@ -202,14 +203,18 @@ function AppInner() {
             <div className="flex-1 overflow-hidden relative">
               {sessions.map((s) => (
                 <React.Fragment key={s.id}>
-                  <ChatView
-                    sessionId={s.id}
-                    visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'chat'}
-                  />
-                  <TerminalView
-                    sessionId={s.id}
-                    visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'terminal'}
-                  />
+                  <ErrorBoundary name="Chat">
+                    <ChatView
+                      sessionId={s.id}
+                      visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'chat'}
+                    />
+                  </ErrorBoundary>
+                  <ErrorBoundary name="Terminal">
+                    <TerminalView
+                      sessionId={s.id}
+                      visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'terminal'}
+                    />
+                  </ErrorBoundary>
                 </React.Fragment>
               ))}
               {trustGateActive && sessionId && <TrustGate sessionId={sessionId} />}
@@ -255,7 +260,11 @@ function AppInner() {
       </div>
 
       {/* Game panel (conditional) */}
-      {gameState.panelOpen && <GamePanel connection={gameConnection} />}
+      {gameState.panelOpen && (
+        <ErrorBoundary name="Game">
+          <GamePanel connection={gameConnection} />
+        </ErrorBoundary>
+      )}
     </div>
   );
 }
