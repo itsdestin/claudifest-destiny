@@ -15,6 +15,7 @@ These are typed directly into Claude — just type the `/` and the command name:
 | `/toolkit` | Shows everything you can do — skills, phrases, hooks |
 | `/health` | Checks that everything is working properly |
 | `/update` | Checks for new features and installs them |
+| `/restore` | Restore personal data from a backup (Drive, GitHub, or iCloud) |
 | `/setup-wizard` | Re-runs setup (safe to run anytime) |
 | `/toolkit-uninstall` | Removes the toolkit and restores your old setup |
 

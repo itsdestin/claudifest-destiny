@@ -79,7 +79,7 @@ For the curious:
 
 ## The Contribution Detector
 
-You might notice Claude occasionally mention something like: "That tweak you made to the inbox processor looks useful — want me to send it to the maintainer?"
+You might notice Claude occasionally mention something like: "That tweak you made to the inbox skill looks useful — want me to send it to the maintainer?"
 
 That's the contribution detector — a background hook that notices when you've improved toolkit files. It only suggests once per change, and if you ignore it or say no, it won't ask again.
 
