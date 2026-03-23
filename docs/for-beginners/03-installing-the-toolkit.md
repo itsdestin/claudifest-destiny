@@ -39,7 +39,7 @@ Claude asks which parts of the toolkit you want:
 |-------|-----------------|
 | **Core** | Foundation — hooks, specs system, memory templates, commands |
 | **Life** | Personal knowledge — journaling, encyclopedia, Google Drive sync |
-| **Productivity** | Task management — inbox processor, Todoist integration, text messaging |
+| **Productivity** | Task management — Claude's Inbox (multi-provider), skill creator, text messaging |
 
 You can install everything (recommended), or pick and choose. You can always add more later.
 

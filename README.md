@@ -51,19 +51,19 @@ claude
 ## What's Inside
 
 ### Core (Foundation)
-- **Session hooks** — Auto-sync, statusline, write guards, git backup
+- **Session hooks** — Auto-sync, statusline, write guards, git backup, worktree guard
 - **Specs system** — Structured documentation that persists across conversations
 - **Memory templates** — Organized persistent memory for Claude
-- **Commands** — `/setup-wizard`, `/update`, `/health`, `/contribute`, `/toolkit-uninstall`
+- **Commands** — `/setup-wizard`, `/update`, `/health`, `/restore`, `/contribute`, `/toolkit-uninstall`
 - **Contribution detector** — Notices your improvements, offers to share them upstream
 
 ### Life (Personal Knowledge)
 - **Journaling assistant** — Conversational daily journaling with Socratic prompts
 - **Encyclopedia system** — A living biography built from 8 modular source files
-- **Google Drive sync** — Automated backup via rclone
+- **Personal data sync** — Automated backup via Google Drive, GitHub, or iCloud
 
 ### Productivity (Task Management)
-- **Inbox processor** — Processes notes and tasks from Todoist
+- **Claude's Inbox** — Processes notes and tasks from any configured source (Todoist, Drive, Gmail, Apple Notes, and more)
 - **Skill creator** — Build, test, and benchmark new skills
 - **Text messaging** — Read and send SMS/RCS through Claude (via Google Messages)
 

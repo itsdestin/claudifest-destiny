@@ -37,7 +37,7 @@ That's it. Your new commands:
 
 **Life** (optional) — A personal knowledge system. Journaling assistant with Socratic-style prompts. An encyclopedia system that builds and maintains a living biography from 8 modular source files. Google Drive sync via rclone.
 
-**Productivity** (optional) — Task management and communication. Todoist inbox processor, skill creator, and a Google Messages MCP server for reading/sending texts through Claude.
+**Productivity** (optional) — Task management and communication. Claude's Inbox (provider-agnostic: Todoist, Drive, Gmail, Apple Notes, and more), skill creator, and a Google Messages MCP server for reading/sending texts through Claude.
 
 **Modules** (optional) — Optional domain-specific add-ons available. Run `/toolkit` to see what's available.
 

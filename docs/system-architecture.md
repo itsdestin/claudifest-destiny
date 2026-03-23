@@ -110,7 +110,7 @@ The `/setup-wizard` skill is the primary entry point for both first-time install
 - **Phase 0A (GitHub restore):** Clones or pulls the user's private config repo into `~/.claude/`, rewrites hardcoded HOME paths and project slugs, and merges `mcp-servers/mcp-config.json` back into `~/.claude.json`. Then jumps to Phase 0C.
 - **Phase 0B (Drive restore):** Installs rclone if missing, configures the `gdrive:` remote, and syncs encyclopedia files, personal data (memory, CLAUDE.md, config), and conversation transcripts from Drive. Then jumps to Phase 0C.
 - **Phase 0C (abbreviated check):** Runs the same dependency checks as Phase 4 but frames them as "confirming everything your restored config needs." Skips Phase 5 (personalization) entirely since templates and config already exist from backup. Proceeds directly to Phase 6 (verification).
-- **iCloud restore:** Not yet implemented — noted as coming soon, falls through to fresh install.
+- **Phase 0C (iCloud restore):** Detects the iCloud Drive folder (macOS: `~/Library/Mobile Documents/com~apple~CloudDocs/DestinClaude/`, Windows: `~/iCloudDrive/DestinClaude/`), copies personal data, and proceeds to the abbreviated dependency check.
 
 **Phases 1–6 (fresh install):** Environment check → conflict resolution → layer selection → dependency install → personalization (encyclopedia templates, CLAUDE.md fragments, marketplace plugins) → verification.
 
@@ -122,7 +122,7 @@ The `/setup-wizard` skill is the primary entry point for both first-time install
 
 **Google Drive sync:** rclone handles bidirectional sync for encyclopedia files and journal entries. Configured during setup with `rclone config` for Google Drive OAuth.
 
-**Personal data sync:** The `personal-sync.sh` hook (PostToolUse, 15-min debounce) backs up memory files, CLAUDE.md, and `toolkit-state/config.json` to either a private GitHub repo or Google Drive (`gdrive:{DRIVE_ROOT}/Backup/personal/`). The `session-start.sh` hook pulls the latest personal data at the start of every session for cross-device continuity. On a brand-new device, the setup wizard Phase 0B performs the initial pull before the session-start hook is ever invoked.
+**Personal data sync:** The `personal-sync.sh` hook (PostToolUse, 15-min debounce) backs up memory files, CLAUDE.md, and `toolkit-state/config.json` to all configured backends (Google Drive, GitHub, and/or iCloud). The `session-start.sh` hook pulls the latest personal data from the primary backend at the start of every session for cross-device continuity. On a brand-new device, the setup wizard or `/restore` command performs the initial pull.
 
 ## Memory System
 
