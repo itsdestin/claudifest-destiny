@@ -1,10 +1,16 @@
 appId: com.destinclaude.desktop
-productName: Claude Desktop
+productName: DestinCode
 directories:
   output: release
   buildResources: build
 win:
   target: nsis
+mac:
+  target: dmg
+  category: public.app-category.developer-tools
+linux:
+  target: AppImage
+  category: Development
 files:
   - dist/**/*
   - node_modules/**/*

@@ -1,4 +1,4 @@
-# Claude Desktop UI
+# DestinCode
 
 Electron + React app that wraps Claude Code CLI in a GUI.
 
