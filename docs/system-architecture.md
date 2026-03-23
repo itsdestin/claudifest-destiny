@@ -105,7 +105,7 @@ Receipt photos can be processed via either the `imessages` (macOS) or `gmessages
 
 The `/setup-wizard` skill is the primary entry point for both first-time installs and returns from another device. It runs as a guided conversation — no executable code, just structured prompts that Claude follows.
 
-**Phase 0 — Prior use check:** The wizard's first question is whether the user has run DestinClaude before on another device. Returning users choose a backup source and enter a restore sub-flow; new users proceed to Phase 1.
+**Phase 0 — Prior use check:** The wizard's first question is whether the user has run DestinClaude before on another device. Returning users choose from three restore sources (GitHub, Google Drive, or iCloud) and enter a restore sub-flow; new users proceed to Phase 1.
 
 - **Phase 0A (GitHub restore):** Clones or pulls the user's private config repo into `~/.claude/`, rewrites hardcoded HOME paths and project slugs, and merges `mcp-servers/mcp-config.json` back into `~/.claude.json`. Then jumps to Phase 0D.
 - **Phase 0B (Drive restore):** Installs rclone if missing, configures the `gdrive:` remote, and syncs encyclopedia files, personal data (memory, CLAUDE.md, config), and conversation transcripts from Drive. Then jumps to Phase 0D.

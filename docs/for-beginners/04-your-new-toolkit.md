@@ -29,7 +29,7 @@ You don't need special commands for these. Just say them in plain English:
 Start a daily journal entry. Claude asks about your day conversationally — what happened, how you felt, what's on your mind. Entries are saved by date automatically.
 
 **"Check my inbox"**
-If you use Todoist, Claude processes any notes you've captured on your phone — answering questions, creating tasks, or filing information.
+Claude processes notes captured from any of your configured sources (Todoist, Gmail, Apple Notes, Google Drive, iCloud, and more) — answering questions, creating tasks, or filing information.
 
 **"Brief me on [person's name]"**
 Pull together everything you've told Claude about someone — useful before a meeting or visit.
