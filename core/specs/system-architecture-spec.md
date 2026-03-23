@@ -1,7 +1,7 @@
 # System Design — Spec
 
-**Version:** 1.1
-**Last updated:** 2026-03-20
+**Version:** 1.2
+**Last updated:** 2026-03-22
 **Feature location:** `~/.claude/` (entire system)
 
 ## Purpose
@@ -78,12 +78,19 @@ Local (~/.claude/)
 
 | Hook | Event | Matcher | Purpose | State Files |
 |------|-------|---------|---------|-------------|
+| `session-start.sh` | SessionStart | `startup` | Git pull, encyclopedia cache sync, inbox check, DestinTip injection | None (reads remote state) |
+| `contribution-detector.sh` | SessionStart | `startup` | Detect toolkit contributions and offer to submit upstream | None |
 | `write-guard.sh` | PreToolUse | `Write\|Edit` | Block writes when another active session owns the file | Reads `.write-registry.json` |
 | `tool-router.sh` | PreToolUse | `mcp__claude_ai_Gmail__\|mcp__claude_ai_Google_Calendar__` | Block Claude.ai native Gmail/Calendar MCP tools; redirect to GWS CLI equivalents | None |
 | `git-sync.sh` | PostToolUse | `Write\|Edit` | Commit to Git, debounced push, Drive archive, update write registry | Writes `.write-registry.json`, `.push-marker`, `.sync-status` |
-| `title-update.sh` | PostToolUse | `.*` | Prompt Claude to set session topic (10-min throttle) | Reads/writes `/tmp/claude-topics/marker-{sid}` |
-| `session-start.sh` | SessionStart | `startup` | Git pull, encyclopedia cache sync, inbox check | None (reads remote state) |
+| `personal-sync.sh` | PostToolUse | `Write\|Edit` | Sync personal data files to Drive after edits | None |
+| `title-update.sh` | PostToolUse | `.*` | Prompt Claude to set session topic (10-min throttle) | Reads/writes `~/.claude/topics/marker-{sid}` |
+| `todo-capture.sh` | UserPromptSubmit | `.*` | Capture task mentions from user prompts to Todoist | None |
 | `checklist-reminder.sh` | Stop | `.*` | Remind Claude to verify system change checklist if system files were modified | Reads `.write-registry.json` |
+| `done-sound.sh` | Stop | `.*` | Play a chime sound when Claude finishes | None |
+| `announcement-fetch.js` | (utility) | — | Fetch broadcast announcements from GitHub repo | Writes `.announcement-cache.json` |
+| `usage-fetch.js` | (utility) | — | Retrieve and cache API usage/rate-limit data | Writes `.usage-cache.json` |
+| `statusline.sh` | (statusLine) | — | Render multi-line status bar for Claude Code | Reads topics, sync-status, caches |
 
 **Execution order within same event:** Hooks fire in the order listed in `settings.json`. For PostToolUse, `git-sync.sh` (Write|Edit only) fires before `title-update.sh` (all tools).
 

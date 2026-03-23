@@ -1,7 +1,7 @@
 # Statusline & Auto-Title — Spec
 
-**Version:** 1.9
-**Last updated:** 2026-03-20
+**Version:** 1.10
+**Last updated:** 2026-03-22
 **Feature location:** `core/hooks/statusline.sh`, `core/hooks/title-update.sh`, `core/hooks/usage-fetch.js`, `core/hooks/announcement-fetch.js`
 (Installed via symlinks to `~/.claude/hooks/` and `~/.claude/statusline.sh`)
 
@@ -78,7 +78,7 @@ A real-time information display system for Claude Code sessions. Four components
 
 1. **Session name** (bold white) — if no `session_id` present, falls back to showing sync status on line 1 instead. When `session_id` exists but no session name or topic file, defaults to **"New Session"**.
 2. **Sync status + warnings** — sync status colored green/yellow/red based on prefix (OK/WARN/ERR), followed by optional severity-tagged warnings from `~/.claude/.sync-warnings` (written by `session-start.sh`). Red warnings use `DANGER:` prefix, yellow warnings use `WARN:` prefix. A dim `/sync for info` hint is appended when warnings are present. Warning types: `OFFLINE` (red), `PERSONAL:NOT_CONFIGURED` (red), `PERSONAL:STALE` (yellow), `SKILLS:*` (red), `PROJECTS:*` (red).
-3. **Model + Context** — dim model name, colored context remaining percentage
+3. **Model + Context + Git** — dim model name, colored context remaining percentage, optional dim `repo/branch` fragment (shown when CWD is inside a git repository)
 4. **Rate limits** — 5h and 7d utilization with reset times, each independently colored by its own utilization (green <50%, yellow 50-79%, red ≥80%)
 5. **Toolkit version + announcement** — dim version when current; yellow with dim `| Run /update` hint when update available. Optional bold yellow `★ message` announcement appended inline after a dim `|` separator.
 

@@ -1,7 +1,7 @@
 # DestinClaude Toolkit — Spec
 
-**Version:** 2.5
-**Last updated:** 2026-03-20
+**Version:** 2.6
+**Last updated:** 2026-03-22
 **Feature location:** `~/.claude/plugins/destinclaude/` (toolkit root)
 
 ## Purpose
@@ -176,7 +176,7 @@ Copy-based installs caused persistent, hard-to-diagnose file drift: installed co
 - ~~Add setup feature to restore configuration from Google Drive~~ (resolved in v1.1.3 — Phase 0 restore flow)
 - Add more tip prompts and hints in the first setup wizard run — mention Google Drive widget or Apple Notes widget on home screen for quick inbox capture, which can be emptied later from laptop, etc. (from inbox 2026-03-17)
 - Add iCloud support via rclone as a Drive alternative — rclone has native iCloud backend (from inbox 2026-03-17)
-- **Desktop App (Phase 2)** — Electron GUI wrapping Claude Code CLI with chat view, tool cards, approval flow, and session management UI. Phase 1 (terminal-only) complete on `DesktopApp` branch. Phase 2 adds structured chat view with message bubbles, tool card rendering from hook events, and approval buttons for blocking hooks. See `~/.claude/specs/claude-desktop-ui-spec.md` for full design.
+- ~~Desktop App~~ (shipped in v1.4.0 — DestinCode Electron GUI with terminal view, chat view, command drawer, Connect 4 multiplayer, cross-platform CI build. Installed via setup-wizard Phase 5b or bootstrap installer.)
 
 ## Change Log
 
