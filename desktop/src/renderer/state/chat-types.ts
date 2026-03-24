@@ -104,7 +104,7 @@ export type ChatAction =
       toolName: string;
       input: Record<string, unknown>;
       requestId: string;
-      permissionSuggestions?: unknown[];
+      permissionSuggestions?: string[];
     };
 
 export type ChatState = Map<string, SessionChatState>;

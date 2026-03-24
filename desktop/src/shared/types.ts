@@ -27,7 +27,7 @@ export interface ToolCallState {
   input: Record<string, unknown>;
   status: ToolCallStatus;
   requestId?: string;
-  permissionSuggestions?: unknown[];
+  permissionSuggestions?: string[];
   response?: string;
   error?: string;
 }
