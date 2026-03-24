@@ -1,12 +1,14 @@
 import net from 'net';
 import { randomUUID } from 'crypto';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { EventEmitter } from 'events';
 import { HookEvent } from '../shared/types';
 
 const DEFAULT_PIPE_NAME = process.platform === 'win32'
-  ? '\\.\pipe\claude-desktop-hooks'
-  : '/tmp/claude-desktop-hooks.sock';
+  ? '\\\\.\\pipe\\claude-desktop-hooks'
+  : path.join(os.tmpdir(), 'claude-desktop-hooks.sock');
 
 export class HookRelay extends EventEmitter {
   private server: net.Server | null = null;

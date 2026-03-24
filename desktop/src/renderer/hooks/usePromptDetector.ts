@@ -13,13 +13,15 @@ import { getScreenText, onBufferReady } from './terminal-registry';
 export function usePromptDetector() {
   const dispatch = useChatDispatch();
   const chatState = useChatStateMap();
+  const chatStateRef = useRef(chatState);
+  chatStateRef.current = chatState;
   const lastMenuRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     const unsub = onBufferReady((sid: string) => {
       // Skip prompt detection when a PermissionRequest approval is active
       // (the hook-based UI is handling the permission flow)
-      for (const [, session] of chatState) {
+      for (const [, session] of chatStateRef.current) {
         for (const [, tool] of session.toolCalls) {
           if (tool.status === 'awaiting-approval') return;
         }
@@ -54,5 +56,5 @@ export function usePromptDetector() {
     });
 
     return unsub;
-  }, [dispatch, chatState]);
+  }, [dispatch]);
 }

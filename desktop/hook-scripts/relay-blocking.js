@@ -13,7 +13,9 @@
  * The SERVER decides whether a hook is blocking — relay doesn't need to know.
  */
 const net = require('net');
-const PIPE_NAME = process.env.CLAUDE_DESKTOP_PIPE || (process.platform === 'win32' ? '\\.\pipe\claude-desktop-hooks' : '/tmp/claude-desktop-hooks.sock');
+const os = require('os');
+const path = require('path');
+const PIPE_NAME = process.env.CLAUDE_DESKTOP_PIPE || (process.platform === 'win32' ? '\\\\.\\pipe\\claude-desktop-hooks' : path.join(os.tmpdir(), 'claude-desktop-hooks.sock'));
 const TIMEOUT_MS = parseInt(process.env.CLAUDE_RELAY_TIMEOUT || '60000', 10);
 
 let input = '';
