@@ -18,6 +18,17 @@ import type { SkillEntry, PermissionMode } from '../shared/types';
 
 type ViewMode = 'chat' | 'terminal';
 
+// Diagnostic logger — writes to a DOM element for visibility.
+// Remove after debugging.
+const _diagLog: string[] = [];
+function diag(msg: string) {
+  const entry = `${new Date().toISOString().slice(11, 23)} ${msg}`;
+  _diagLog.push(entry);
+  if (_diagLog.length > 50) _diagLog.shift();
+  const el = document.getElementById('__diag');
+  if (el) el.textContent = _diagLog.join('\n');
+}
+
 interface StatusDataState {
   usage: any;
   announcement: any;
@@ -51,6 +62,7 @@ function AppInner() {
 
   useEffect(() => {
     const createdHandler = window.claude.on.sessionCreated((info) => {
+      diag(`SESSION_CREATED id=${info.id.slice(0,8)} mode=${info.permissionMode}`);
       setSessions((prev) => [...prev, info]);
       setSessionId(info.id);
       setViewModes((prev) => new Map(prev).set(info.id, 'chat'));
@@ -82,9 +94,13 @@ function AppInner() {
     });
 
     const hookHandler = window.claude.on.hookEvent((event) => {
+      diag(`HOOK type=${event.type} sid=${(event.sessionId||'').slice(0,8)}`);
       const action = hookEventToAction(event);
       if (action) {
+        diag(`  → action=${action.type}`);
         dispatch(action);
+      } else {
+        diag(`  → (no action)`);
       }
     });
 
