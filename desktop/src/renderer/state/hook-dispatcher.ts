@@ -30,7 +30,7 @@ export function hookEventToAction(event: HookEvent): ChatAction | null {
       const toolName = (payload.tool_name as string) || 'Unknown';
       const toolInput = (payload.tool_input as Record<string, unknown>) || {};
       const requestId = payload._requestId as string;
-      const permissionSuggestions = payload.permission_suggestions as unknown[] | undefined;
+      const permissionSuggestions = payload.permission_suggestions as string[] | undefined;
 
       // Only create action if requestId is present (socket was held by HookRelay)
       if (!requestId) return null;
