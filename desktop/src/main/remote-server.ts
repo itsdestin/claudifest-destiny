@@ -594,6 +594,19 @@ export class RemoteServer {
         break;
       }
 
+      // --- UI state sync: broadcast actions to all OTHER clients ---
+      case 'ui:action': {
+        const data = JSON.stringify({ type: 'ui:action', payload });
+        for (const c of this.clients) {
+          if (c !== client && c.ws.readyState === WebSocket.OPEN) {
+            c.ws.send(data);
+          }
+        }
+        // Also forward to Electron window via IPC if this came from a remote client
+        this.sessionManager.emit('ui-action', payload);
+        break;
+      }
+
       // --- Fire-and-forget ---
       case 'session:input': {
         this.sessionManager.sendInput(payload.sessionId, payload.text);
@@ -619,7 +632,7 @@ export class RemoteServer {
     }
   }
 
-  private broadcast(msg: { type: string; payload: any }): void {
+  broadcast(msg: { type: string; payload: any }): void {
     const data = JSON.stringify(msg);
     for (const client of this.clients) {
       if (client.ws.readyState === WebSocket.OPEN) {

@@ -87,4 +87,6 @@ export const IPC = {
   REMOTE_GET_CLIENT_COUNT: 'remote:get-client-count',
   REMOTE_GET_CLIENT_LIST: 'remote:get-client-list',
   REMOTE_DISCONNECT_CLIENT: 'remote:disconnect-client',
+  UI_ACTION_BROADCAST: 'ui:action:broadcast',
+  UI_ACTION_RECEIVED: 'ui:action:received',
 } as const;

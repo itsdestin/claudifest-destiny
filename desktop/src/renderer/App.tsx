@@ -148,6 +148,13 @@ function AppInner() {
       }));
     });
 
+    // UI action sync — receive actions broadcast from other devices
+    const uiActionHandler = (window.claude.on as any).uiAction?.((action: any) => {
+      if (action && action.type) {
+        dispatch(action);
+      }
+    });
+
     return () => {
       window.claude.off('session:created', createdHandler);
       window.claude.off('session:destroyed', destroyedHandler);
@@ -155,6 +162,7 @@ function AppInner() {
       window.claude.off('session:renamed', renamedHandler);
       window.claude.off('pty:output', ptyModeHandler);
       window.claude.off('status:data', statusHandler);
+      if (uiActionHandler) window.claude.off('ui:action:received', uiActionHandler);
     };
   }, [dispatch]);
 

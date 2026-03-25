@@ -29,6 +29,8 @@ const IPC = {
   REMOTE_GET_CLIENT_COUNT: 'remote:get-client-count',
   REMOTE_GET_CLIENT_LIST: 'remote:get-client-list',
   REMOTE_DISCONNECT_CLIENT: 'remote:disconnect-client',
+  UI_ACTION_BROADCAST: 'ui:action:broadcast',
+  UI_ACTION_RECEIVED: 'ui:action:received',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -78,6 +80,11 @@ contextBridge.exposeInMainWorld('claude', {
       ipcRenderer.on(IPC.SESSION_RENAMED, handler);
       return handler;
     },
+    uiAction: (cb: (action: any) => void) => {
+      const handler = (_e: IpcRendererEvent, action: any) => cb(action);
+      ipcRenderer.on(IPC.UI_ACTION_RECEIVED, handler);
+      return handler;
+    },
   },
   skills: {
     list: (): Promise<any[]> => ipcRenderer.invoke(IPC.SKILLS_LIST),
@@ -105,6 +112,7 @@ contextBridge.exposeInMainWorld('claude', {
     getClientCount: () => ipcRenderer.invoke(IPC.REMOTE_GET_CLIENT_COUNT),
     getClientList: () => ipcRenderer.invoke(IPC.REMOTE_GET_CLIENT_LIST),
     disconnectClient: (clientId: string) => ipcRenderer.invoke(IPC.REMOTE_DISCONNECT_CLIENT, clientId),
+    broadcastAction: (action: any) => ipcRenderer.send(IPC.UI_ACTION_BROADCAST, action),
   },
   off: (channel: string, handler: (...args: any[]) => void) =>
     ipcRenderer.removeListener(channel, handler),

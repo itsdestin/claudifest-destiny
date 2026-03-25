@@ -133,6 +133,9 @@ function handleMessage(data: string): void {
     case 'status:data':
       dispatchEvent('status:data', payload);
       break;
+    case 'ui:action':
+      dispatchEvent('ui:action', payload);
+      break;
   }
 }
 
@@ -238,6 +241,7 @@ export function installShim(): void {
       hookEvent: (cb: Callback) => addListener('hook:event', cb),
       statusData: (cb: Callback) => addListener('status:data', cb),
       sessionRenamed: (cb: Callback) => addListener('session:renamed', cb),
+      uiAction: (cb: Callback) => addListener('ui:action', cb),
     },
     skills: {
       list: () => invoke('skills:list'),
@@ -260,6 +264,7 @@ export function installShim(): void {
       getClientCount: () => invoke('remote:get-client-count'),
       getClientList: () => invoke('remote:get-client-list'),
       disconnectClient: (clientId: string) => invoke('remote:disconnect-client', clientId),
+      broadcastAction: (action: any) => fire('ui:action', action),
     },
     off: (channel: string, handler: Callback) => removeListener(channel, handler),
     removeAllListeners: (channel: string) => removeAllListeners(channel),

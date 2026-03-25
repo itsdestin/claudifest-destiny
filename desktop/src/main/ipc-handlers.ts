@@ -207,6 +207,16 @@ export function registerIpcHandlers(
     ipcMain.handle(IPC.REMOTE_DISCONNECT_CLIENT, async (_event, clientId: string) => {
       return remoteServer?.disconnectClient(clientId) ?? false;
     });
+
+    // UI action sync: Electron window broadcasts an action → forward to all remote clients
+    ipcMain.on(IPC.UI_ACTION_BROADCAST, (_event, action: any) => {
+      remoteServer?.broadcast({ type: 'ui:action', payload: action });
+    });
+
+    // UI action sync: Remote client broadcasts an action → forward to Electron window
+    sessionManager.on('ui-action', (action: any) => {
+      send(IPC.UI_ACTION_RECEIVED, action);
+    });
   }
 
   // PTY input (fire-and-forget, not request-response)
