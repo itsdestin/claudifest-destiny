@@ -56,11 +56,15 @@ function AppInner() {
 
   useEffect(() => {
     const createdHandler = window.claude.on.sessionCreated((info) => {
-      setSessions((prev) => [...prev, info]);
-      setSessionId(info.id);
-      setViewModes((prev) => new Map(prev).set(info.id, 'chat'));
-      setPermissionModes((prev) => new Map(prev).set(info.id, info.permissionMode || 'normal'));
-      dispatch({ type: 'SESSION_INIT', sessionId: info.id });
+      setSessions((prev) => {
+        // Deduplicate — replay buffers resend session:created for existing sessions
+        if (prev.some((s) => s.id === info.id)) return prev;
+        dispatch({ type: 'SESSION_INIT', sessionId: info.id });
+        return [...prev, info];
+      });
+      setSessionId((prev) => prev ?? info.id);
+      setViewModes((prev) => prev.has(info.id) ? prev : new Map(prev).set(info.id, 'chat'));
+      setPermissionModes((prev) => prev.has(info.id) ? prev : new Map(prev).set(info.id, info.permissionMode || 'normal'));
     });
 
     const destroyedHandler = window.claude.on.sessionDestroyed((id) => {

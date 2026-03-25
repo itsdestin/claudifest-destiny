@@ -79,6 +79,31 @@ export class RemoteServer {
     this.wss = new WebSocketServer({ server: this.httpServer, path: '/ws' });
     this.wss.on('connection', (ws, req) => this.handleConnection(ws, req));
 
+    // Dev mode: proxy WebSocket upgrades (non-/ws) to Vite for HMR
+    if (!hasStaticBuild) {
+      this.httpServer.on('upgrade', (req, socket, head) => {
+        if (req.url === '/ws') return; // handled by our WebSocketServer
+        const viteWsUrl = viteDevUrl.replace('http', 'ws');
+        const proxyUrl = new URL(req.url || '/', viteWsUrl);
+        const proxyReq = http.request(proxyUrl, {
+          method: 'GET',
+          headers: req.headers,
+        });
+        proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
+          socket.write(
+            `HTTP/1.1 101 Switching Protocols\r\n` +
+            Object.entries(proxyRes.headers).map(([k, v]) => `${k}: ${v}`).join('\r\n') +
+            '\r\n\r\n'
+          );
+          if (proxyHead.length) socket.write(proxyHead);
+          proxySocket.pipe(socket);
+          socket.pipe(proxySocket);
+        });
+        proxyReq.on('error', () => socket.destroy());
+        proxyReq.end();
+      });
+    }
+
     // Status data polling — independent of ipc-handlers.ts
     const usageCachePath = path.join(os.homedir(), '.claude', '.usage-cache.json');
     const announcementCachePath = path.join(os.homedir(), '.claude', '.announcement-cache.json');
