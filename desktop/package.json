@@ -4,6 +4,7 @@
   "description": "Desktop GUI for Claude Code with the DestinClaude toolkit",
   "main": "dist/main/main.js",
   "scripts": {
+    "postinstall": "node scripts/patch-node-pty.js",
     "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && npm run dev:main\"",
     "dev:main": "tsc -p tsconfig.json && node -e \"require('fs').cpSync('src/main/pty-worker.js','dist/main/pty-worker.js')\" && electron .",
     "dev:renderer": "vite",
