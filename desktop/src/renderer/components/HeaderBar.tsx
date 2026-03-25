@@ -10,11 +10,11 @@ interface SessionEntry {
   permissionMode: PermissionMode;
 }
 
-const MODE_CONFIG: Record<PermissionMode, { label: string; color: string; bg: string; border: string }> = {
-  normal:        { label: 'NORMAL',         color: '#9CA3AF', bg: 'rgba(156,163,175,0.15)', border: 'rgba(156,163,175,0.25)' },
-  'auto-accept': { label: 'ACCEPT CHANGES', color: '#A78BFA', bg: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.25)' },
-  plan:          { label: 'PLAN MODE',      color: '#2DD4BF', bg: 'rgba(45,212,191,0.15)',  border: 'rgba(45,212,191,0.25)' },
-  bypass:        { label: 'BYPASS PERMISSIONS', color: '#FA8072', bg: 'rgba(250,128,114,0.15)', border: 'rgba(250,128,114,0.25)' },
+const MODE_CONFIG: Record<PermissionMode, { label: string; shortLabel: string; color: string; bg: string; border: string }> = {
+  normal:        { label: 'NORMAL',             shortLabel: 'NORMAL',  color: '#9CA3AF', bg: 'rgba(156,163,175,0.15)', border: 'rgba(156,163,175,0.25)' },
+  'auto-accept': { label: 'ACCEPT CHANGES',     shortLabel: 'ACCEPT',  color: '#A78BFA', bg: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.25)' },
+  plan:          { label: 'PLAN MODE',           shortLabel: 'PLAN',    color: '#2DD4BF', bg: 'rgba(45,212,191,0.15)',  border: 'rgba(45,212,191,0.25)' },
+  bypass:        { label: 'BYPASS PERMISSIONS',  shortLabel: 'BYPASS',  color: '#FA8072', bg: 'rgba(250,128,114,0.15)', border: 'rgba(250,128,114,0.25)' },
 };
 
 interface Props {
@@ -69,7 +69,8 @@ export default function HeaderBar({
           }}
           title="Click to cycle permission mode (Shift+Tab)"
         >
-          {cfg.label}
+          <span className="sm:hidden">{cfg.shortLabel}</span>
+          <span className="hidden sm:inline">{cfg.label}</span>
         </button>
         {model && (
           <span className="text-[10px] text-gray-500 truncate max-w-[120px] hidden sm:inline">
