@@ -27,7 +27,7 @@ function LoginScreen({ onLogin }: { onLogin: (password: string) => Promise<void>
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+    <div className="flex items-center justify-center h-full bg-gray-900 text-white">
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-72">
         <h1 className="text-xl font-bold text-center mb-2">DestinCode Remote</h1>
         <input
@@ -97,7 +97,7 @@ function Root() {
   }
 
   if (!shimReady) {
-    return <div className="flex items-center justify-center h-screen bg-gray-900 text-white text-sm">Loading...</div>;
+    return <div className="flex items-center justify-center h-full bg-gray-900 text-white text-sm">Loading...</div>;
   }
 
   return <LoginScreen onLogin={handleLogin} />;

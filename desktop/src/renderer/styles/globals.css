@@ -29,6 +29,12 @@
   --font-mono: 'Cascadia Mono', 'Cascadia Code', 'Fira Code', monospace;
 }
 
+/* Use dynamic viewport height on mobile — prevents content from scrolling behind browser chrome */
+html, body, #root {
+  height: 100dvh;
+  overflow: hidden;
+}
+
 /* xterm.js needs explicit height to fill its container */
 .xterm {
   height: 100%;

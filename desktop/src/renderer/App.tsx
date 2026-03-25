@@ -259,7 +259,7 @@ function AppInner() {
   const announcementText = statusData.announcement?.message || null;
 
   return (
-    <div className="flex w-screen h-screen bg-gray-950 text-gray-200">
+    <div className="flex w-screen h-full bg-gray-950 text-gray-200">
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {sessions.length > 0 && sessionId && currentSession ? (
