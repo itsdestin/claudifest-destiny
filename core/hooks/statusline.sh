@@ -125,8 +125,13 @@ printf '%b\n' "$MODEL_LINE"
 # --- Line 4: Rate limit info (via usage-fetch.js) ---
 # Find hooks directory: config-based lookup (works with copies on Windows), symlink fallback
 HOOKS_DIR=""
-if command -v node &>/dev/null && [[ -f "$HOME/.claude/toolkit-state/config.json" ]]; then
-    _TK=$(node -e "try{const c=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(c.toolkit_root)console.log(c.toolkit_root)}catch{}" "$HOME/.claude/toolkit-state/config.json" 2>/dev/null)
+_TK=""
+if command -v node &>/dev/null; then
+    for _cfg in "$HOME/.claude/toolkit-state/config.local.json" "$HOME/.claude/toolkit-state/config.json"; do
+        [[ ! -f "$_cfg" ]] && continue
+        _TK=$(node -e "try{const c=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(c.toolkit_root)console.log(c.toolkit_root)}catch{}" "$_cfg" 2>/dev/null)
+        [[ -n "$_TK" ]] && break
+    done
     [[ -n "$_TK" && -d "$_TK/core/hooks" ]] && HOOKS_DIR="$_TK/core/hooks"
 fi
 if [[ -z "$HOOKS_DIR" ]]; then

@@ -38,6 +38,8 @@ The Backup & Sync system keeps Claude Code's configuration, memory, skills, and 
 | Hook output via `hookSpecificOutput` JSON | `git-sync.sh` emits structured JSON so Claude Code surfaces the message in the conversation, not just in verbose mode. | Plain stdout (only visible in verbose mode), stderr (same issue). |
 | Write guard via centralized registry | Same-machine concurrency protection using a PreToolUse hook that checks `~/.claude/.write-registry.json` before Write/Edit. Blocks if a different, still-running PID last wrote the file. Registry updated in `git-sync.sh` PostToolUse, shared mutex serializes access. | Per-session tracking (catches manual edits but adds cleanup burden), file-system watcher (robust but adds daemon), no protection (silent overwrites). |
 | Multi-project support via path-based routing | A single `git-sync.sh` hook routes files to the correct Git repo based on path prefix. Each project gets independent push markers and rebase-fail counters. Branch detection is automatic via `git symbolic-ref`. | Separate hook scripts per project (duplicated logic, harder to maintain), monorepo (loses independent history and permissions). |
+| Portable/local config split | `config.json` holds portable user preferences (synced cross-device). `config.local.json` holds machine-specific values — platform, toolkit_root, binary paths, capability flags — rebuilt by `session-start.sh` every session. `config_get()` in backup-common.sh reads local first, portable second. Eliminates cross-device conflicts from machine-specific data in synced config. | Key-level merge during sync (complex bash merge logic), environment variables (not persistent), template with placeholders (adds build step). |
+| mcp-config.json excluded from sync | `mcp-config.json` is extracted from `.claude.json` for local readability but NOT git-committed or synced. MCP server definitions contain absolute paths and platform-specific servers that break on other devices. Each device rebuilds its own via the Claude Code UI or setup wizard. | Sync with path rewriting (fragile), per-platform config files (proliferation). |
 
 ## Current Implementation
 
@@ -77,7 +79,7 @@ The hook fires on every PostToolUse for Write/Edit but immediately exits if the 
 | OAuth | `*gws/client_secret.json` |
 | Plugins | `*installed_plugins.json`, `*blocklist.json` |
 | Skills | `*/skills/*` |
-| MCP servers | `*/mcp-servers/*` (includes `mcp-config.json` — extracted mcpServers block from `.claude.json`) |
+| MCP servers | `*/mcp-servers/*` (excludes `mcp-config.json` — machine-specific, gitignored since v4.1) |
 | Plans | `*/plans/*` |
 | Specs | `*/specs/*` |
 | History | `*history.jsonl` |
@@ -107,6 +109,7 @@ The hook fires on every PostToolUse for Write/Edit but immediately exits if the 
 | `~/.claude/.write-registry.json` | Write guard: last-writer PID + hash per tracked file | git-sync (via `update_registry`) |
 | `~/.claude/.rebase-fail-count-claude-mobile` | Consecutive rebase failure counter for Claude Mobile | git-sync |
 | `~/.claude/backup-meta.json` | Schema version and toolkit version stamp, written by personal-sync after each successful sync cycle | personal-sync |
+| `~/.claude/toolkit-state/config.local.json` | Machine-specific config (platform, toolkit_root, binary paths). Rebuilt every session start. Never synced. | session-start (`rebuild_local_config`) |
 
 ## Dependencies
 
@@ -132,7 +135,7 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
-| 2026-03-24 | 4.1 | Critical fix: session-start Drive pull used `rclone sync` for memory, which deletes local files (including conversation .jsonl) not present on the remote. Changed to `rclone copy --update`. This was silently destroying conversation history on every session start when Drive backend was configured. | Bugfix | Destin |
+| 2026-03-24 | 4.1 | Cross-device live sync: split config.json into portable config.json (synced) + config.local.json (rebuilt per-device by session-start). mcp-config.json excluded from git tracking and personal-sync (machine-specific). config_get() upgraded to read both files with local precedence. See cross-device-sync-design (03-24-2026). | Update | Destin |
 | 2026-03-23 | 4.0 | Refactored: symlink-based ownership detection replaces drive-archive.sh — all backend replication now handled by personal-sync.sh. New shared library (lib/backup-common.sh), migration framework (lib/migrate.sh, migrations/v1.json), toolkit integrity check in session-start. See backup-system-refactor-design (03-22-2026). | Architecture | — |
 | 2026-03-18 | 3.3 | Added Interactive Restore section: setup wizard now handles restore for returning users via GitHub or Drive, complementing the existing manual restore.sh path. | Update | — |
 | 2026-03-16 | 3.2 | Multi-project backup support: git-sync.sh now routes files to the correct Git repo based on path prefix (`~/.claude/` → claude-config, `~/claude-mobile/` → claude-mobile). Each project gets independent push markers and rebase-fail counters. Branch detection is automatic. New mandate: all Claude projects must be backed up to private GitHub repos by default. | Update | — |

@@ -29,6 +29,7 @@ Backs up personal data (memory files, CLAUDE.md, toolkit config, encyclopedia ca
 | Multi-backend loop | `PERSONAL_SYNC_BACKEND` can be comma-separated (e.g., `"drive,github"`) to enable multiple backends simultaneously. The hook iterates over each backend in sequence; failure in one is logged but does not block others. | Single-backend only (rejected: users may want redundancy), parallel execution (rejected: adds complexity, race conditions on shared state files). |
 | Expanded backup scope | Now includes encyclopedia cache (`~/.claude/encyclopedia/`) and user-created skills (non-symlinks in `~/.claude/skills/`) in addition to memory, CLAUDE.md, and toolkit config. Symlinks into TOOLKIT_ROOT are explicitly excluded (those are toolkit-owned code). | Toolkit-code inclusion (rejected: toolkit code belongs in the public repo, not personal backup), encyclopedia exclusion (rejected: cache is valuable for cross-device continuity). |
 | backup-meta.json | Written after each successful sync cycle with schema version, toolkit version, timestamp, and platform. Enables the migration framework to detect version skew when restoring on a new machine. | No metadata file (rejected: migration framework needs version info to know which migrations to run). |
+| Machine-specific files excluded | `config.local.json` and `mcp-config.json` are explicitly excluded from sync scope via early-exit in the path filter. Both contain absolute paths and platform-specific values that break on other devices. `config.local.json` is rebuilt by session-start; `mcp-config.json` is extracted from `.claude.json`. | Sync with merge logic (fragile in bash), sync everything and fix on restore (original approach, caused the cross-device conflicts). |
 
 ## What Gets Synced
 
@@ -47,6 +48,8 @@ Backs up personal data (memory files, CLAUDE.md, toolkit config, encyclopedia ca
 - Toolkit code (skills, hooks, commands — handled by public toolkit repo)
 - Sessions, shell-snapshots, tasks (ephemeral runtime state)
 - Credentials, tokens, secrets (security risk)
+- `config.local.json` (machine-specific config — rebuilt by session-start every session)
+- `mcp-config.json` (machine-specific MCP server definitions — extracted from `.claude.json`)
 
 ## Backend Configuration
 
@@ -182,7 +185,7 @@ New block in `session-start.sh`, after the encyclopedia cache sync:
 
 1. **Read config** — load `PERSONAL_SYNC_BACKEND` from config.json. If unset, run auto-detection (see above).
 2. **Pull** — based on backend:
-   - **Drive:** `rclone copy --update` from `gdrive:{DRIVE_ROOT}/Backup/personal/` to local paths (MUST use `copy`, not `sync` — `sync` deletes local files not present on remote)
+   - **Drive:** `rclone sync` from `gdrive:{DRIVE_ROOT}/Backup/personal/` to local paths
    - **GitHub:** `cd` to local repo checkout, `git pull personal-sync main`
 3. **Conflict handling** — if pull fails, log a warning and continue with local state. Never block session start.
 
@@ -230,7 +233,7 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
-| 2026-03-24 | 2.1 | Critical fix: session-start Drive pull used `rclone sync` for memory which destroyed local conversation .jsonl files. Changed to `rclone copy --update`. | Bugfix | Destin |
+| 2026-03-24 | 2.1 | Excluded config.local.json and mcp-config.json from sync scope (machine-specific, cause cross-device conflicts). Added design decision documenting the exclusion rationale. See cross-device-sync-design (03-24-2026). | Update | Destin |
 | 2026-03-23 | 2.0 | Added iCloud backend, multi-backend loop, expanded scope (encyclopedia, user-created skills), backup-meta.json writing. Absorbed Drive archive from git-sync.sh. See backup-system-refactor-design (03-22-2026). | Architecture | — |
 | 2026-03-17 | 1.0 | Initial spec | New | — |
 | 2026-03-19 | 1.1 | Added auto-detection/self-healing for Drive and iCloud backends; added `"icloud"` as a backend option; documented the false-warning bug fix | Update | Destin |
