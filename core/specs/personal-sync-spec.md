@@ -1,6 +1,6 @@
 # Personal Data Sync — Spec
 
-**Version:** 2.2
+**Version:** 2.3
 **Last updated:** 2026-03-25
 **Feature location:** `core/hooks/personal-sync.sh`, session-start integration in `core/hooks/session-start.sh`
 
@@ -29,6 +29,9 @@ Backs up personal data (memory files, CLAUDE.md, toolkit config, encyclopedia ca
 | Multi-backend loop | `PERSONAL_SYNC_BACKEND` can be comma-separated (e.g., `"drive,github"`) to enable multiple backends simultaneously. The hook iterates over each backend in sequence; failure in one is logged but does not block others. | Single-backend only (rejected: users may want redundancy), parallel execution (rejected: adds complexity, race conditions on shared state files). |
 | Expanded backup scope | Now includes encyclopedia cache (`~/.claude/encyclopedia/`) and user-created skills (non-symlinks in `~/.claude/skills/`) in addition to memory, CLAUDE.md, and toolkit config. Symlinks into TOOLKIT_ROOT are explicitly excluded (those are toolkit-owned code). | Toolkit-code inclusion (rejected: toolkit code belongs in the public repo, not personal backup), encyclopedia exclusion (rejected: cache is valuable for cross-device continuity). |
 | backup-meta.json | Written after each successful sync cycle with schema version, toolkit version, timestamp, and platform. Enables the migration framework to detect version skew when restoring on a new machine. | No metadata file (rejected: migration framework needs version info to know which migrations to run). |
+| Conversations synced per-slug | Conversation `.jsonl` files pushed per-slug (`conversations/{slug}/{session-id}.jsonl`) to all backends. Uses `rclone copy --checksum` for Drive (append-only files where mtime is unreliable cross-platform). Other categories continue using `--update`. `aggregate_conversations()` symlinks all conversations into the home-directory slug for unified `/resume`. See cross-device-sync-design (03-25-2026) D3-D6. | Keep in git-sync only (requires git repo), flat directory (loses project origin), copy instead of symlink (wastes disk). |
+| Machine-specific files excluded | `config.local.json` and `mcp-config.json` excluded via early-exit in path filter. Both contain absolute paths and platform-specific values. `config.local.json` rebuilt by session-start; `mcp-config.json` extracted from `.claude.json`. See cross-device-sync-design (03-25-2026) D1-D2. | Sync with merge logic (fragile in bash), sync everything and fix on restore. |
+| Legacy conversation migration | One-time `rclone copy` from `gdrive:Claude/Backup/conversations/` to `gdrive:Claude/Backup/personal/conversations/`, gated by marker file. Uses copy (not move) to preserve data for unmigrated devices. See cross-device-sync-design (03-25-2026) D9. | rclone move (destructive), no migration (two locations forever). |
 
 ## What Gets Synced
 
@@ -40,12 +43,15 @@ Backs up personal data (memory files, CLAUDE.md, toolkit config, encyclopedia ca
 | Encyclopedia cache | `~/.claude/encyclopedia/` | Local cache of encyclopedia source files |
 | User-created skills | `~/.claude/skills/*/` (non-symlinks) | Skills created by user, not from toolkit repo |
 | Backup metadata | `~/.claude/backup-meta.json` | Schema version for migration framework |
+| Conversations | `~/.claude/projects/*/*.jsonl` | Session transcripts, cross-device /resume |
 
 ### What does NOT get synced
 
 - Journal entries (written directly to Drive by journaling skill)
 - Toolkit code (skills, hooks, commands — handled by public toolkit repo)
-- Sessions, shell-snapshots, tasks (ephemeral runtime state)
+- Shell-snapshots, tasks (ephemeral runtime state)
+- `config.local.json` (machine-specific config — rebuilt by session-start every session)
+- `mcp-config.json` (machine-specific MCP server definitions — extracted from `.claude.json`)
 - Credentials, tokens, secrets (security risk)
 
 ## Backend Configuration
@@ -79,6 +85,11 @@ Two new keys in `~/.claude/toolkit-state/config.json`:
   │   │   └── ...
   │   └── <another-project-key>/
   │       └── ...
+  ├── conversations/                # Conversation transcripts
+  │   ├── <project-slug>/
+  │   │   ├── <session-id>.jsonl
+  │   │   └── ...
+  │   └── ...
   ├── CLAUDE.md
   └── toolkit-state/
       └── config.json
@@ -91,7 +102,7 @@ Two new keys in `~/.claude/toolkit-state/config.json`:
 - **Repo:** User-provided private repo URL
 - **Remote name:** `personal-sync` (to avoid colliding with `origin` on any existing repo)
 - **Branch:** `main`
-- **Repo structure:** Same directory layout as Drive (memory/, CLAUDE.md, toolkit-state/)
+- **Repo structure:** Same directory layout as Drive (memory/, conversations/{slug}/, CLAUDE.md, toolkit-state/)
 - **Init:** On first use, if the repo is empty, the hook initializes it with a README and .gitignore
 - **Push:** `git add -A && git commit -m "auto: personal sync" && git push personal-sync main`
 - **Pull:** `git pull personal-sync main` (at session start)
@@ -116,6 +127,9 @@ Two new keys in `~/.claude/toolkit-state/config.json`:
   ├── CLAUDE.md
   ├── toolkit-state/
   │   └── config.json
+  ├── conversations/
+  │   └── <project-slug>/
+  │       └── ...
   ├── encyclopedia/
   │   └── ...
   └── skills/
@@ -184,7 +198,9 @@ New block in `session-start.sh`, after the encyclopedia cache sync:
 2. **Pull** — based on backend:
    - **Drive:** `rclone copy --update` from `gdrive:{DRIVE_ROOT}/Backup/personal/` to local paths (MUST use `copy`, not `sync` — `sync` deletes local files not present on remote)
    - **GitHub:** `cd` to local repo checkout, `git pull personal-sync main`
-3. **Conflict handling** — if pull fails, log a warning and continue with local state. Never block session start.
+3. **Conversation pull** — same mechanics as memory pull, but using `--checksum` for Drive and per-slug directory mapping. After pull, `aggregate_conversations()` symlinks all `.jsonl` files into the home-directory slug.
+4. **Legacy conversation migration** — one-time `rclone copy` from `gdrive:Claude/Backup/conversations/` to `gdrive:Claude/Backup/personal/conversations/`, gated by `~/.claude/toolkit-state/.legacy-conversations-migrated` marker file.
+5. **Conflict handling** — if pull fails, log a warning and continue with local state. Never block session start.
 
 ### Pull target mapping
 
@@ -193,6 +209,7 @@ New block in `session-start.sh`, after the encyclopedia cache sync:
 | `personal/memory/{project-key}/` | `~/.claude/projects/{project-key}/memory/` |
 | `personal/CLAUDE.md` | `~/.claude/CLAUDE.md` |
 | `personal/toolkit-state/config.json` | `~/.claude/toolkit-state/config.json` |
+| `personal/conversations/{slug}/*.jsonl` | `~/.claude/projects/{slug}/*.jsonl` |
 
 ## Setup Wizard Integration
 
@@ -230,6 +247,7 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
+| 2026-03-25 | 2.3 | Cross-device conversation sync: conversations added as synced category (per-slug, --checksum for Drive), home-directory aggregation via symlinks, config.local.json and mcp-config.json excluded, legacy conversation migration (D9), renamed get_primary_backend to get_preferred_backend. See cross-device-sync-design (03-25-2026). | Update | Destin |
 | 2026-03-25 | 2.2 | Three fixes: (1) Push operations changed from `rclone sync` to `rclone copy` — sync propagated accidental local deletions to Drive, destroying backup copies. (2) Pull path mapping fixed — memory files were restored to project root instead of `memory/` subdirectory. (3) Windows slug calculation fixed — `cygpath -w` used instead of `realpath` to match Claude Code's slug algorithm. Also fixed git-sync stash pop to emit visible `hookSpecificOutput` warning instead of silent stderr. | Bugfix | Destin |
 | 2026-03-24 | 2.1 | Critical fix: session-start Drive pull used `rclone sync` for memory which destroyed local conversation .jsonl files. Changed to `rclone copy --update`. | Bugfix | Destin |
 | 2026-03-23 | 2.0 | Added iCloud backend, multi-backend loop, expanded scope (encyclopedia, user-created skills), backup-meta.json writing. Absorbed Drive archive from git-sync.sh. See backup-system-refactor-design (03-22-2026). | Architecture | — |
