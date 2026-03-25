@@ -46,6 +46,7 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
   const [passwordStatus, setPasswordStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [loading, setLoading] = useState(true);
   const [showAddDevice, setShowAddDevice] = useState(false);
+  const [showSetupQR, setShowSetupQR] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Load config, detect Tailscale, and get client list on open
@@ -53,6 +54,7 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
     if (!open) return;
     setLoading(true);
     setShowAddDevice(false);
+    setShowSetupQR(false);
     const claude = (window as any).claude;
     if (!claude?.remote) { setLoading(false); return; }
     Promise.all([
@@ -172,7 +174,7 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
 
                   {tailscale?.installed && tailscale.url && config?.hasPassword ? (
                     /* Tailscale ready — show button that expands to QR */
-                    showAddDevice ? (
+                    showSetupQR ? (
                       <div className="mt-2">
                         <p className="text-[10px] text-gray-500 mb-2">Scan to connect a device:</p>
                         <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
@@ -188,7 +190,7 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
                       </div>
                     ) : (
                       <button
-                        onClick={() => setShowAddDevice(true)}
+                        onClick={() => setShowSetupQR(true)}
                         className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium"
                       >
                         Set Up Remote Access
