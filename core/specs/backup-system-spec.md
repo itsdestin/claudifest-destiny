@@ -1,8 +1,8 @@
 # Backup & Sync -- Spec
 
-**Version:** 4.1
+**Version:** 4.2
 **Last updated:** 2026-03-24
-**Feature location:** `core/hooks/git-sync.sh`, `core/hooks/personal-sync.sh`, `core/hooks/lib/backup-common.sh`
+**Feature location:** `core/hooks/git-sync.sh`, `core/hooks/personal-sync.sh`, `core/hooks/lib/backup-common.sh`, `core/skills/sync/SKILL.md`
 
 ## Purpose
 
@@ -38,6 +38,8 @@ The Backup & Sync system keeps Claude Code's configuration, memory, skills, and 
 | Hook output via `hookSpecificOutput` JSON | `git-sync.sh` emits structured JSON so Claude Code surfaces the message in the conversation, not just in verbose mode. | Plain stdout (only visible in verbose mode), stderr (same issue). |
 | Write guard via centralized registry | Same-machine concurrency protection using a PreToolUse hook that checks `~/.claude/.write-registry.json` before Write/Edit. Blocks if a different, still-running PID last wrote the file. Registry updated in `git-sync.sh` PostToolUse, shared mutex serializes access. | Per-session tracking (catches manual edits but adds cleanup burden), file-system watcher (robust but adds daemon), no protection (silent overwrites). |
 | Multi-project support via path-based routing | A single `git-sync.sh` hook routes files to the correct Git repo based on path prefix. Each project gets independent push markers and rebase-fail counters. Branch detection is automatic via `git symbolic-ref`. | Separate hook scripts per project (duplicated logic, harder to maintain), monorepo (loses independent history and permissions). |
+| Project discovery via `discover_projects()` | `session-start.sh` scans 7 common directories (`~/projects/`, `~/repos/`, `~/code/`, `~/dev/`, `~/src/`, `~/Documents/`, `~/Desktop/`) at depth 1 for git repos not already tracked by git-sync or registered in `tracked-projects.json`. Results written to `~/.claude/.unsynced-projects` for the `/sync` skill to consume. | Manual-only registration (users forget), recursive scan (too slow on large filesystems), file watcher daemon (added complexity). |
+| `/sync` skill as the resolution layer | The detect → display → resolve pipeline: `session-start.sh` detects issues and writes `.sync-warnings`; `statusline.sh` displays them with a `/sync for info` hint; the `/sync` skill provides interactive resolution (status dashboard, warning resolution, project onboarding, force sync). The skill reads state files but does not duplicate hook logic. | Automatic resolution in hooks (too opinionated, may take unwanted actions), separate command per warning type (fragmented UX). |
 
 ## Current Implementation
 
@@ -51,6 +53,46 @@ The hook supports multiple independent Git repositories. File path routing deter
 | Claude Mobile | `~/claude-mobile/` | `{github-user}/claude-mobile` (private) | `master` |
 
 Each project has independent push markers and rebase-fail counters. Drive archive only runs for the Claude Config repo.
+
+### Project Discovery & Registration
+
+`discover_projects()` in `lib/backup-common.sh` scans common working directories for git repos not already tracked. Called by `session-start.sh` on every session start:
+
+1. **Build skip set** — hardcoded git-sync paths (`~/.claude/`, `~/claude-mobile/`) plus all `projects[].path` and `ignored[]` entries from `tracked-projects.json`
+2. **Scan** — checks depth-1 children of `~/projects/`, `~/repos/`, `~/code/`, `~/dev/`, `~/src/`, `~/Documents/`, `~/Desktop/` for `.git/` directories
+3. **Output** — writes discovered paths to `~/.claude/.unsynced-projects` (one per line, sorted, deduped)
+4. **Warn** — writes `PROJECTS:<count>` to `~/.claude/.sync-warnings` for statusline display
+
+The `/sync` skill consumes `.unsynced-projects` and walks the user through registration (create GitHub repo, register in `tracked-projects.json`) or ignoring each project.
+
+**`tracked-projects.json` schema:**
+```json
+{
+  "projects": [
+    { "path": "/c/Users/user/projects/myapp", "remote": "user/myapp", "registered": "2026-03-24T..." }
+  ],
+  "ignored": [
+    "/c/Users/user/Documents/old-experiment"
+  ]
+}
+```
+
+### Sync Status & Resolution (`/sync` skill)
+
+The `/sync` skill (`core/skills/sync/SKILL.md`) completes the detect → display → resolve pipeline for sync health. It provides four capabilities:
+
+1. **Status dashboard** — reads state files (`.sync-status`, `.push-marker`, `.personal-sync-marker`, `backup-meta.json`, `tracked-projects.json`, `.sync-warnings`) and displays a unified overview of Git sync, personal data sync, skill backup, and project tracking status.
+
+2. **Warning resolution** — walks through each active warning from `.sync-warnings` with targeted diagnosis and actionable options:
+   - `OFFLINE` → advisory (resolves automatically)
+   - `PERSONAL:NOT_CONFIGURED` → refers to `/setup-wizard`
+   - `PERSONAL:STALE` → diagnoses cause (hook missing? backend unreachable? debounce stuck?), offers force sync
+   - `SKILLS:<names>` → offers to add unbackedup skills to git tracking
+   - `PROJECTS:<count>` → transitions to project onboarding
+
+3. **Project onboarding** — interactive per-project flow reading `.unsynced-projects`: detect git/remote status, offer to create GitHub repos, register in `tracked-projects.json`, or ignore.
+
+4. **Force sync** — manual trigger (`/sync now` or trigger phrases from mandate) that resets debounce markers and runs git-sync + personal-sync immediately. Fulfills the manual backup mandate.
 
 ### Interactive Restore (Setup Wizard)
 
@@ -107,6 +149,8 @@ The hook fires on every PostToolUse for Write/Edit but immediately exits if the 
 | `~/.claude/.write-registry.json` | Write guard: last-writer PID + hash per tracked file | git-sync (via `update_registry`) |
 | `~/.claude/.rebase-fail-count-claude-mobile` | Consecutive rebase failure counter for Claude Mobile | git-sync |
 | `~/.claude/backup-meta.json` | Schema version and toolkit version stamp, written by personal-sync after each successful sync cycle | personal-sync |
+| `~/.claude/.unsynced-projects` | Discovered git repos not tracked by git-sync or registered | session-start (via `discover_projects()`) |
+| `~/.claude/tracked-projects.json` | Project registry — tracked and ignored project paths | `/sync` skill |
 
 ## Dependencies
 
@@ -123,6 +167,7 @@ The hook fires on every PostToolUse for Write/Edit but immediately exits if the 
   - **All tracked files** -- any file matching the tracked-files filter implicitly depends on this system for cross-device persistence.
   - **CLAUDE.md manual backup instructions** -- references the hook scripts directly and documents trigger phrases.
   - **Specs INDEX** (`~/.claude/specs/INDEX.md`) -- lists this spec.
+  - **`/sync` skill** (`core/skills/sync/SKILL.md`) -- reads state files to provide status dashboard and interactive resolution.
 
 ## Known Issues & Planned Updates
 
@@ -132,6 +177,7 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
+| 2026-03-24 | 4.2 | Added `/sync` skill and project discovery. `discover_projects()` in backup-common.sh scans common directories for untracked git repos; session-start.sh now actively writes `.unsynced-projects`. The `/sync` skill provides status dashboard, warning resolution, project onboarding, and force sync — fulfilling the manual backup mandate (line 19). New state files: `.unsynced-projects`, `tracked-projects.json`. New design decisions: project discovery, `/sync` as resolution layer. | Update | Destin |
 | 2026-03-24 | 4.1 | Critical fix: session-start Drive pull used `rclone sync` for memory, which deletes local files (including conversation .jsonl) not present on the remote. Changed to `rclone copy --update`. This was silently destroying conversation history on every session start when Drive backend was configured. | Bugfix | Destin |
 | 2026-03-23 | 4.0 | Refactored: symlink-based ownership detection replaces drive-archive.sh — all backend replication now handled by personal-sync.sh. New shared library (lib/backup-common.sh), migration framework (lib/migrate.sh, migrations/v1.json), toolkit integrity check in session-start. See backup-system-refactor-design (03-22-2026). | Architecture | — |
 | 2026-03-18 | 3.3 | Added Interactive Restore section: setup wizard now handles restore for returning users via GitHub or Drive, complementing the existing manual restore.sh path. | Update | — |
