@@ -16,8 +16,17 @@ const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_FAILURES = 5;
 
 interface AuthenticatedClient {
+  id: string;
   ws: WebSocket;
   token: string;
+  ip: string;
+  connectedAt: number;
+}
+
+export interface ClientInfo {
+  id: string;
+  ip: string;
+  connectedAt: number;
 }
 
 export class RemoteServer {
@@ -158,6 +167,27 @@ export class RemoteServer {
     return this.clients.size;
   }
 
+  /** List all connected remote clients. */
+  getClientList(): ClientInfo[] {
+    return Array.from(this.clients).map(c => ({
+      id: c.id,
+      ip: c.ip,
+      connectedAt: c.connectedAt,
+    }));
+  }
+
+  /** Disconnect a specific client by ID. */
+  disconnectClient(clientId: string): boolean {
+    for (const client of this.clients) {
+      if (client.id === clientId) {
+        client.ws.close(4002, 'Disconnected by admin');
+        this.clients.delete(client);
+        return true;
+      }
+    }
+    return false;
+  }
+
   // --- Event handlers for buffering ---
 
   private onPtyOutput = (sessionId: string, data: string) => {
@@ -284,7 +314,7 @@ export class RemoteServer {
     if (this.config.trustTailscale && this.config.isTailscaleIp(ip)) {
       const token = randomUUID();
       this.tokens.set(token, true);
-      this.addClient(ws, token);
+      this.addClient(ws, token, ip);
       ws.send(JSON.stringify({ type: 'auth:ok', token }));
       this.replayBuffers(ws);
       return;
@@ -327,7 +357,7 @@ export class RemoteServer {
           this.clearFailedAttempts(ip);
           const token = msg.token && this.tokens.has(msg.token) ? msg.token : randomUUID();
           this.tokens.set(token, true);
-          this.addClient(ws, token);
+          this.addClient(ws, token, ip);
           ws.send(JSON.stringify({ type: 'auth:ok', token }));
           this.replayBuffers(ws);
         } else {
@@ -344,8 +374,8 @@ export class RemoteServer {
     ws.on('message', authHandler);
   }
 
-  private addClient(ws: WebSocket, token: string): void {
-    const client: AuthenticatedClient = { ws, token };
+  private addClient(ws: WebSocket, token: string, ip: string): void {
+    const client: AuthenticatedClient = { id: randomUUID(), ws, token, ip, connectedAt: Date.now() };
     this.clients.add(client);
 
     ws.on('message', (raw) => this.handleMessage(client, raw as Buffer | string));
@@ -497,6 +527,15 @@ export class RemoteServer {
       }
       case 'remote:get-client-count': {
         this.respond(client.ws, type, id, this.getClientCount());
+        break;
+      }
+      case 'remote:get-client-list': {
+        this.respond(client.ws, type, id, this.getClientList());
+        break;
+      }
+      case 'remote:disconnect-client': {
+        const result = this.disconnectClient(payload.clientId || payload);
+        this.respond(client.ws, type, id, result);
         break;
       }
 

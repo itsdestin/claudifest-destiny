@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface RemoteConfig {
@@ -16,6 +16,12 @@ interface TailscaleInfo {
   url: string | null;
 }
 
+interface ClientInfo {
+  id: string;
+  ip: string;
+  connectedAt: number;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -23,25 +29,40 @@ interface Props {
   hasActiveSession: boolean;
 }
 
+function timeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
+}
+
 export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSession }: Props) {
   const [config, setConfig] = useState<RemoteConfig | null>(null);
   const [tailscale, setTailscale] = useState<TailscaleInfo | null>(null);
+  const [clients, setClients] = useState<ClientInfo[]>([]);
   const [newPassword, setNewPassword] = useState('');
   const [passwordStatus, setPasswordStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [loading, setLoading] = useState(true);
+  const [showAddDevice, setShowAddDevice] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // Load config and detect Tailscale on open
+  // Load config, detect Tailscale, and get client list on open
   useEffect(() => {
     if (!open) return;
     setLoading(true);
+    setShowAddDevice(false);
     const claude = (window as any).claude;
     if (!claude?.remote) { setLoading(false); return; }
     Promise.all([
       claude.remote.getConfig(),
       claude.remote.detectTailscale(),
-    ]).then(([cfg, ts]: [RemoteConfig, TailscaleInfo]) => {
+      claude.remote.getClientList(),
+    ]).then(([cfg, ts, cls]: [RemoteConfig, TailscaleInfo, ClientInfo[]]) => {
       setConfig(cfg);
       setTailscale(ts);
+      setClients(cls);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [open]);
@@ -50,11 +71,14 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (showAddDevice) setShowAddDevice(false);
+        else onClose();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, onClose]);
+  }, [open, onClose, showAddDevice]);
 
   const handleSetPassword = useCallback(async () => {
     if (!newPassword.trim()) return;
@@ -88,7 +112,21 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
     onClose();
   }, [hasActiveSession, onSendInput, onClose]);
 
-  const isSetUp = config?.hasPassword && tailscale?.installed;
+  const handleDisconnectClient = useCallback(async (clientId: string) => {
+    await (window as any).claude.remote.disconnectClient(clientId);
+    setClients(prev => prev.filter(c => c.id !== clientId));
+    setConfig(prev => prev ? { ...prev, clientCount: Math.max(0, prev.clientCount - 1) } : prev);
+  }, []);
+
+  const handleCopyLink = useCallback(() => {
+    if (tailscale?.url) {
+      navigator.clipboard.writeText(tailscale.url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [tailscale]);
+
+  const hasClients = clients.length > 0;
 
   return (
     <>
@@ -96,7 +134,7 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
       {open && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-          onClick={onClose}
+          onClick={() => { if (showAddDevice) setShowAddDevice(false); else onClose(); }}
         />
       )}
 
@@ -124,22 +162,43 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
             </div>
           ) : (
             <div className="flex-1 px-4 py-4 space-y-6">
-              {/* Setup prompt — shown when not fully configured */}
-              {!isSetUp && (
+
+              {/* Setup banner — shown when no clients connected */}
+              {!hasClients && (
                 <div className="bg-blue-500/10 border border-blue-500/25 rounded-lg p-3">
                   <p className="text-xs text-blue-400 mb-2">
                     Remote access lets you use DestinCode from any device — phone, tablet, or another computer.
                   </p>
-                  <button
-                    onClick={handleRunSetup}
-                    disabled={!hasActiveSession}
-                    className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={!hasActiveSession ? 'Create a session first' : ''}
-                  >
-                    Set Up Remote Access
-                  </button>
-                  {!hasActiveSession && (
-                    <p className="text-[10px] text-gray-500 mt-1 text-center">Create a session first to run setup</p>
+
+                  {/* Show QR if Tailscale is connected and password is set */}
+                  {tailscale?.installed && tailscale.url && config?.hasPassword ? (
+                    <div className="mt-2">
+                      <p className="text-[10px] text-gray-500 mb-2">Scan to connect a device:</p>
+                      <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
+                        <QRCodeSVG value={tailscale.url} size={140} />
+                      </div>
+                      <p className="text-[10px] text-gray-500 mt-2 text-center font-mono">{tailscale.url}</p>
+                      <button
+                        onClick={handleCopyLink}
+                        className="w-full mt-2 px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 text-[10px] text-gray-400"
+                      >
+                        {copied ? 'Copied!' : 'Copy link'}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleRunSetup}
+                        disabled={!hasActiveSession}
+                        className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={!hasActiveSession ? 'Create a session first' : ''}
+                      >
+                        Set Up Remote Access
+                      </button>
+                      {!hasActiveSession && (
+                        <p className="text-[10px] text-gray-500 mt-1 text-center">Create a session first to run setup</p>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -189,15 +248,66 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
                     </button>
                   </div>
                 </div>
-
-                {/* Connected clients */}
-                {config && config.clientCount > 0 && (
-                  <div className="py-2 flex items-center justify-between">
-                    <span className="text-xs text-gray-300">Remote clients</span>
-                    <span className="text-xs text-gray-400">{config.clientCount} connected</span>
-                  </div>
-                )}
               </section>
+
+              {/* Remote Clients section — shown when clients exist */}
+              {hasClients && (
+                <section>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[10px] font-medium text-gray-500 tracking-wider uppercase">Remote Clients</h3>
+                    <button
+                      onClick={() => setShowAddDevice(true)}
+                      className="text-[10px] text-blue-400 hover:text-blue-300"
+                    >
+                      + Add Device
+                    </button>
+                  </div>
+
+                  <div className="space-y-1">
+                    {clients.map(client => (
+                      <div key={client.id} className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-800/50">
+                        <div>
+                          <span className="text-xs text-gray-300 font-mono">{client.ip}</span>
+                          <span className="text-[10px] text-gray-600 ml-2">{timeAgo(client.connectedAt)}</span>
+                        </div>
+                        <button
+                          onClick={() => handleDisconnectClient(client.id)}
+                          className="text-gray-600 hover:text-red-400 text-sm leading-none px-1"
+                          title="Disconnect"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Add Device overlay */}
+              {showAddDevice && tailscale?.url && (
+                <section className="bg-gray-800/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-medium text-gray-300">Add Device</h3>
+                    <button
+                      onClick={() => setShowAddDevice(false)}
+                      className="text-gray-500 hover:text-gray-300 text-sm leading-none"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-500 mb-2">Scan QR or copy link to connect a new device:</p>
+                  <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
+                    <QRCodeSVG value={tailscale.url} size={140} />
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-2 text-center font-mono">{tailscale.url}</p>
+                  <button
+                    onClick={handleCopyLink}
+                    className="w-full mt-2 px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-xs"
+                  >
+                    {copied ? 'Copied!' : 'Copy Link'}
+                  </button>
+                </section>
+              )}
 
               {/* Tailscale section */}
               <section>
@@ -230,16 +340,6 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
                         }`} />
                       </button>
                     </label>
-
-                    {tailscale.url && config?.hasPassword && (
-                      <div className="py-3">
-                        <p className="text-[10px] text-gray-500 mb-2">Scan to open on your phone:</p>
-                        <div className="flex justify-center bg-white rounded-lg p-3 w-fit mx-auto">
-                          <QRCodeSVG value={tailscale.url} size={160} />
-                        </div>
-                        <p className="text-[10px] text-gray-500 mt-2 text-center font-mono">{tailscale.url}</p>
-                      </div>
-                    )}
                   </>
                 ) : (
                   <div className="py-2">

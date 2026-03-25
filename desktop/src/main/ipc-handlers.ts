@@ -164,6 +164,14 @@ export function registerIpcHandlers(
     ipcMain.handle(IPC.REMOTE_GET_CLIENT_COUNT, async () => {
       return remoteServer?.getClientCount() ?? 0;
     });
+
+    ipcMain.handle(IPC.REMOTE_GET_CLIENT_LIST, async () => {
+      return remoteServer?.getClientList() ?? [];
+    });
+
+    ipcMain.handle(IPC.REMOTE_DISCONNECT_CLIENT, async (_event, clientId: string) => {
+      return remoteServer?.disconnectClient(clientId) ?? false;
+    });
   }
 
   // PTY input (fire-and-forget, not request-response)

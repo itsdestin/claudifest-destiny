@@ -258,6 +258,8 @@ export function installShim(): void {
         invoke('remote:set-config', updates),
       detectTailscale: () => invoke('remote:detect-tailscale'),
       getClientCount: () => invoke('remote:get-client-count'),
+      getClientList: () => invoke('remote:get-client-list'),
+      disconnectClient: (clientId: string) => invoke('remote:disconnect-client', clientId),
     },
     off: (channel: string, handler: Callback) => removeListener(channel, handler),
     removeAllListeners: (channel: string) => removeAllListeners(channel),

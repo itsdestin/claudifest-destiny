@@ -27,6 +27,8 @@ const IPC = {
   REMOTE_SET_CONFIG: 'remote:set-config',
   REMOTE_DETECT_TAILSCALE: 'remote:detect-tailscale',
   REMOTE_GET_CLIENT_COUNT: 'remote:get-client-count',
+  REMOTE_GET_CLIENT_LIST: 'remote:get-client-list',
+  REMOTE_DISCONNECT_CLIENT: 'remote:disconnect-client',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -101,6 +103,8 @@ contextBridge.exposeInMainWorld('claude', {
       ipcRenderer.invoke(IPC.REMOTE_SET_CONFIG, updates),
     detectTailscale: () => ipcRenderer.invoke(IPC.REMOTE_DETECT_TAILSCALE),
     getClientCount: () => ipcRenderer.invoke(IPC.REMOTE_GET_CLIENT_COUNT),
+    getClientList: () => ipcRenderer.invoke(IPC.REMOTE_GET_CLIENT_LIST),
+    disconnectClient: (clientId: string) => ipcRenderer.invoke(IPC.REMOTE_DISCONNECT_CLIENT, clientId),
   },
   off: (channel: string, handler: (...args: any[]) => void) =>
     ipcRenderer.removeListener(channel, handler),

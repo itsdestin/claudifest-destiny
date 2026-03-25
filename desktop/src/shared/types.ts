@@ -85,4 +85,6 @@ export const IPC = {
   REMOTE_SET_CONFIG: 'remote:set-config',
   REMOTE_DETECT_TAILSCALE: 'remote:detect-tailscale',
   REMOTE_GET_CLIENT_COUNT: 'remote:get-client-count',
+  REMOTE_GET_CLIENT_LIST: 'remote:get-client-list',
+  REMOTE_DISCONNECT_CLIENT: 'remote:disconnect-client',
 } as const;
