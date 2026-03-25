@@ -1086,11 +1086,13 @@ phase_deps() {
     var fs = require('fs'), path = require('path');
 
     var settings;
-    try { settings = JSON.parse(fs.readFileSync('${node_settings}', 'utf8')); }
+    var settingsPath = process.argv[2];
+    var cachePath = process.argv[3];
+    try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); }
     catch(e) { process.exit(0); }
 
     var enabled = settings.enabledPlugins || {};
-    var cache = '${node_cache}';
+    var cache = cachePath;
     var deps = {};  // executable -> {plugins: Set, events: Set}
 
     Object.keys(enabled).forEach(function(pluginId) {
@@ -1164,8 +1166,10 @@ phase_deps() {
 
     // Also check MCP servers from ~/.claude.json
     try {
-      var claudeJson = JSON.parse(fs.readFileSync(path.join(process.env.HOME || process.env.USERPROFILE, '.claude.json'), 'utf8'));
-      var proj = (claudeJson.projects || {})['C:/Users/desti'] || claudeJson;
+      var homeDir = require('os').homedir();
+      var claudeJson = JSON.parse(fs.readFileSync(path.join(homeDir, '.claude.json'), 'utf8'));
+      var projKey = homeDir.replace(/\\\\/g, '/');
+      var proj = (claudeJson.projects || {})[projKey] || claudeJson;
       var mcps = proj.mcpServers || {};
       Object.keys(mcps).forEach(function(name) {
         var mcp = mcps[name];
@@ -1187,7 +1191,7 @@ phase_deps() {
       var events = Object.keys(d.events).join(',');
       console.log(exe + '\t' + plugins + '\t' + events);
     });
-  " 2>/dev/null)" || true
+  " "${node_settings}" "${node_cache}" 2>/dev/null)" || true
 
   if [ -z "$dep_list" ]; then
     emit "INFO" "deps" "no external dependencies found"
