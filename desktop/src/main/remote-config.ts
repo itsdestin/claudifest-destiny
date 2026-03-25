@@ -98,6 +98,11 @@ export class RemoteConfig {
       const execFileAsync = promisify(execFile);
       let tsPath = 'tailscale';
       try { const w = require('which'); tsPath = w.sync('tailscale'); } catch {}
+      // Windows: Tailscale installs to Program Files but may not be on PATH
+      if (process.platform === 'win32' && tsPath === 'tailscale') {
+        const winPath = 'C:\\Program Files\\Tailscale\\tailscale.exe';
+        try { require('fs').accessSync(winPath); tsPath = winPath; } catch {}
+      }
 
       const { stdout: ip } = await execFileAsync(tsPath, ['ip', '-4']);
       const tailscaleIp = ip.trim();
