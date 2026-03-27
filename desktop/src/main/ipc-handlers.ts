@@ -8,6 +8,7 @@ import { IPC, SkillEntry } from '../shared/types';
 import { scanSkills } from './skill-scanner';
 import { RemoteConfig } from './remote-config';
 import { RemoteServer } from './remote-server';
+import { TranscriptWatcher } from './transcript-watcher';
 
 // Max age for clipboard paste images (1 hour)
 const CLIPBOARD_MAX_AGE_MS = 60 * 60 * 1000;
@@ -326,6 +327,15 @@ export function registerIpcHandlers(
   const topicDir = path.join(os.homedir(), '.claude', 'topics');
   // Maps desktop session ID → Claude Code session ID
   const sessionIdMap = new Map<string, string>();
+  const transcriptWatcher = new TranscriptWatcher();
+
+  transcriptWatcher.on('transcript-event', (event: any) => {
+    send(IPC.TRANSCRIPT_EVENT, event);
+    if (remoteServer) {
+      remoteServer.bufferTranscriptEvent(event);
+      remoteServer.broadcast({ type: 'transcript:event', payload: event });
+    }
+  });
   const topicWatchers = new Map<string, fs.FSWatcher | NodeJS.Timeout>();
   const lastTopics = new Map<string, string>();
 
@@ -398,11 +408,18 @@ export function registerIpcHandlers(
       if (sessionIdMap.has(desktopId)) return;
       sessionIdMap.set(desktopId, claudeId);
       startWatching(desktopId, claudeId);
+
+      // Start watching the transcript file for this session
+      const sessionInfo = sessionManager.getSession(desktopId);
+      if (sessionInfo) {
+        transcriptWatcher.startWatching(desktopId, claudeId, sessionInfo.cwd);
+      }
     });
   }
 
   // Stop watching when a session is destroyed
   sessionManager.on('session-exit', (sessionId: string) => {
+    transcriptWatcher.stopWatching(sessionId);
     const watcher = topicWatchers.get(sessionId);
     if (watcher) {
       if (typeof (watcher as fs.FSWatcher).close === 'function') {
@@ -426,6 +443,7 @@ export function registerIpcHandlers(
   // Return cleanup function for use during app shutdown
   return function cleanup() {
     clearInterval(statusInterval);
+    transcriptWatcher.stopAll();
     for (const [id, watcher] of topicWatchers) {
       if (typeof (watcher as fs.FSWatcher).close === 'function') {
         (watcher as fs.FSWatcher).close();
