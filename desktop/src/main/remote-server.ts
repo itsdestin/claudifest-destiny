@@ -37,6 +37,7 @@ export class RemoteServer {
   private tokensPath: string;
   private ptyBuffers = new Map<string, string>(); // sessionId → rolling PTY output
   private hookBuffers = new Map<string, any[]>(); // sessionId → rolling hook events
+  private transcriptBuffers = new Map<string, any[]>();
   private statusInterval: ReturnType<typeof setInterval> | null = null;
   private failedAttempts = new Map<string, { count: number; resetAt: number }>();
   // Topic file watcher for session:renamed events
@@ -183,6 +184,7 @@ export class RemoteServer {
     if (this.topicInterval) clearInterval(this.topicInterval);
     this.sessionIdMap.clear();
     this.lastTopics.clear();
+    this.transcriptBuffers.clear();
     this.sessionManager.off('pty-output', this.onPtyOutput);
     this.hookRelay.off('hook-event', this.onHookEvent);
     this.sessionManager.off('session-exit', this.onSessionExit);
@@ -271,8 +273,19 @@ export class RemoteServer {
   private onSessionExit = (sessionId: string) => {
     this.ptyBuffers.delete(sessionId);
     this.hookBuffers.delete(sessionId);
+    this.transcriptBuffers.delete(sessionId);
     this.broadcast({ type: 'session:destroyed', payload: { sessionId } });
   };
+
+  bufferTranscriptEvent(event: any): void {
+    const sessionId = event.sessionId || '';
+    let buf = this.transcriptBuffers.get(sessionId) || [];
+    buf.push(event);
+    if (buf.length > HOOK_BUFFER_SIZE) {
+      buf = buf.slice(buf.length - HOOK_BUFFER_SIZE);
+    }
+    this.transcriptBuffers.set(sessionId, buf);
+  }
 
   // --- HTTP static file serving ---
 
@@ -464,6 +477,13 @@ export class RemoteServer {
       for (const [_sessionId, events] of this.hookBuffers) {
         for (const event of events) {
           ws.send(JSON.stringify({ type: 'hook:event', payload: event }));
+        }
+      }
+
+      // Transcript event buffers
+      for (const [_sessionId, events] of this.transcriptBuffers) {
+        for (const event of events) {
+          ws.send(JSON.stringify({ type: 'transcript:event', payload: event }));
         }
       }
     }, 500); // 500ms gives React time to render App and register SESSION_INIT
