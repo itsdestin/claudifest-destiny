@@ -38,7 +38,7 @@ export function usePartyGame(
     clientRef.current?.close();
 
     const client = new PartyClient({
-      party: 'connect-four',
+      party: 'connectfour',
       room: code,
       username,
       onMessage: (data) => {
