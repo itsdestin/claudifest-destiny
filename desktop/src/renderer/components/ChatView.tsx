@@ -59,10 +59,17 @@ export default function ChatView({ sessionId, visible }: Props) {
   const isThinkingRef = useRef(state.isThinking);
   isThinkingRef.current = state.isThinking;
 
+  // Throttle TERMINAL_ACTIVITY dispatches — the thinking timeout only needs
+  // a heartbeat every few seconds, not a dispatch on every PTY write.
+  const lastActivityDispatchRef = useRef(0);
   useEffect(() => {
     return onBufferReady((sid) => {
       if (sid === sessionId && isThinkingRef.current) {
-        dispatch({ type: 'TERMINAL_ACTIVITY', sessionId });
+        const now = Date.now();
+        if (now - lastActivityDispatchRef.current > 5000) {
+          lastActivityDispatchRef.current = now;
+          dispatch({ type: 'TERMINAL_ACTIVITY', sessionId });
+        }
       }
     });
   }, [sessionId, dispatch]);
