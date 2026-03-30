@@ -37,6 +37,10 @@ export function onConnectionStateChange(cb: (state: RemoteConnectionState) => vo
 }
 
 function getWsUrl(): string {
+  // Android WebView loads from file:// — connect to local bridge server
+  if (location.protocol === 'file:') {
+    return 'ws://localhost:9901';
+  }
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${proto}//${location.host}/ws`;
 }
@@ -140,6 +144,15 @@ function handleMessage(data: string): void {
       break;
     case 'transcript:event':
       dispatchEvent('transcript:event', payload);
+      break;
+    case 'prompt:show':
+      dispatchEvent('prompt:show', payload);
+      break;
+    case 'prompt:dismiss':
+      dispatchEvent('prompt:dismiss', payload);
+      break;
+    case 'prompt:complete':
+      dispatchEvent('prompt:complete', payload);
       break;
   }
 }
@@ -258,6 +271,9 @@ export function installShim(): void {
       sessionRenamed: (cb: Callback) => addListener('session:renamed', cb),
       uiAction: (cb: Callback) => addListener('ui:action:received', cb),
       transcriptEvent: (cb: Callback) => addListener('transcript:event', cb),
+      promptShow: (cb: Callback) => addListener('prompt:show', cb),
+      promptDismiss: (cb: Callback) => addListener('prompt:dismiss', cb),
+      promptComplete: (cb: Callback) => addListener('prompt:complete', cb),
     },
     skills: {
       list: () => invoke('skills:list'),

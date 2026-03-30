@@ -81,6 +81,14 @@ function Root() {
         if (isConnected) setHasConnectedOnce(true);
       });
 
+      // Android WebView: auto-connect (LocalBridgeServer accepts without password)
+      if (location.protocol === 'file:') {
+        connect('android-local', false).catch((err) => {
+          console.error('Android auto-connect failed:', err);
+        });
+        return;
+      }
+
       // Auto-login with stored token
       const storedToken = localStorage.getItem('destincode-remote-token');
       if (storedToken) {

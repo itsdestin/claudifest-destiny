@@ -278,6 +278,39 @@ function AppInner() {
       dispatch(action);
     });
 
+    // Prompt events — Android bridge broadcasts Ink menu prompts detected from PTY screen
+    const promptShowHandler = (window.claude.on as any).promptShow?.((payload: any) => {
+      // A prompt arriving proves the session is alive — dismiss "Initializing" overlay
+      setInitializedSessions((prev) => {
+        if (prev.has(payload.sessionId)) return prev;
+        const next = new Set(prev);
+        next.add(payload.sessionId);
+        return next;
+      });
+      dispatch({
+        type: 'SHOW_PROMPT',
+        sessionId: payload.sessionId,
+        promptId: payload.promptId,
+        title: payload.title,
+        buttons: payload.buttons || [],
+      });
+    });
+    const promptDismissHandler = (window.claude.on as any).promptDismiss?.((payload: any) => {
+      dispatch({
+        type: 'DISMISS_PROMPT',
+        sessionId: payload.sessionId,
+        promptId: payload.promptId,
+      });
+    });
+    const promptCompleteHandler = (window.claude.on as any).promptComplete?.((payload: any) => {
+      dispatch({
+        type: 'COMPLETE_PROMPT',
+        sessionId: payload.sessionId,
+        promptId: payload.promptId,
+        selection: payload.selection || '',
+      });
+    });
+
     return () => {
       window.claude.off('session:created', createdHandler);
       window.claude.off('session:destroyed', destroyedHandler);
@@ -287,6 +320,9 @@ function AppInner() {
       window.claude.off('status:data', statusHandler);
       if (transcriptHandler) window.claude.off('transcript:event', transcriptHandler);
       if (uiActionHandler) window.claude.off('ui:action:received', uiActionHandler);
+      if (promptShowHandler) window.claude.off('prompt:show', promptShowHandler);
+      if (promptDismissHandler) window.claude.off('prompt:dismiss', promptDismissHandler);
+      if (promptCompleteHandler) window.claude.off('prompt:complete', promptCompleteHandler);
     };
   }, [dispatch]);
 
