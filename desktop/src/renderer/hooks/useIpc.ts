@@ -67,6 +67,13 @@ export function usePtyOutput(
   useEffect(() => {
     if (!sessionId) return;
 
+    // Use per-session channel if available (avoids N+1 callback amplification)
+    const claude = window.claude as any;
+    if (claude?.on?.ptyOutputForSession) {
+      return claude.on.ptyOutputForSession(sessionId, (data: string) => cbRef.current(data));
+    }
+
+    // Fallback: global channel with client-side filter
     const handler = window.claude.on.ptyOutput((sid, data) => {
       if (sid === sessionId) {
         cbRef.current(data);
