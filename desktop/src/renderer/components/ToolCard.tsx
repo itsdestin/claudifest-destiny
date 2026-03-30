@@ -160,7 +160,7 @@ export default function ToolCard({ tool, sessionId }: Props) {
           {Object.keys(tool.input).length > 0 && (
             <div>
               <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Input</div>
-              <pre className="text-xs text-gray-400 bg-gray-900 rounded p-2 overflow-x-auto max-h-48 overflow-y-auto">
+              <pre className="text-xs text-gray-400 bg-gray-900 rounded p-2 overflow-auto max-h-48">
                 {JSON.stringify(tool.input, null, 2)}
               </pre>
             </div>
@@ -168,7 +168,7 @@ export default function ToolCard({ tool, sessionId }: Props) {
           {tool.response && (
             <div>
               <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Response</div>
-              <pre className="text-xs text-gray-400 bg-gray-900 rounded p-2 overflow-x-auto max-h-48 overflow-y-auto">
+              <pre className="text-xs text-gray-400 bg-gray-900 rounded p-2 overflow-auto max-h-48">
                 {tool.response}
               </pre>
             </div>
@@ -176,7 +176,7 @@ export default function ToolCard({ tool, sessionId }: Props) {
           {tool.error && (
             <div>
               <div className="text-[10px] uppercase tracking-wider text-red-500 mb-1">Error</div>
-              <pre className="text-xs text-red-400 bg-gray-900 rounded p-2 overflow-x-auto max-h-48 overflow-y-auto">
+              <pre className="text-xs text-red-400 bg-gray-900 rounded p-2 overflow-auto max-h-48">
                 {tool.error}
               </pre>
             </div>
