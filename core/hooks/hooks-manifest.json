@@ -70,6 +70,13 @@
         "timeout": 5,
         "required": false
       }
+    ],
+    "SessionEnd": [
+      {
+        "command": "bash ~/.claude/hooks/session-end-sync.sh",
+        "timeout": 15,
+        "required": true
+      }
     ]
   }
 }
