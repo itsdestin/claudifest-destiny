@@ -253,7 +253,8 @@ export function registerIpcHandlers(
 
   sessionManager.on('pty-output', (sessionId: string, data: string) => {
     if (readySessions.has(sessionId)) {
-      send(IPC.PTY_OUTPUT, sessionId, data);
+      send(`pty:output:${sessionId}`, data);          // per-session (TerminalView)
+      send(IPC.PTY_OUTPUT, sessionId, data);           // global (App.tsx mode detection)
     } else {
       let buf = pendingOutput.get(sessionId);
       if (!buf) {
@@ -270,7 +271,8 @@ export function registerIpcHandlers(
     const buffered = pendingOutput.get(sessionId);
     if (buffered) {
       for (const data of buffered) {
-        send(IPC.PTY_OUTPUT, sessionId, data);
+        send(`pty:output:${sessionId}`, data);         // per-session (TerminalView)
+        send(IPC.PTY_OUTPUT, sessionId, data);          // global (App.tsx mode detection)
       }
       pendingOutput.delete(sessionId);
     }

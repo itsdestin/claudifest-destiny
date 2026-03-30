@@ -117,7 +117,8 @@ function handleMessage(data: string): void {
   // Push events — dispatch to registered listeners
   switch (type) {
     case 'pty:output':
-      dispatchEvent('pty:output', payload.sessionId, payload.data);
+      dispatchEvent('pty:output', payload.sessionId, payload.data);              // global (App.tsx mode detection)
+      dispatchEvent(`pty:output:${payload.sessionId}`, payload.data);            // per-session (TerminalView)
       break;
     case 'hook:event':
       dispatchEvent('hook:event', payload);
@@ -245,6 +246,11 @@ export function installShim(): void {
       sessionCreated: (cb: Callback) => addListener('session:created', cb),
       sessionDestroyed: (cb: Callback) => addListener('session:destroyed', cb),
       ptyOutput: (cb: Callback) => addListener('pty:output', cb),
+      ptyOutputForSession: (sessionId: string, cb: (data: string) => void) => {
+        const channel = `pty:output:${sessionId}`;
+        const handler = addListener(channel, cb);
+        return () => removeListener(channel, handler);
+      },
       hookEvent: (cb: Callback) => addListener('hook:event', cb),
       statusData: (cb: Callback) => addListener('status:data', cb),
       sessionRenamed: (cb: Callback) => addListener('session:renamed', cb),
