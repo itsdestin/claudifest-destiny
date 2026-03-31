@@ -11,23 +11,25 @@ import { RemoteServer } from './remote-server';
 import { RemoteConfig } from './remote-config';
 import { scanSkills } from './skill-scanner';
 import { IPC } from '../shared/types';
+import { log, rotateLog } from './logger';
 
-// macOS Electron apps launched from Finder/Dock inherit a minimal PATH from
-// launchd (just /usr/bin:/bin:/usr/sbin:/sbin). Homebrew and nvm paths are
-// missing, so 'node' and 'claude' can't be found. Prepend common locations.
-// NOTE: Linux desktop environments typically inherit the user's shell PATH,
-// but some (Snap, Flatpak, certain DEs) may also strip it. If Linux users
-// report 'command not found' errors, extend this block to include linux.
-if (process.platform === 'darwin') {
+// macOS and Linux Electron apps may inherit a minimal PATH that's missing
+// common tool locations (Homebrew, nvm, Volta, pipx, cargo). macOS Finder/Dock
+// only provides /usr/bin:/bin:/usr/sbin:/sbin. Linux Snap/Flatpak/some DEs may
+// also strip user paths. Prepend common locations on both platforms.
+// Windows is not affected — which.sync() resolves executables independently.
+if (process.platform === 'darwin' || process.platform === 'linux') {
   const home = os.homedir();
   const extraPaths = [
-    '/opt/homebrew/bin',          // Homebrew (Apple Silicon)
-    '/usr/local/bin',             // Homebrew (Intel) / system-wide installs
+    `${home}/.local/bin`,         // pipx, cargo, etc.
     `${home}/.nvm/current/bin`,   // nvm
     `${home}/.volta/bin`,         // Volta
-    `${home}/.local/bin`,         // pipx, cargo, etc.
     `${home}/.npm-global/bin`,    // npm global installs
+    '/usr/local/bin',             // system-wide installs / Homebrew (Intel)
   ];
+  if (process.platform === 'darwin') {
+    extraPaths.unshift('/opt/homebrew/bin');  // Homebrew (Apple Silicon)
+  }
   process.env.PATH = `${extraPaths.join(path.delimiter)}${path.delimiter}${process.env.PATH}`;
 }
 
@@ -76,6 +78,18 @@ function createWindow() {
 
   // Forward hook events to renderer
   hookRelay.on('hook-event', (event) => {
+    // Auto-approve permission requests for skip-permissions (dangerous mode) sessions
+    if (event.type === 'PermissionRequest') {
+      const sessionInfo = sessionManager.getSession(event.sessionId);
+      if (sessionInfo?.skipPermissions) {
+        const requestId = event.payload?._requestId as string;
+        if (requestId) {
+          hookRelay.respond(requestId, { decision: { behavior: 'allow' } });
+          return;
+        }
+      }
+    }
+
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(IPC.HOOK_EVENT, event);
     }
@@ -95,24 +109,26 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  await rotateLog();
+
   // Install hook relay entries in Claude Code settings
   try {
     const installScript = path.join(__dirname, '../../scripts/install-hooks.js');
     require(installScript);
   } catch (e) {
-    console.error('Failed to install hooks:', e);
+    log('ERROR', 'Main', 'Failed to install hooks', { error: String(e) });
   }
 
   try {
     await hookRelay.start();
   } catch (e) {
-    console.error('Failed to start hook relay:', e);
+    log('ERROR', 'Main', 'Failed to start hook relay', { error: String(e) });
   }
 
   try {
     await remoteServer.start();
   } catch (e) {
-    console.error('Failed to start remote server:', e);
+    log('ERROR', 'Main', 'Failed to start remote server', { error: String(e) });
   }
 
   const FAVORITES_PATH = path.join(os.homedir(), '.claude', 'destinclaude-favorites.json');
@@ -142,11 +158,11 @@ app.whenReady().then(async () => {
     } catch (err: any) {
       // Log specific failure reason for debugging
       if (err.code === 'ENOENT') {
-        console.warn('[GitHub Auth] gh CLI not found on PATH');
+        log('WARN', 'GitHubAuth', 'gh CLI not found on PATH');
       } else if (err.stderr?.includes('not logged in')) {
-        console.warn('[GitHub Auth] gh CLI not authenticated');
+        log('WARN', 'GitHubAuth', 'gh CLI not authenticated');
       } else {
-        console.warn('[GitHub Auth] Failed:', err.message || err);
+        log('WARN', 'GitHubAuth', 'Failed', { error: String(err.message || err) });
       }
       return null;
     }

@@ -8,6 +8,7 @@ interface Props {
   sessionId: string;
   disabled?: boolean;
   onOpenDrawer?: (searchMode: boolean) => void;
+  onResumeCommand?: () => void;
 }
 
 interface Attachment {
@@ -27,7 +28,7 @@ function fileNameFromPath(p: string): string {
   return p.replace(/\\/g, '/').split('/').pop() || p;
 }
 
-export default function InputBar({ sessionId, disabled, onOpenDrawer }: Props) {
+export default function InputBar({ sessionId, disabled, onOpenDrawer, onResumeCommand }: Props) {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -53,6 +54,12 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer }: Props) {
 
   const sendMessage = useCallback(
     (message: string, files: Attachment[] = []) => {
+      // Intercept /resume command
+      if (message.trim() === '/resume' && onResumeCommand) {
+        onResumeCommand();
+        return;
+      }
+
       const parts: string[] = [];
       for (const f of files) {
         parts.push(f.path);
@@ -70,7 +77,9 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer }: Props) {
         timestamp: Date.now(),
       });
 
-      window.claude.session.sendInput(sessionId, combined + '\r');
+      // Replace newlines with spaces so multi-line pastes don't get split
+      // into separate PTY inputs (each \n would act as Enter)
+      window.claude.session.sendInput(sessionId, combined.replace(/[\r\n]+/g, ' ') + '\r');
     },
     [sessionId, disabled, dispatch],
   );
@@ -89,7 +98,10 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer }: Props) {
   }, [text, autoResize]);
 
   const send = useCallback(() => {
-    sendMessage(text, attachments);
+    // Read directly from the DOM element to avoid stale-closure races
+    // where paste + immediate Enter outrun React's render cycle
+    const currentText = inputRef.current?.value ?? text;
+    sendMessage(currentText, attachments);
     setText('');
     setAttachments([]);
     // Reset height after clearing
@@ -122,6 +134,11 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer }: Props) {
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
+    // Only treat as image paste if there's no text content — copying from
+    // web pages often includes both text/plain and image/png items, and
+    // we don't want to block the text paste in that case.
+    const hasText = Array.from(items).some((item) => item.type.startsWith('text/'));
+    if (hasText) return;
     for (const item of Array.from(items)) {
       if (item.type.startsWith('image/')) {
         e.preventDefault();

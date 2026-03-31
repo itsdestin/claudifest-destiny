@@ -46,6 +46,16 @@ function getOrCreateTurn(session: SessionChatState): {
 }
 
 export function chatReducer(state: ChatState, action: ChatAction): ChatState {
+  // Fast path: the two highest-frequency no-op patterns exit before cloning.
+  // TERMINAL_ACTIVITY fires on every rAF during output; default catches unknown types.
+  if (action.type === 'TERMINAL_ACTIVITY') {
+    const session = state.get(action.sessionId);
+    if (!session || !session.isThinking) return state;
+    const next = new Map(state);
+    next.set(action.sessionId, { ...session, lastActivityAt: Date.now() });
+    return next;
+  }
+
   const next = new Map(state);
 
   switch (action.type) {
@@ -65,14 +75,14 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Deduplicate — if the last timeline entry is a user message with the
-      // same content (InputBar optimistic + hook event arriving later), skip
-      const lastEntry = session.timeline[session.timeline.length - 1];
-      if (
-        lastEntry &&
-        lastEntry.kind === 'user' &&
-        lastEntry.message.content === action.content
-      ) {
+      // Deduplicate — if any of the last 3 timeline entries is a user message
+      // with the same content (InputBar optimistic + hook/transcript event
+      // arriving later, possibly with intervening entries), skip
+      const lastFew = session.timeline.slice(-3);
+      const isDuplicate = lastFew.some(entry =>
+        entry.kind === 'user' && 'message' in entry && entry.message.content === action.content
+      );
+      if (isDuplicate) {
         if (!session.isThinking) {
           next.set(action.sessionId, {
             ...session, isThinking: true, currentGroupId: null, currentTurnId: null,
@@ -173,12 +183,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return next;
     }
 
-    case 'TERMINAL_ACTIVITY': {
-      const session = next.get(action.sessionId);
-      if (!session || !session.isThinking) return state;
-      next.set(action.sessionId, { ...session, lastActivityAt: Date.now() });
-      return next;
-    }
+    // TERMINAL_ACTIVITY handled in fast path above (before Map clone)
 
     // --- Transcript watcher actions ---
 
@@ -186,13 +191,13 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Dedup against last timeline entry (optimistic USER_PROMPT)
-      const lastEntry = session.timeline[session.timeline.length - 1];
-      if (
-        lastEntry &&
-        lastEntry.kind === 'user' &&
-        lastEntry.message.content === action.text
-      ) {
+      // Dedup against last 3 timeline entries (optimistic USER_PROMPT may
+      // have intervening assistant-turn or tool entries before transcript arrives)
+      const lastFewT = session.timeline.slice(-3);
+      const isDuplicateT = lastFewT.some(entry =>
+        entry.kind === 'user' && 'message' in entry && entry.message.content === action.text
+      );
+      if (isDuplicateT) {
         if (!session.isThinking) {
           next.set(action.sessionId, {
             ...session, isThinking: true, currentGroupId: null, currentTurnId: null,
@@ -325,20 +330,50 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
-      // Find the last running tool and transition to awaiting-approval
+      // Find the matching running tool — prefer matching by tool name,
+      // fall back to the first running tool if no name match exists.
       const toolCalls = new Map(session.toolCalls);
       let found = false;
+      let fallbackId: string | null = null;
       for (const [id, tool] of toolCalls) {
         if (tool.status === 'running') {
-          toolCalls.set(id, {
-            ...tool,
-            status: 'awaiting-approval',
-            requestId: action.requestId,
-            permissionSuggestions: action.permissionSuggestions,
-          });
-          found = true;
-          break;
+          if (tool.toolName === action.toolName) {
+            toolCalls.set(id, {
+              ...tool,
+              status: 'awaiting-approval',
+              requestId: action.requestId,
+              permissionSuggestions: action.permissionSuggestions,
+            });
+            found = true;
+            break;
+          }
+          if (!fallbackId) fallbackId = id;
         }
+      }
+      // Prefer matching by requestId over the arbitrary first-running-tool fallback
+      if (!found && action.requestId) {
+        for (const [id, tool] of toolCalls) {
+          if (tool.status === 'running' && tool.requestId === action.requestId) {
+            toolCalls.set(id, {
+              ...tool,
+              status: 'awaiting-approval',
+              requestId: action.requestId,
+              permissionSuggestions: action.permissionSuggestions,
+            });
+            found = true;
+            break;
+          }
+        }
+      }
+      if (!found && fallbackId) {
+        const tool = toolCalls.get(fallbackId)!;
+        toolCalls.set(fallbackId, {
+          ...tool,
+          status: 'awaiting-approval',
+          requestId: action.requestId,
+          permissionSuggestions: action.permissionSuggestions,
+        });
+        found = true;
       }
 
       if (!found) {
@@ -386,8 +421,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return next;
     }
 
-    case 'PERMISSION_RESPONDED':
-    case 'PERMISSION_EXPIRED': {
+    case 'PERMISSION_RESPONDED': {
       const session = next.get(action.sessionId);
       if (!session) return state;
 
@@ -400,6 +434,85 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       }
 
       next.set(action.sessionId, { ...session, toolCalls });
+      return next;
+    }
+
+    case 'PERMISSION_EXPIRED': {
+      const session = next.get(action.sessionId);
+      if (!session) return state;
+
+      const toolCalls = new Map(session.toolCalls);
+      for (const [id, tool] of toolCalls) {
+        if (tool.status === 'awaiting-approval' && tool.requestId === action.requestId) {
+          toolCalls.set(id, {
+            ...tool,
+            status: 'failed',
+            requestId: undefined,
+            error: 'Permission request expired — socket closed before a response was sent',
+          });
+          break;
+        }
+      }
+
+      next.set(action.sessionId, { ...session, toolCalls });
+      return next;
+    }
+
+    case 'HISTORY_LOADED': {
+      const session = next.get(action.sessionId);
+      if (!session) return state;
+
+      // Build timeline entries from historical messages
+      const historyTimeline: TimelineEntry[] = [];
+      const historyTurns = new Map(session.assistantTurns);
+      let historyMsgCounter = 0;
+
+      // Add "see previous messages" marker if there's more history
+      if (action.hasMore) {
+        historyTimeline.push({
+          kind: 'prompt',
+          prompt: {
+            promptId: '_history_expand',
+            title: 'See previous messages',
+            buttons: [],
+          },
+        });
+      }
+
+      // When replacing history (hasMore=false), remove old history entries and expand button
+      const existingTimeline = action.hasMore
+        ? session.timeline
+        : session.timeline.filter((e) => {
+            if (e.kind === 'prompt' && e.prompt.promptId === '_history_expand') return false;
+            if (e.kind === 'user' && e.message.id.startsWith('hist-')) return false;
+            if (e.kind === 'assistant-turn' && e.turnId.startsWith('hist-')) return false;
+            return true;
+          });
+
+      for (const msg of action.messages) {
+        const id = `hist-${++historyMsgCounter}`;
+        if (msg.role === 'user') {
+          historyTimeline.push({
+            kind: 'user',
+            message: { id, role: 'user', content: msg.content, timestamp: msg.timestamp },
+          });
+        } else {
+          const turnId = `hist-turn-${historyMsgCounter}`;
+          const msgId = `hist-msg-${historyMsgCounter}`;
+          historyTurns.set(turnId, {
+            id: turnId,
+            segments: [{ type: 'text', content: msg.content, messageId: msgId }],
+          });
+          historyTimeline.push({ kind: 'assistant-turn', turnId });
+        }
+      }
+
+      // Prepend history before existing timeline
+      next.set(action.sessionId, {
+        ...session,
+        timeline: [...historyTimeline, ...existingTimeline],
+        assistantTurns: historyTurns,
+      });
       return next;
     }
 

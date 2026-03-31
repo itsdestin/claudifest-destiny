@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import TerminalView from './components/TerminalView';
 import ChatView from './components/ChatView';
 import HeaderBar from './components/HeaderBar';
@@ -16,7 +16,9 @@ import { AppIcon, WelcomeAppIcon } from './components/Icons';
 import CommandDrawer from './components/CommandDrawer';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
+import ResumeBrowser from './components/ResumeBrowser';
 import type { SkillEntry, PermissionMode } from '../shared/types';
+import type { SessionStatusColor } from './components/StatusDot';
 
 type ViewMode = 'chat' | 'terminal';
 
@@ -51,6 +53,8 @@ function AppInner() {
   const [skills, setSkills] = useState<SkillEntry[]>([]);
   // Track which sessions the user has "seen" (switched to after activity completed)
   const [viewedSessions, setViewedSessions] = useState<Set<string>>(new Set());
+  const [resumeInfo, setResumeInfo] = useState<Map<string, { claudeSessionId: string; projectSlug: string }>>(new Map());
+  const [resumeRequested, setResumeRequested] = useState(false);
 
   usePromptDetector();
   const dispatch = useChatDispatch();
@@ -71,28 +75,42 @@ function AppInner() {
     respondToChallenge: lobby.respondToChallenge,
   };
 
-  // Derive session status colors for status dots
-  const sessionStatuses = React.useMemo(() => {
-    const statuses = new Map<string, 'green' | 'red' | 'blue' | 'gray'>();
+  // Derive session status colors for status dots.
+  // chatStateMap is a new Map reference on every dispatch, so we stabilize with
+  // a ref — return the previous reference when the derived values haven't changed.
+  const sessionStatusesRef = useRef<Map<string, SessionStatusColor>>(new Map());
+
+  const sessionStatuses = useMemo(() => {
+    const newStatuses = new Map<string, SessionStatusColor>();
+    let changed = false;
+
     for (const s of sessions) {
       const chatState = chatStateMap.get(s.id);
-      if (!chatState) { statuses.set(s.id, 'gray'); continue; }
+      if (!chatState) { newStatuses.set(s.id, 'gray'); }
+      else {
+        const hasAwaiting = [...chatState.toolCalls.values()].some(t => t.status === 'awaiting-approval');
+        const hasRunning = [...chatState.toolCalls.values()].some(t => t.status === 'running');
 
-      const hasAwaiting = [...chatState.toolCalls.values()].some(t => t.status === 'awaiting-approval');
-      const hasRunning = [...chatState.toolCalls.values()].some(t => t.status === 'running');
-
-      if (hasAwaiting) {
-        statuses.set(s.id, 'red');
-      } else if (chatState.isThinking || hasRunning) {
-        statuses.set(s.id, 'green');
-      } else if (chatState.timeline.length > 0 && !viewedSessions.has(s.id)) {
-        statuses.set(s.id, 'blue');
-      } else {
-        statuses.set(s.id, 'gray');
+        const status: SessionStatusColor = hasAwaiting
+          ? 'red'
+          : (chatState.isThinking || hasRunning)
+            ? 'green'
+            : (chatState.timeline.length > 0 && !viewedSessions.has(s.id) && s.id !== sessionId)
+              ? 'blue'
+              : 'gray';
+        newStatuses.set(s.id, status);
       }
+
+      const prev = sessionStatusesRef.current.get(s.id);
+      if (prev !== newStatuses.get(s.id)) changed = true;
     }
-    return statuses;
-  }, [sessions, chatStateMap, viewedSessions]);
+
+    if (!changed && newStatuses.size === sessionStatusesRef.current.size) {
+      return sessionStatusesRef.current;
+    }
+    sessionStatusesRef.current = newStatuses;
+    return newStatuses;
+  }, [sessions, chatStateMap, viewedSessions, sessionId]);
 
   useEffect(() => {
     const createdHandler = window.claude.on.sessionCreated((info) => {
@@ -100,9 +118,10 @@ function AppInner() {
         // Deduplicate — replay buffers resend session:created for existing sessions
         if (prev.some((s) => s.id === info.id)) return prev;
         dispatch({ type: 'SESSION_INIT', sessionId: info.id });
+        // Only auto-focus genuinely new sessions (not replayed ones)
+        setSessionId(info.id);
         return [...prev, info];
       });
-      setSessionId((prev) => prev ?? info.id);
       setViewModes((prev) => prev.has(info.id) ? prev : new Map(prev).set(info.id, 'chat'));
       setPermissionModes((prev) => prev.has(info.id) ? prev : new Map(prev).set(info.id, info.permissionMode || 'normal'));
     });
@@ -300,7 +319,18 @@ function AppInner() {
 
   // Load skills once on mount
   useEffect(() => {
-    window.claude.skills.list().then(setSkills).catch(console.error);
+    window.claude.skills.list().then((list) => {
+      // Inject built-in resume skill at the top
+      const resumeSkill: SkillEntry = {
+        id: '_resume',
+        displayName: 'Resume Session',
+        description: 'Resume a previous conversation',
+        category: 'personal',
+        prompt: '',
+        source: 'destinclaude',
+      };
+      setSkills([resumeSkill, ...list]);
+    }).catch(console.error);
   }, []);
 
   // Mark session as viewed when the user switches to it
@@ -315,8 +345,16 @@ function AppInner() {
     }
   }, [sessionId]);
 
-  // Clear viewed status when a session starts thinking (user sent a new message)
+  // Clear viewed status when a session starts thinking (user sent a new message).
+  // Early-exit: skip iteration if no sessions are currently thinking.
   useEffect(() => {
+    let anyThinking = false;
+    for (const s of sessions) {
+      const chatState = chatStateMap.get(s.id);
+      if (chatState?.isThinking) { anyThinking = true; break; }
+    }
+    if (!anyThinking) return;
+
     for (const s of sessions) {
       const chatState = chatStateMap.get(s.id);
       if (chatState?.isThinking) {
@@ -353,6 +391,11 @@ function AppInner() {
 
   const handleSelectSkill = useCallback(
     (skill: SkillEntry) => {
+      if (skill.id === '_resume') {
+        setDrawerOpen(false);
+        setResumeRequested(true);
+        return;
+      }
       if (!sessionId) return;
       setDrawerOpen(false);
       dispatch({
@@ -373,6 +416,40 @@ function AppInner() {
       skipPermissions: dangerous,
     });
   }, []);
+
+  const handleResumeSession = useCallback(async (claudeSessionId: string, projectSlug: string) => {
+    const slugToPath = (s: string) => {
+      if (/^[A-Z]--/.test(s)) return s.replace(/^([A-Z])--/, '$1:\\').replace(/-/g, '\\');
+      return '/' + s.replace(/-/g, '/');
+    };
+    const cwd = slugToPath(projectSlug);
+
+    // Pass --resume flag so Claude Code boots directly into the resumed session
+    const newSession = await (window.claude.session.create as any)({
+      name: 'Resuming...',
+      cwd,
+      skipPermissions: false,
+      resumeSessionId: claudeSessionId,
+    });
+    if (!newSession?.id) return;
+
+    setResumeInfo((prev) => new Map(prev).set(newSession.id, { claudeSessionId, projectSlug }));
+
+    // Load recent history into chat view
+    try {
+      const messages = await (window as any).claude.session.loadHistory(claudeSessionId, projectSlug, 10, false);
+      if (messages.length > 0) {
+        dispatch({
+          type: 'HISTORY_LOADED',
+          sessionId: newSession.id,
+          messages,
+          hasMore: true,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load history:', err);
+    }
+  }, [dispatch]);
 
   const currentViewMode = sessionId ? (viewModes.get(sessionId) || 'chat') : 'chat';
 
@@ -434,6 +511,14 @@ function AppInner() {
               onSelectSession={setSessionId}
               onCreateSession={createSession}
               onCloseSession={(id) => window.claude.session.destroy(id)}
+              onReorderSessions={(fromIndex: number, toIndex: number) => {
+                setSessions(prev => {
+                  const next = [...prev];
+                  const [moved] = next.splice(fromIndex, 1);
+                  next.splice(toIndex, 0, moved);
+                  return next;
+                });
+              }}
               viewMode={currentViewMode}
               onToggleView={handleToggleView}
               gamePanelOpen={gameState.panelOpen}
@@ -447,6 +532,8 @@ function AppInner() {
               onToggleSettings={() => setSettingsOpen(prev => !prev)}
               settingsBadge={settingsBadge}
               sessionStatuses={sessionStatuses}
+              onResumeSession={handleResumeSession}
+              onOpenResumeBrowser={() => setResumeRequested(true)}
             />
             <div className="flex-1 overflow-hidden relative">
               {sessions.map((s) => (
@@ -455,6 +542,7 @@ function AppInner() {
                     <ChatView
                       sessionId={s.id}
                       visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'chat'}
+                      resumeInfo={resumeInfo}
                     />
                   </ErrorBoundary>
                   <ErrorBoundary name="Terminal">
@@ -476,7 +564,7 @@ function AppInner() {
             </div>
             {currentViewMode === 'chat' && (
               <>
-                <ChatInputBar sessionId={sessionId} onOpenDrawer={handleOpenDrawer} disabled={trustGateActive || !sessionInitialized} />
+                <ChatInputBar sessionId={sessionId} onOpenDrawer={handleOpenDrawer} disabled={trustGateActive || !sessionInitialized} onResumeCommand={() => setResumeRequested(true)} />
                 <CommandDrawer
                   open={drawerOpen}
                   searchMode={drawerSearchMode}
@@ -540,12 +628,17 @@ function AppInner() {
         }}
         hasActiveSession={!!sessionId}
       />
+      <ResumeBrowser
+        open={resumeRequested}
+        onClose={() => setResumeRequested(false)}
+        onResume={handleResumeSession}
+      />
     </div>
   );
 }
 
-function ChatInputBar({ sessionId, onOpenDrawer, disabled }: { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; disabled?: boolean }) {
-  return <InputBar sessionId={sessionId} onOpenDrawer={onOpenDrawer} disabled={disabled} />;
+function ChatInputBar({ sessionId, onOpenDrawer, disabled, onResumeCommand }: { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; disabled?: boolean; onResumeCommand?: () => void }) {
+  return <InputBar sessionId={sessionId} onOpenDrawer={onOpenDrawer} disabled={disabled} onResumeCommand={onResumeCommand} />;
 }
 
 export default function App() {

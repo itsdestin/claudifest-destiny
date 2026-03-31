@@ -215,7 +215,7 @@ A short structured summary written by the assistant, appended after the full ses
 **Steps to save — depends on environment:**
 
 **Claude Code CLI:**
-Write to a temp file, upload, then clean up:
+Write to a temp file, ensure the destination exists, upload, then clean up:
 ```bash
 cat << 'EOF' > /tmp/journal-entry.md
 [compiled entry content]
