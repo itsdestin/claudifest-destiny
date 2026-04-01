@@ -18,6 +18,7 @@ import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
 import type { SkillEntry, PermissionMode } from '../shared/types';
+import { getPlatform } from './platform';
 import type { SessionStatusColor } from './components/StatusDot';
 
 type ViewMode = 'chat' | 'terminal';
@@ -264,7 +265,18 @@ function AppInner() {
 
     // UI action sync — receive actions broadcast from other devices
     const uiActionHandler = (window.claude.on as any).uiAction?.((action: any) => {
-      if (!action?.type) return;
+      if (!action) return;
+      // Handle view switching from native side (e.g. Chat button in TerminalKeyboardRow)
+      if (action.action === 'switch-view' && action.mode) {
+        setSessionId((currentSid) => {
+          if (currentSid) {
+            setViewModes((prev) => new Map(prev).set(currentSid, action.mode));
+          }
+          return currentSid;
+        });
+        return;
+      }
+      if (!action.type) return;
       // Handle session initialization sync (not a chat reducer action)
       if (action.type === '_SESSION_INITIALIZED' && action.sessionId) {
         setInitializedSessions((prev) => {
@@ -493,6 +505,10 @@ function AppInner() {
     (mode: ViewMode) => {
       if (!sessionId) return;
       setViewModes((prev) => new Map(prev).set(sessionId, mode));
+      // On Android, tell the native side to switch views
+      if (getPlatform() === 'android') {
+        (window as any).claude?.remote?.broadcastAction?.({ action: 'switch-view', mode });
+      }
     },
     [sessionId],
   );
@@ -582,12 +598,15 @@ function AppInner() {
                       resumeInfo={resumeInfo}
                     />
                   </ErrorBoundary>
-                  <ErrorBoundary name="Terminal">
-                    <TerminalView
-                      sessionId={s.id}
-                      visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'terminal'}
-                    />
-                  </ErrorBoundary>
+                  {/* On Android, native Termux handles terminal — don't mount xterm.js */}
+                  {getPlatform() !== 'android' && (
+                    <ErrorBoundary name="Terminal">
+                      <TerminalView
+                        sessionId={s.id}
+                        visible={s.id === sessionId && (viewModes.get(s.id) || 'chat') === 'terminal'}
+                      />
+                    </ErrorBoundary>
+                  )}
                 </React.Fragment>
               ))}
               {/* Initializing overlay — shown before Claude is ready */}

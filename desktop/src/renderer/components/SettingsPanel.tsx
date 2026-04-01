@@ -406,6 +406,19 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
               </section>
             </div>
           )}
+
+          {/* Support */}
+          <div className="border-t border-gray-800 pt-4 mt-2 flex flex-col gap-2">
+            <a
+              href="https://buymeacoffee.com/itsdestin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors text-sm text-gray-300 hover:text-gray-100"
+            >
+              <span>☕</span>
+              <span>Donate</span>
+            </a>
+          </div>
         </div>
       </div>
     </>

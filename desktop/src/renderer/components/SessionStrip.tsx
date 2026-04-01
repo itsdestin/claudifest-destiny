@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { SessionStatusColor } from './StatusDot';
+import { isAndroid } from '../platform';
 
 interface SessionEntry {
   id: string;
@@ -211,14 +212,18 @@ export default function SessionStrip({
 
   if (sessions.length === 0) return null;
 
-  const allExpanded = sessions.length <= 3;
+  // On Android: show only the active session pill (single pill + dropdown)
+  const visibleSessions = isAndroid()
+    ? sessions.filter(s => s.id === activeSessionId)
+    : sessions;
+  const allExpanded = !isAndroid() && sessions.length <= 3;
   const dragging = dragIdx !== null && isDragging.current && dragPos !== null;
 
   return (
     <>
-      <div className="flex items-center gap-0.5 bg-gray-800 rounded-full px-1.5 py-0.5">
+      <div className="flex items-center gap-0.5 bg-gray-800 rounded-full px-1.5 py-0.5 overflow-hidden">
         {/* ── Session pills ──────────────────────────────── */}
-        {sessions.map((s, idx) => {
+        {visibleSessions.map((s, idx) => {
           const color = sessionStatuses?.get(s.id) || 'gray';
           const isActive = s.id === activeSessionId;
           const isHovered = hoveredId === s.id;
@@ -243,7 +248,7 @@ export default function SessionStrip({
                 onMouseLeave={allExpanded ? undefined : handleLeave}
                 className={`
                   relative flex items-center gap-1 rounded-full px-1.5 py-px
-                  border select-none touch-none
+                  border select-none touch-none overflow-hidden
                   ${showName && (isActive || !allExpanded)
                     ? 'border-gray-600 bg-gray-850'
                     : 'border-transparent'
@@ -255,7 +260,7 @@ export default function SessionStrip({
                     ? 'opacity 150ms, transform 150ms'
                     : 'all 150ms cubic-bezier(0.34, 1.56, 0.64, 1)',
                   transform: (!isBeingDragged && isHovered && !isActive) ? 'scale(1.04)' : undefined,
-                  boxShadow: isActive ? GLOW_SHADOW[color] : undefined,
+                  boxShadow: (!isAndroid() && isActive) ? GLOW_SHADOW[color] : undefined,
                   cursor: isBeingDragged ? 'grabbing' : 'grab',
                 }}
                 title={s.name}
@@ -271,7 +276,7 @@ export default function SessionStrip({
                 >
                   {s.name}
                 </span>
-                {/* Active indicator bar — removed; dot is sufficient */}
+                {/* Active indicator bar — removed (dot is sufficient) */}
               </button>
               {/* Insertion line — rendered after the pill */}
               {isOver && dragIdx !== null && idx > dragIdx && (
