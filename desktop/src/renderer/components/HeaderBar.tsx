@@ -111,8 +111,8 @@ export default function HeaderBar({
 
       {/* Right — view toggles */}
       <div className="flex-1 flex items-center justify-end gap-1 sm:gap-2">
-        {/* Chat/Terminal toggle — hidden on Android; native floating button handles it */}
-        {!isAndroid() && (
+        {/* Chat/Terminal toggle */}
+        {(
           <div className="flex bg-gray-800 rounded-md p-0.5 gap-0.5">
             <button
               onClick={() => onToggleView('chat')}
