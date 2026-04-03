@@ -34,6 +34,12 @@ const IPC = {
   TRANSCRIPT_EVENT: 'transcript:event',
   SESSION_BROWSE: 'session:browse',
   SESSION_HISTORY: 'session:history',
+  FIRST_RUN_STATE: 'first-run:state',
+  FIRST_RUN_RETRY: 'first-run:retry',
+  FIRST_RUN_START_AUTH: 'first-run:start-auth',
+  FIRST_RUN_SUBMIT_API_KEY: 'first-run:submit-api-key',
+  FIRST_RUN_DEV_MODE_DONE: 'first-run:dev-mode-done',
+  FIRST_RUN_SKIP: 'first-run:skip',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -143,4 +149,19 @@ contextBridge.exposeInMainWorld('claude', {
   getGitHubAuth: () => ipcRenderer.invoke('github:auth'),
   // Async IPC — renderer must await this (was sendSync before v2.2.0)
   getHomePath: (): Promise<string> => ipcRenderer.invoke('get-home-path'),
+  firstRun: {
+    getState: (): Promise<any> => ipcRenderer.invoke(IPC.FIRST_RUN_STATE),
+    retry: (): Promise<void> => ipcRenderer.invoke(IPC.FIRST_RUN_RETRY),
+    startAuth: (mode: 'oauth' | 'apikey'): Promise<void> =>
+      ipcRenderer.invoke(IPC.FIRST_RUN_START_AUTH, mode),
+    submitApiKey: (key: string): Promise<void> =>
+      ipcRenderer.invoke(IPC.FIRST_RUN_SUBMIT_API_KEY, key),
+    devModeDone: (): Promise<void> => ipcRenderer.invoke(IPC.FIRST_RUN_DEV_MODE_DONE),
+    skip: (): Promise<void> => ipcRenderer.invoke(IPC.FIRST_RUN_SKIP),
+    onStateChanged: (cb: (state: any) => void) => {
+      const handler = (_e: IpcRendererEvent, state: any) => cb(state);
+      ipcRenderer.on(IPC.FIRST_RUN_STATE, handler);
+      return handler;
+    },
+  },
 });
