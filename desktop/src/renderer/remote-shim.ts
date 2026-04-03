@@ -373,6 +373,11 @@ export function installShim(): void {
       disconnectClient: (clientId: string) => invoke('remote:disconnect-client', clientId),
       broadcastAction: (action: any) => fire('ui:action', action),
     },
+    model: {
+      getPreference: () => invoke('model:get-preference'),
+      setPreference: (model: string) => invoke('model:set-preference', { model }),
+      switch: (sessionId: string, model: string) => invoke('model:switch', { sessionId, model }),
+    },
     // Android-only bridge methods — only called when isAndroid() is true
     android: {
       getTier: () => invoke('android:get-tier'),
