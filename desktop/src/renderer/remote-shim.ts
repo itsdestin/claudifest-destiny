@@ -448,6 +448,11 @@ export function installShim(): void {
       disconnectClient: (clientId: string) => invoke('remote:disconnect-client', clientId),
       broadcastAction: (action: any) => fire('ui:action', action),
     },
+    model: {
+      getPreference: () => invoke('model:get-preference'),
+      setPreference: (model: string) => invoke('model:set-preference', { model }),
+      switch: (sessionId: string, model: string) => invoke('model:switch', { sessionId, model }),
+    },
     // Android-only bridge methods — when connected to a remote desktop, these
     // return immediate defaults since the remote server doesn't handle android:* messages
     android: {
