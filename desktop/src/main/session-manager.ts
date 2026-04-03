@@ -20,6 +20,7 @@ export interface CreateSessionOpts {
   rows?: number;
   /** Resume a previous session by its Claude Code session ID */
   resumeSessionId?: string;
+  model?: string;
 }
 
 interface ManagedSession {
@@ -45,6 +46,9 @@ export class SessionManager extends EventEmitter {
     }
     if (opts.resumeSessionId) {
       args.push('--resume', opts.resumeSessionId);
+    }
+    if (opts.model) {
+      args.push('--model', opts.model);
     }
 
     // Spawn a separate Node.js process for node-pty so it uses Node's
