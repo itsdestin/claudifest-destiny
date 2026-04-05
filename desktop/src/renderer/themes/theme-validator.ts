@@ -8,7 +8,8 @@ const REQUIRED_TOKENS = [
 
 /** Relative luminance of a hex color (0–1). */
 export function luminance(hex: string): number {
-  const clean = hex.replace('#', '');
+  const clean = hex.replace(/^#/, '');
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return 0; // treat unparseable as black
   const r = parseInt(clean.slice(0, 2), 16) / 255;
   const g = parseInt(clean.slice(2, 4), 16) / 255;
   const b = parseInt(clean.slice(4, 6), 16) / 255;
@@ -18,7 +19,7 @@ export function luminance(hex: string): number {
 
 /** Returns '#FFFFFF' or '#000000' based on accent luminance. */
 export function computeOnAccent(accentHex: string): '#FFFFFF' | '#000000' {
-  return luminance(accentHex) < 0.4 ? '#FFFFFF' : '#000000';
+  return luminance(accentHex) < 0.179 ? '#FFFFFF' : '#000000';
 }
 
 /** Throws a descriptive error if the theme JSON is invalid. */
