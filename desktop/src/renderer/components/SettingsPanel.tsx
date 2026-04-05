@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { isAndroid } from '../platform';
 import ThemeScreen from './ThemeScreen';
-
+import { useTheme } from '../state/theme-context';
 
 interface RemoteConfig {
   enabled: boolean;
@@ -115,6 +115,73 @@ function Toggle({ enabled, onToggle, color = 'green' }: { enabled: boolean; onTo
 
 
 // ─── Tier selector popup (Android) ────────────────────────────────────────
+
+// ─── Theme popup button ────────────────────────────────────────────────────
+
+/** Compact "Appearance" row — opens ThemeScreen in a centered popup modal */
+function ThemeButton({ onSendInput }: { onSendInput?: (text: string) => void }) {
+  const { activeTheme, font } = useTheme();
+  const [open, setOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  const fontName = font.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+  const { canvas, panel, inset, accent } = activeTheme.tokens;
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <section>
+      <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Appearance</h3>
+
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
+      >
+        <div className="flex rounded overflow-hidden shrink-0" style={{ width: 32, height: 20 }}>
+          <div style={{ flex: 1, background: canvas }} />
+          <div style={{ flex: 1, background: panel }} />
+          <div style={{ flex: 1, background: inset }} />
+          <div style={{ flex: 1, background: accent }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-xs text-fg font-medium">{activeTheme.name}</span>
+          <span className="text-[10px] text-fg-muted ml-2">{fontName}</span>
+        </div>
+        <svg className="w-3.5 h-3.5 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            ref={popupRef}
+            className="fixed z-[61] rounded-xl bg-panel border border-edge shadow-2xl overflow-hidden"
+            style={{
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 'min(380px, 90vw)',
+              maxHeight: '85vh',
+            }}
+          >
+            <ThemeScreen onClose={() => setOpen(false)} onSendInput={onSendInput} />
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+// ─── Tier selector popup ───────────────────────────────────────────────────
 
 const TIER_OPTIONS = [
   { id: 'CORE', name: 'Core', desc: 'Personal assistant — journal, inbox, briefings' },
@@ -360,7 +427,7 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
     <>
       <div className="flex-1 px-4 py-4 space-y-6">
 
-        <ThemeScreen onClose={onClose} onSendInput={onSendInput} />
+        <ThemeButton onSendInput={onSendInput} />
 
         {/* Tier & directories are local-only — hide when connected to remote desktop */}
         {!remoteConnected && (
@@ -658,7 +725,7 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
     <>
       <div className="flex-1 px-4 py-4 space-y-6">
 
-        <ThemeScreen onClose={onClose} onSendInput={onSendInput} />
+        <ThemeButton onSendInput={onSendInput} />
 
         {/* Setup banner — shown when no clients connected */}
         {!hasClients && (
