@@ -4,6 +4,7 @@ import type { ThemeTokens, ThemeShape, ThemeBackground, ThemeLayout, ThemeDefini
 export function buildTokenCSS(tokens: ThemeTokens): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(tokens)) {
+    if (typeof value !== 'string') continue;
     result[`--${key}`] = value;
   }
   return result;
@@ -97,12 +98,18 @@ export function applyThemeToDom(theme: ThemeDefinition): void {
   }
 }
 
+const TOKEN_CSS_PROPS = [
+  '--canvas', '--panel', '--inset', '--well', '--accent', '--on-accent',
+  '--fg', '--fg-2', '--fg-dim', '--fg-muted', '--fg-faint',
+  '--edge', '--edge-dim', '--scrollbar-thumb', '--scrollbar-hover',
+] as const;
+
 /** Clears all theme-engine-applied DOM mutations. */
 export function clearThemeFromDom(): void {
   const root = document.documentElement;
   const body = document.body;
   root.removeAttribute('data-panels-blur');
-  const propsToRemove = ['--panels-blur', '--radius-sm', '--radius-md', '--radius-lg', '--radius-full'];
+  const propsToRemove = [...TOKEN_CSS_PROPS, '--panels-blur', '--radius-sm', '--radius-md', '--radius-lg', '--radius-full'];
   for (const p of propsToRemove) root.style.removeProperty(p);
   for (const a of LAYOUT_ATTRS) body.removeAttribute(a);
   const customEl = document.getElementById('theme-custom') as HTMLStyleElement | null;

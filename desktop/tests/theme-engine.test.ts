@@ -30,6 +30,12 @@ describe('buildShapeCSS', () => {
   it('returns empty object for undefined shape', () => {
     expect(buildShapeCSS(undefined)).toEqual({});
   });
+
+  it('skips empty string values and includes non-empty values', () => {
+    const result = buildShapeCSS({ 'radius-sm': '', 'radius-md': '4px' });
+    expect('--radius-sm' in result).toBe(false);
+    expect(result['--radius-md']).toBe('4px');
+  });
 });
 
 describe('buildBackgroundStyle', () => {
@@ -42,6 +48,16 @@ describe('buildBackgroundStyle', () => {
     const result = buildBackgroundStyle({ type: 'image', value: 'https://example.com/bg.jpg' });
     expect(result?.backgroundImage).toBe('url("https://example.com/bg.jpg")');
     expect(result?.backgroundSize).toBe('cover');
+  });
+
+  it('returns solid CSS for solid type', () => {
+    const result = buildBackgroundStyle({ type: 'solid', value: '#1a1a2e' });
+    expect(result?.background).toBe('#1a1a2e');
+  });
+
+  it('passes opacity through to the result', () => {
+    const result = buildBackgroundStyle({ type: 'solid', value: '#1a1a2e', opacity: 0.8 });
+    expect(result?.opacity).toBe('0.8');
   });
 
   it('returns null for undefined background', () => {
