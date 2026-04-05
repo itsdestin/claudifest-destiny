@@ -233,8 +233,16 @@ export default function SessionStrip({
   }, [dragIdx]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    if (dragIdx !== null && isDragging.current && overIdx !== null && onReorderSessions) {
-      onReorderSessions(dragIdx, overIdx);
+    if (dragIdx !== null && isDragging.current) {
+      // Reorder if dropped on a different position
+      if (overIdx !== null && onReorderSessions) {
+        onReorderSessions(dragIdx, overIdx);
+      }
+      // Select the dragged session so it stays active after drop
+      const draggedSession = sessions[dragIdx];
+      if (draggedSession) {
+        onSelectSession(draggedSession.id);
+      }
     }
     // Reset all drag state
     setDragIdx(null);
@@ -246,7 +254,7 @@ export default function SessionStrip({
 
     // Allow the suppressClick flag to clear after the click event fires
     setTimeout(() => { suppressClick.current = false; }, 0);
-  }, [dragIdx, overIdx, onReorderSessions]);
+  }, [dragIdx, overIdx, onReorderSessions, sessions, onSelectSession]);
 
   const handleClick = useCallback((id: string) => {
     if (suppressClick.current) return;
@@ -466,15 +474,29 @@ export default function SessionStrip({
         </div>
       </div>
 
-      {/* ── Floating drag ghost — snaps to insertion gap ──── */}
+      {/* ── Insertion indicator — shows where the pill will land ── */}
       {dragging && ghostTarget && (
         <div
-          className="fixed z-[9999] pointer-events-none flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-inset border border-edge shadow-lg shadow-black/40"
+          className="fixed z-[9998] pointer-events-none"
           style={{
             left: ghostTarget.x,
             top: ghostTarget.y,
+            transform: 'translate(-50%, -50%)',
+            transition: 'left 120ms cubic-bezier(0.34, 1.56, 0.64, 1), top 120ms ease',
+          }}
+        >
+          <div className="w-0.5 h-4 rounded-full bg-accent" style={{ opacity: 0.8 }} />
+        </div>
+      )}
+
+      {/* ── Floating drag ghost — follows cursor freely ──── */}
+      {dragging && dragPos && (
+        <div
+          className="fixed z-[9999] pointer-events-none flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-inset border border-edge shadow-lg shadow-black/40"
+          style={{
+            left: dragPos.x,
+            top: dragPos.y,
             transform: 'translate(-50%, -50%) scale(1.05)',
-            transition: 'left 150ms cubic-bezier(0.34, 1.56, 0.64, 1), top 150ms cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}
         >
           <SessionDot color={dragColor} isActive />
