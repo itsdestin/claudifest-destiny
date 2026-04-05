@@ -565,13 +565,14 @@ function AppInner() {
       if (event.sessionId !== sessionId) return;
 
       const actualModel = event.data.model as string;
-      const matches = actualModel.includes(pendingModel);
+      const baseKey = (k: string) => k.replace(/\[.*\]/, '');
+      const matches = actualModel.includes(baseKey(pendingModel));
       if (matches) {
         setPendingModel(null);
         consecutiveFailures.current = 0;
         (window.claude as any).model?.setPreference(pendingModel);
       } else {
-        const actual = MODELS.find(m => actualModel.includes(m));
+        const actual = MODELS.find(m => actualModel.includes(baseKey(m)));
         if (actual) setModel(actual);
         const failures = consecutiveFailures.current + 1;
         consecutiveFailures.current = failures;

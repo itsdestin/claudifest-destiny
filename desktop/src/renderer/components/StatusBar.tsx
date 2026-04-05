@@ -16,13 +16,13 @@ interface StatusData {
   syncWarnings: string | null;
 }
 
-const MODELS = ['sonnet', 'opus', 'haiku'] as const;
+const MODELS = ['sonnet', 'opus[1m]', 'haiku'] as const;
 type ModelAlias = typeof MODELS[number];
 
 const MODEL_DISPLAY: Record<ModelAlias, { label: string; color: string; bg: string; border: string }> = {
-  sonnet: { label: 'Sonnet', color: '#9CA3AF', bg: 'rgba(156,163,175,0.15)', border: 'rgba(156,163,175,0.25)' },
-  opus:   { label: 'Opus',   color: '#818CF8', bg: 'rgba(129,140,248,0.15)', border: 'rgba(129,140,248,0.25)' },
-  haiku:  { label: 'Haiku',  color: '#2DD4BF', bg: 'rgba(45,212,191,0.15)',  border: 'rgba(45,212,191,0.25)' },
+  sonnet:      { label: 'Sonnet',   color: '#9CA3AF', bg: 'rgba(156,163,175,0.15)', border: 'rgba(156,163,175,0.25)' },
+  'opus[1m]':  { label: 'Opus 1M',  color: '#818CF8', bg: 'rgba(129,140,248,0.15)', border: 'rgba(129,140,248,0.25)' },
+  haiku:       { label: 'Haiku',    color: '#2DD4BF', bg: 'rgba(45,212,191,0.15)',  border: 'rgba(45,212,191,0.25)' },
 };
 
 function utilizationColor(pct: number): string {
