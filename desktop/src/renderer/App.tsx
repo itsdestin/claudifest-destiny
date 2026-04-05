@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import TerminalView from './components/TerminalView';
 import ChatView from './components/ChatView';
 import HeaderBar from './components/HeaderBar';
-import InputBar from './components/InputBar';
+import InputBar, { type InputBarHandle } from './components/InputBar';
 import StatusBar from './components/StatusBar';
 import ErrorBoundary from './components/ErrorBoundary';
 import GamePanel from './components/game/GamePanel';
@@ -50,6 +50,8 @@ function AppInner() {
   const [initializedSessions, setInitializedSessions] = useState<Set<string>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerSearchMode, setDrawerSearchMode] = useState(false);
+  const [drawerFilter, setDrawerFilter] = useState<string | undefined>(undefined);
+  const inputBarRef = useRef<InputBarHandle>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsBadge, setSettingsBadge] = useState(false);
   const [skills, setSkills] = useState<SkillEntry[]>([]);
@@ -498,17 +500,28 @@ function AppInner() {
   const handleOpenDrawer = useCallback((searchMode: boolean) => {
     setDrawerSearchMode(searchMode);
     setDrawerOpen(true);
+    // When opened via "/" in InputBar, the InputBar drives the filter
+    // When opened via compass button, use the drawer's internal search
+    if (!searchMode) setDrawerFilter(undefined);
+  }, []);
+
+  const handleCloseDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    setDrawerFilter(undefined);
   }, []);
 
   const handleSelectSkill = useCallback(
     (skill: SkillEntry) => {
       if (skill.id === '_resume') {
         setDrawerOpen(false);
+        setDrawerFilter(undefined);
         setResumeRequested(true);
         return;
       }
       if (!sessionId) return;
       setDrawerOpen(false);
+      setDrawerFilter(undefined);
+      inputBarRef.current?.clear();
       dispatch({
         type: 'USER_PROMPT',
         sessionId,
@@ -687,13 +700,14 @@ function AppInner() {
             </div>
             {currentViewMode === 'chat' && (
               <>
-                <ChatInputBar sessionId={sessionId} onOpenDrawer={handleOpenDrawer} disabled={trustGateActive || !sessionInitialized} onResumeCommand={() => setResumeRequested(true)} />
+                <ChatInputBar ref={inputBarRef} sessionId={sessionId} onOpenDrawer={handleOpenDrawer} onCloseDrawer={handleCloseDrawer} onDrawerSearch={setDrawerFilter} disabled={trustGateActive || !sessionInitialized} onResumeCommand={() => setResumeRequested(true)} />
                 <CommandDrawer
                   open={drawerOpen}
                   searchMode={drawerSearchMode}
                   skills={skills}
                   onSelect={handleSelectSkill}
-                  onClose={() => setDrawerOpen(false)}
+                  onClose={handleCloseDrawer}
+                  externalFilter={drawerFilter}
                 />
                 <StatusBar
                   statusData={{
@@ -760,9 +774,11 @@ function AppInner() {
   );
 }
 
-function ChatInputBar({ sessionId, onOpenDrawer, disabled, onResumeCommand }: { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; disabled?: boolean; onResumeCommand?: () => void }) {
-  return <InputBar sessionId={sessionId} onOpenDrawer={onOpenDrawer} disabled={disabled} onResumeCommand={onResumeCommand} />;
-}
+const ChatInputBar = React.forwardRef<InputBarHandle, { sessionId: string; onOpenDrawer: (searchMode: boolean) => void; onCloseDrawer?: () => void; onDrawerSearch?: (query: string) => void; disabled?: boolean; onResumeCommand?: () => void }>(
+  function ChatInputBar({ sessionId, onOpenDrawer, onCloseDrawer, onDrawerSearch, disabled, onResumeCommand }, ref) {
+    return <InputBar ref={ref} sessionId={sessionId} onOpenDrawer={onOpenDrawer} onCloseDrawer={onCloseDrawer} onDrawerSearch={onDrawerSearch} disabled={disabled} onResumeCommand={onResumeCommand} />;
+  },
+);
 
 export default function App() {
   return (

@@ -1,13 +1,19 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { useChatDispatch } from '../state/chat-context';
 import QuickChips, { QuickChip } from './QuickChips';
 import { AttachIcon, CompassIcon } from './Icons';
 import BrailleBurst from './BrailleBurst';
 
+export interface InputBarHandle {
+  clear: () => void;
+}
+
 interface Props {
   sessionId: string;
   disabled?: boolean;
   onOpenDrawer?: (searchMode: boolean) => void;
+  onCloseDrawer?: () => void;
+  onDrawerSearch?: (query: string) => void;
   onResumeCommand?: () => void;
 }
 
@@ -28,11 +34,19 @@ function fileNameFromPath(p: string): string {
   return p.replace(/\\/g, '/').split('/').pop() || p;
 }
 
-export default function InputBar({ sessionId, disabled, onOpenDrawer, onResumeCommand }: Props) {
+const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId, disabled, onOpenDrawer, onCloseDrawer, onDrawerSearch, onResumeCommand }, ref) {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const dispatch = useChatDispatch();
+
+  useImperativeHandle(ref, () => ({
+    clear: () => {
+      setText('');
+      setAttachments([]);
+      if (inputRef.current) inputRef.current.style.height = 'auto';
+    },
+  }));
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -122,9 +136,10 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer, onResumeCo
     sendMessage(currentText, attachments);
     setText('');
     setAttachments([]);
+    onCloseDrawer?.();
     // Reset height after clearing
     if (inputRef.current) inputRef.current.style.height = 'auto';
-  }, [text, attachments, sendMessage]);
+  }, [text, attachments, sendMessage, onCloseDrawer]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,12 +252,18 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer, onResumeCo
             rows={1}
             onChange={(e) => {
               const val = e.target.value;
+              setText(val);
               // Detect "/" typed as first character — open drawer in search mode
               if (val === '/' && text === '') {
                 onOpenDrawer?.(true);
-                return;
+                onDrawerSearch?.('');
+              } else if (val.startsWith('/') && text.startsWith('/')) {
+                // Continue updating drawer filter as user types after "/"
+                onDrawerSearch?.(val.slice(1));
+              } else if (!val.startsWith('/') && text.startsWith('/')) {
+                // User deleted the "/" — close the drawer
+                onCloseDrawer?.();
               }
-              setText(val);
             }}
             onKeyDown={(e) => {
               // Enter sends, Shift+Enter inserts newline
@@ -270,4 +291,6 @@ export default function InputBar({ sessionId, disabled, onOpenDrawer, onResumeCo
       </div>
     </div>
   );
-}
+});
+
+export default InputBar;

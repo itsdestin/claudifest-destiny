@@ -8,6 +8,8 @@ interface Props {
   skills: SkillEntry[];
   onSelect: (skill: SkillEntry) => void;
   onClose: () => void;
+  /** When defined, the drawer uses this filter instead of its own search input (driven by InputBar "/" typing). */
+  externalFilter?: string;
 }
 
 const categoryOrder = ['personal', 'work', 'development', 'admin', 'other'] as const;
@@ -19,19 +21,20 @@ const categoryLabels: Record<string, string> = {
   other: 'OTHER SKILLS',
 };
 
-export default function CommandDrawer({ open, searchMode, skills, onSelect, onClose }: Props) {
+export default function CommandDrawer({ open, searchMode, skills, onSelect, onClose, externalFilter }: Props) {
   const [search, setSearch] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
+  const hasExternalFilter = externalFilter !== undefined;
 
-  // Focus search on open (always in search mode, optionally in browse mode)
+  // Focus search on open (only when NOT driven by InputBar's "/" typing)
   useEffect(() => {
-    if (open) {
+    if (open && !hasExternalFilter) {
       setSearch('');
       // Small delay to let the transition start before focusing
       const t = setTimeout(() => searchRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
-  }, [open, searchMode]);
+  }, [open, searchMode, hasExternalFilter]);
 
   // Close on Escape
   useEffect(() => {
@@ -43,21 +46,24 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
+  // Use external filter (from InputBar "/" typing) when available, otherwise internal search
+  const activeQuery = hasExternalFilter ? (externalFilter || '') : search;
+
   // Filter skills by search query
   const filtered = useMemo(() => {
-    if (!search.trim()) return skills;
-    const q = search.toLowerCase();
+    if (!activeQuery.trim()) return skills;
+    const q = activeQuery.toLowerCase();
     return skills.filter(
       (s) =>
         s.displayName.toLowerCase().includes(q) ||
         s.description.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q),
     );
-  }, [skills, search]);
+  }, [skills, activeQuery]);
 
   // Group by category (only when not searching)
   const grouped = useMemo(() => {
-    if (search.trim()) return null;
+    if (activeQuery.trim()) return null;
     const groups = new Map<string, SkillEntry[]>();
     for (const s of filtered) {
       const list = groups.get(s.category) || [];
@@ -65,7 +71,7 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
       groups.set(s.category, list);
     }
     return groups;
-  }, [filtered, search]);
+  }, [filtered, activeQuery]);
 
   return (
     <>
@@ -89,23 +95,25 @@ export default function CommandDrawer({ open, searchMode, skills, onSelect, onCl
           <div className="w-8 h-1 rounded-full bg-fg-faint" />
         </div>
 
-        {/* Search bar */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-2 bg-well rounded-lg px-3 py-2 border border-edge-dim">
-            <svg className="w-4 h-4 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="11" cy="11" r="7" />
-              <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
-            </svg>
-            <input
-              ref={searchRef}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search skills and commands..."
-              className="flex-1 bg-transparent text-sm text-fg placeholder-fg-muted outline-none"
-            />
+        {/* Search bar — hidden when InputBar is driving the search via "/" */}
+        {!hasExternalFilter && (
+          <div className="px-4 pb-3">
+            <div className="flex items-center gap-2 bg-well rounded-lg px-3 py-2 border border-edge-dim">
+              <svg className="w-4 h-4 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+              </svg>
+              <input
+                ref={searchRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search skills and commands..."
+                className="flex-1 bg-transparent text-sm text-fg placeholder-fg-muted outline-none"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Scrollable content */}
         <div className="overflow-y-auto px-4 pb-4" style={{ maxHeight: 'calc(45vh - 80px)' }}>
