@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateTheme, computeOnAccent } from '../src/renderer/themes/theme-validator';
+import { validateTheme, computeOnAccent, luminance } from '../src/renderer/themes/theme-validator';
 
 const MINIMAL_VALID = {
   name: 'Test Theme',
@@ -42,7 +42,6 @@ describe('validateTheme', () => {
 describe('computeOnAccent', () => {
   it('returns white for dark accent colors', () => {
     expect(computeOnAccent('#1A1A1A')).toBe('#FFFFFF');
-    expect(computeOnAccent('#7C6AF7')).toBe('#FFFFFF');
     expect(computeOnAccent('#0D0F1A')).toBe('#FFFFFF');
   });
 
@@ -50,5 +49,25 @@ describe('computeOnAccent', () => {
     expect(computeOnAccent('#F2F2F2')).toBe('#000000');
     expect(computeOnAccent('#FFFFFF')).toBe('#000000');
     expect(computeOnAccent('#D4D4D4')).toBe('#000000');
+  });
+
+  it('returns black for mid-range colors above 0.179 threshold', () => {
+    expect(computeOnAccent('#7C6AF7')).toBe('#000000');
+    expect(computeOnAccent('#FF7700')).toBe('#000000');
+  });
+});
+
+describe('luminance', () => {
+  it('returns 1.0 for white', () => {
+    expect(luminance('#FFFFFF')).toBeCloseTo(1.0);
+  });
+
+  it('returns 0.0 for black', () => {
+    expect(luminance('#000000')).toBeCloseTo(0.0);
+  });
+
+  it('returns 0 for non-hex input without crashing', () => {
+    expect(luminance('rgb(255,255,255)')).toBe(0);
+    expect(luminance('#FFF')).toBe(0);
   });
 });
