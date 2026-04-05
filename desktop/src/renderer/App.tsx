@@ -62,40 +62,8 @@ function AppInner() {
   const [viewedSessions, setViewedSessions] = useState<Set<string>>(new Set());
   const [resumeInfo, setResumeInfo] = useState<Map<string, { claudeSessionId: string; projectSlug: string }>>(new Map());
   const [resumeRequested, setResumeRequested] = useState(false);
-  const [isFirstRun, setIsFirstRun] = useState<boolean | null>(null); // null = loading
-  const handleFirstRunComplete = useCallback(() => setIsFirstRun(false), []);
-
-  const [model, setModel] = useState<ModelAlias>('sonnet');
-  const [pendingModel, setPendingModel] = useState<ModelAlias | null>(null);
-  const consecutiveFailures = useRef(0);
-  const [toast, setToast] = useState<string | null>(null);
-
-  // Check first-run state with a 3-second safety timeout — never hang the app
-  useEffect(() => {
-    let resolved = false;
-    const resolve = (value: boolean) => {
-      if (!resolved) { resolved = true; setIsFirstRun(value); }
-    };
-    const timeout = setTimeout(() => resolve(false), 3000);
-
-    (window as any).claude?.firstRun?.getState?.()
-      .then((state: any) => {
-        clearTimeout(timeout);
-        resolve(!!(state && state.currentStep !== 'COMPLETE'));
-      })
-      .catch(() => { clearTimeout(timeout); resolve(false); });
-
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Load persisted model preference on mount
-  useEffect(() => {
-    (window.claude as any).model?.getPreference().then((m: string) => {
-      if (MODELS.includes(m as any)) {
-        setModel(m as ModelAlias);
-      }
-    }).catch(() => {});
-  }, []);
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
 
   usePromptDetector();
   const dispatch = useChatDispatch();
@@ -779,8 +747,9 @@ function AppInner() {
                   open={drawerOpen}
                   searchMode={drawerSearchMode}
                   onSelect={handleSelectSkill}
-                  onClose={handleCloseDrawer}
-                  externalFilter={drawerFilter}
+                  onClose={() => setDrawerOpen(false)}
+                  onOpenManager={() => setManagerOpen(true)}
+                  onOpenMarketplace={() => setMarketplaceOpen(true)}
                 />
               )}
             </div>
