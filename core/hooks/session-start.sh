@@ -369,6 +369,11 @@ _session_sync_background() {
                         rclone copy "$DRIVE_SOURCE/conversations/" "$CLAUDE_DIR/projects/" \
                             --checksum --include '*.jsonl' --ignore-existing 2>/dev/null &
                         local _conv_pull_pid=$!
+                        # Conversation index — pull to staging for post-pull merge
+                        mkdir -p "$CLAUDE_DIR/toolkit-state/.index-staging"
+                        rclone copy "gdrive:$_DR/Backup/system-backup/conversation-index.json" \
+                            "$CLAUDE_DIR/toolkit-state/.index-staging/" \
+                            --checksum 2>/dev/null &
                         wait
                         # Capture conversation pull exit code atomically
                         # (fixes A3: subshell variable scoping bug)
@@ -405,6 +410,12 @@ _session_sync_background() {
                                 cp -n "$_conv_slug"*.jsonl "$CLAUDE_DIR/projects/$_cs_name/" 2>/dev/null || true
                             done
                         fi
+                        # Conversation index — stage for post-pull merge
+                        if [[ -f "$REPO_DIR/system-backup/conversation-index.json" ]]; then
+                            mkdir -p "$CLAUDE_DIR/toolkit-state/.index-staging"
+                            cp "$REPO_DIR/system-backup/conversation-index.json" \
+                                "$CLAUDE_DIR/toolkit-state/.index-staging/" 2>/dev/null || true
+                        fi
                     fi
                     ;;
                 icloud)
@@ -434,6 +445,12 @@ _session_sync_background() {
                                 rsync -a --update "$_conv_slug"*.jsonl "$CLAUDE_DIR/projects/$_cs_name/" 2>/dev/null || \
                                     cp -n "$_conv_slug"*.jsonl "$CLAUDE_DIR/projects/$_cs_name/" 2>/dev/null || true
                             done
+                        fi
+                        # Conversation index — stage for post-pull merge
+                        if [[ -f "$ICLOUD_PATH/system-backup/conversation-index.json" ]]; then
+                            mkdir -p "$CLAUDE_DIR/toolkit-state/.index-staging"
+                            cp "$ICLOUD_PATH/system-backup/conversation-index.json" \
+                                "$CLAUDE_DIR/toolkit-state/.index-staging/" 2>/dev/null || true
                         fi
                     fi
                     ;;
@@ -668,6 +685,17 @@ VEREOF
     # Home-directory conversation aggregation (Design ref: D5)
     if type aggregate_conversations &>/dev/null; then
         aggregate_conversations "$CLAUDE_DIR/projects"
+    fi
+
+    # Conversation index — merge remote index and regenerate topic cache
+    local _STAGED_INDEX="$CLAUDE_DIR/toolkit-state/.index-staging/conversation-index.json"
+    if [[ -f "$_STAGED_INDEX" ]] && type merge_conversation_index &>/dev/null; then
+        merge_conversation_index "$_STAGED_INDEX" "$CLAUDE_DIR/conversation-index.json"
+        rm -f "$_STAGED_INDEX"
+        rmdir "$CLAUDE_DIR/toolkit-state/.index-staging" 2>/dev/null || true
+    fi
+    if type regenerate_topic_cache &>/dev/null; then
+        regenerate_topic_cache
     fi
 
     # Migration check (Design ref: D7)

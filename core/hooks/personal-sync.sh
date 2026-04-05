@@ -42,6 +42,7 @@ case "$FILE_PATH" in
     */CLAUDE.md) ;;
     */toolkit-state/config.json) ;;
     */encyclopedia/*) ;;
+    */conversation-index.json) ;;
     */skills/*)
         if type is_toolkit_owned &>/dev/null && is_toolkit_owned "$FILE_PATH"; then
             exit 0
@@ -230,6 +231,14 @@ sync_drive() {
         done
     fi
 
+    # Conversation index — push to system-backup/ (consolidation-ready path)
+    local _INDEX_FILE="$CLAUDE_DIR/conversation-index.json"
+    if [[ -f "$_INDEX_FILE" ]]; then
+        rclone copyto "$_INDEX_FILE" "gdrive:$DRIVE_ROOT/Backup/system-backup/conversation-index.json" \
+            --checksum 2>/dev/null || \
+            log_backup "WARN" "Conversation index sync to Drive failed" "sync.push.drive"
+    fi
+
     if [[ $ERRORS -gt 0 ]]; then
         log_backup "WARN" "Drive sync completed with $ERRORS warning(s)"
         return 1
@@ -322,6 +331,13 @@ sync_github() (
                 done
             fi
         done
+    fi
+
+    # Conversation index
+    local _INDEX_FILE="$CLAUDE_DIR/conversation-index.json"
+    if [[ -f "$_INDEX_FILE" ]]; then
+        mkdir -p "$REPO_DIR/system-backup"
+        cp "$_INDEX_FILE" "$REPO_DIR/system-backup/conversation-index.json" 2>/dev/null || true
     fi
 
     git add -A 2>/dev/null || true
@@ -430,9 +446,22 @@ sync_icloud() {
         done
     fi
 
+    # Conversation index
+    local _INDEX_FILE="$CLAUDE_DIR/conversation-index.json"
+    if [[ -f "$_INDEX_FILE" ]]; then
+        mkdir -p "$ICLOUD_PATH/system-backup"
+        rsync -a --checksum "$_INDEX_FILE" "$ICLOUD_PATH/system-backup/conversation-index.json" 2>/dev/null || \
+            cp "$_INDEX_FILE" "$ICLOUD_PATH/system-backup/conversation-index.json" 2>/dev/null || true
+    fi
+
     log_backup "INFO" "iCloud sync complete."
     return 0
 }
+
+# --- Build conversation index from topic files before push ---
+if type update_conversation_index &>/dev/null; then
+    update_conversation_index || log_backup "WARN" "Conversation index update failed" "sync.push.index"
+fi
 
 # --- Multi-backend sync loop (Design ref: D6) ---
 _sync_errors=0

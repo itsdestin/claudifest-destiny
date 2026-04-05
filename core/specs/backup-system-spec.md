@@ -1,7 +1,7 @@
 # Backup & Sync -- Spec
 
-**Version:** 4.4
-**Last updated:** 2026-03-26
+**Version:** 4.5
+**Last updated:** 2026-04-05
 **Feature location:** `core/hooks/git-sync.sh`, `core/hooks/personal-sync.sh`, `core/hooks/lib/backup-common.sh`, `core/skills/sync/SKILL.md`
 
 ## Purpose
@@ -125,6 +125,7 @@ The hook fires on every PostToolUse for Write/Edit but immediately exits if the 
 | History | `*history.jsonl` |
 | Restore guides | `*RESTORE.md`, `*README.md` |
 | Conversations | `~/.claude/projects/*/*.jsonl` |
+| Conversation index | `~/.claude/conversation-index.json` |
 
 ### Git Sync Flow (`git-sync.sh`)
 
@@ -151,6 +152,7 @@ The hook fires on every PostToolUse for Write/Edit but immediately exits if the 
 | `~/.claude/tracked-projects.json` | Project registry — tracked and ignored project paths | `/sync` skill |
 | `~/.claude/toolkit-state/config.local.json` | Machine-specific config (platform, toolkit_root, binary paths). Rebuilt every session start. Never synced. | session-start (`rebuild_local_config`) |
 | `~/.claude/toolkit-state/.legacy-conversations-migrated` | Marker for one-time legacy conversation migration | session-start |
+| `~/.claude/conversation-index.json` | Session-to-topic mapping for cross-device topic display. Synced to `system-backup/` on all backends. | personal-sync, session-end-sync |
 
 ## Dependencies
 
@@ -177,6 +179,7 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 
 | Date | Version | What changed | Type | Approved by |
 |------|---------|-------------|------|-------------|
+| 2026-04-05 | 4.5 | Added conversation index (`conversation-index.json`) to tracked files and key state files. Index provides cross-device topic/title continuity for `/resume`. Synced to `system-backup/` on all backends. See conversation-index-spec.md. | Update | owner |
 | 2026-03-26 | 4.4 | Revised error visibility mandate: session-start network operations now run in background with failure-specific warnings (GIT:PULL_FAILED, PERSONAL:PULL_FAILED, MIGRATION:FAILED) surfaced via .sync-warnings instead of hookSpecificOutput. Statusline and /sync skill provide the visibility path. | Update | owner |
 | 2026-03-25 | 4.3 | Cross-device sync: portable/local config split (D1), mcp-config.json excluded from sync (D2, reversal of v4.2), conversations added to personal-sync scope, home-directory conversation aggregation via symlinks, git repo health check (D8), renamed get_primary_backend to get_preferred_backend. All backends now documented as complementary (no primary/secondary hierarchy). See cross-device-sync-design (03-25-2026). Removed Claude Mobile (`~/claude-mobile/`) as a tracked project — git-sync.sh now only tracks `~/.claude/`. Removed associated state files and project discovery skip entry. | Update | owner |
 | 2026-03-24 | 4.2 | Added `/sync` skill and project discovery. `discover_projects()` in backup-common.sh scans common directories for untracked git repos; session-start.sh now actively writes `.unsynced-projects`. The `/sync` skill provides status dashboard, warning resolution, project onboarding, and force sync — fulfilling the manual backup mandate (line 19). New state files: `.unsynced-projects`, `tracked-projects.json`. New design decisions: project discovery, `/sync` as resolution layer. | Update | owner |
