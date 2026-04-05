@@ -20,7 +20,7 @@ import ResumeBrowser from './components/ResumeBrowser';
 import type { SkillEntry, PermissionMode } from '../shared/types';
 import { getPlatform, isRemoteMode, onConnectionModeChange } from './platform';
 import type { SessionStatusColor } from './components/StatusDot';
-import { ThemeProvider } from './state/theme-context';
+import { ThemeProvider, useTheme } from './state/theme-context';
 
 type ViewMode = 'chat' | 'terminal';
 
@@ -780,9 +780,16 @@ const ChatInputBar = React.forwardRef<InputBarHandle, { sessionId: string; onOpe
   },
 );
 
+function ThemeBg() {
+  const { bgStyle } = useTheme();
+  if (!bgStyle) return null;
+  return <div id="theme-bg" style={bgStyle as React.CSSProperties} aria-hidden="true" />;
+}
+
 export default function App() {
   return (
     <ThemeProvider>
+      <ThemeBg />
       <GameProvider>
         <ChatProvider>
           <AppInner />
