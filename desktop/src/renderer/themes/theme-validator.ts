@@ -17,7 +17,7 @@ export function luminance(hex: string): number {
 }
 
 /** Returns '#FFFFFF' or '#000000' based on accent luminance. */
-export function computeOnAccent(accentHex: string): string {
+export function computeOnAccent(accentHex: string): '#FFFFFF' | '#000000' {
   return luminance(accentHex) < 0.4 ? '#FFFFFF' : '#000000';
 }
 
