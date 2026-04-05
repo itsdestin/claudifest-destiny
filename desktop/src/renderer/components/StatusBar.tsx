@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme, THEMES, type ThemeName } from '../state/theme-context';
+import { useTheme } from '../state/theme-context';
 
 interface StatusData {
   usage: {
@@ -89,17 +89,10 @@ const warnStyles = {
   warn: 'bg-[#FF9800]/15 text-[#FF9800] border-[#FF9800]/25',
 };
 
-const THEME_LABELS: Record<ThemeName, string> = {
-  light: 'Light',
-  dark: 'Dark',
-  midnight: 'Midnight',
-  creme: 'Crème',
-};
-
 export default function StatusBar({ statusData, onRunSync }: Props) {
   const { usage, updateStatus, contextPercent, syncStatus, syncWarnings } = statusData;
   const warnings = parseSyncWarnings(syncWarnings);
-  const { theme, cycleTheme } = useTheme();
+  const { activeTheme, cycleTheme } = useTheme();
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 sm:px-3 py-1 text-[10px] text-fg-muted border-t border-edge-dim">
@@ -150,7 +143,7 @@ export default function StatusBar({ statusData, onRunSync }: Props) {
         className="px-1.5 py-0.5 rounded bg-panel border border-edge-dim cursor-pointer hover:bg-inset transition-colors"
         title="Click to cycle theme"
       >
-        {THEME_LABELS[theme]}
+        {activeTheme.name}
       </button>
 
       {/* Version — pushed to end, hidden on very narrow screens */}
