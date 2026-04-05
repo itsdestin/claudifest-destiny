@@ -7,6 +7,7 @@ import hljsLightCss from 'highlight.js/styles/github.css?inline';
 import { validateTheme } from '../themes/theme-validator';
 import { applyThemeToDom, buildBackgroundStyle } from '../themes/theme-engine';
 import type { ThemeDefinition, LoadedTheme } from '../themes/theme-types';
+import { resolveAllAssetPaths } from '../themes/theme-asset-resolver';
 
 // Built-in themes imported as JSON (Vite handles JSON imports natively)
 import lightJson from '../themes/builtin/light.json';
@@ -92,7 +93,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           try {
             const raw = await claude.theme.readFile(slug);
             const theme = validateTheme(JSON.parse(raw));
-            loaded.push({ ...theme, source: 'user' });
+            loaded.push(resolveAllAssetPaths({ ...theme, source: 'user' }));
           } catch (e) {
             console.warn(`[ThemeProvider] Failed to load user theme "${slug}":`, e);
           }
@@ -111,7 +112,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       claude.theme.readFile(slug).then((raw: string) => {
         try {
           const theme = validateTheme(JSON.parse(raw));
-          const loaded: LoadedTheme = { ...theme, source: 'user' };
+          const loaded: LoadedTheme = resolveAllAssetPaths({ ...theme, source: 'user' });
           setUserThemes(prev => {
             const idx = prev.findIndex(t => t.slug === slug);
             if (idx >= 0) { const next = [...prev]; next[idx] = loaded; return next; }
