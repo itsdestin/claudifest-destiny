@@ -167,8 +167,11 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
     </div>
 
     <div class="input-bar-container bg-panel">
-      <div class="input-field">Type a message...</div>
-      <div class="send-btn">&#9654;</div>
+      <div class="input-form">
+        <span class="attach-btn">&#8853;</span>
+        <div class="input-field">Message Claude...</div>
+        <div class="send-btn">&#8594;</div>
+      </div>
     </div>
 
     <div class="status-bar bg-panel">
@@ -202,7 +205,36 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
 
 ## Phase 2 — Theme Pack Generation
 
-**When the user picks a concept from the second (or later) round:**
+**When the user picks a concept from the second (or later) round and says "build it":**
+
+### Phase 2a: Visual Refinement (before writing the theme pack)
+
+After the user approves a concept direction, Claude generates and shows each visual element one at a time in the concept browser for tweaking. Each screen is a separate HTML file pushed to the visual companion's `screen_dir`. Claude iterates on each screen until the user approves or says "skip" / "looks good" / "next", then moves to the next screen. After all screens are approved, proceed to the full theme pack generation in Step 1 below.
+
+**Screen 1: Background & Atmosphere**
+- Show the wallpaper or gradient Claude plans to use as a full-width preview (filling most of the viewport)
+- Show the pattern overlay if applicable, rendered as a tiled preview panel beside or below the wallpaper
+- Show glassmorphism settings: a panel sample with the planned blur level and panel opacity, overlaid on the wallpaper so the user sees the actual frosted-glass effect
+- Show the particle effect choice as a label badge (particles are static in preview)
+- Use concept card CSS classes for panels/surfaces; use custom layout for the large wallpaper preview area
+- User can say "try a different wallpaper", "less blur", "no pattern", "more opacity", etc.
+
+**Screen 2: Mascot Crossovers**
+- Show all 3 mascot variants (idle, welcome, inquisitive) side by side
+- Render each at 120x120px minimum so accessory details are clearly visible
+- Display on a neutral background with the theme's accent color as a subtle border or backdrop
+- Below each mascot, show its variant label (Idle, Welcome, Inquisitive)
+- User can say "add a bigger bow", "make it more subtle", "try without the accessory", "different hat", etc.
+
+**Screen 3: Icons & Details**
+- Show icon overrides (send button, new-chat, etc.) at 48x48px scale so details are clear
+- Show the custom cursor SVG at 64x64px if applicable
+- Show scrollbar styling as a mock scrollbar strip
+- Show the `::selection` color as a sample text block with a highlighted selection
+- Use the theme's token colors as the page background so icons are seen in context
+- User can say "change the send icon", "make the cursor simpler", "different selection color", etc.
+
+Each screen uses the same `<style>` embed pattern (full `theme-preview.css` in `<head>`) and scopes tokens via inline `style="--canvas: ...; --accent: ...;"` on a wrapper div, just like concept cards. The layout within each screen can use custom flexbox/grid arrangements for the larger preview areas.
 
 ### Step 1: Create the Theme Pack Folder
 
