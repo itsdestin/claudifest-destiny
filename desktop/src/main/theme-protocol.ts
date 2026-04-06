@@ -1,6 +1,7 @@
 import { protocol, net } from 'electron';
 import path from 'path';
 import os from 'os';
+import { pathToFileURL } from 'url';
 
 const THEMES_DIR = path.join(os.homedir(), '.claude', 'destinclaude-themes');
 
@@ -23,6 +24,6 @@ export function registerThemeProtocol(): void {
       return new Response('Forbidden', { status: 403 });
     }
 
-    return net.fetch(`file://${resolvedPath}`);
+    return net.fetch(pathToFileURL(resolvedPath).href);
   });
 }
