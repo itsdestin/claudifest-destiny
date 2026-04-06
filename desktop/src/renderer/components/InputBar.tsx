@@ -40,6 +40,10 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const dispatch = useChatDispatch();
 
+  // Ref to always-current send function so the global keydown handler
+  // (which only depends on [disabled]) can call it without stale closures
+  const sendRef = useRef<() => void>(() => {});
+
   useImperativeHandle(ref, () => ({
     clear: () => {
       setText('');
@@ -48,26 +52,33 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
     },
   }));
 
-  // Auto-focus input when user starts typing anywhere in the app
+  // Auto-focus input when user starts typing anywhere in the app.
+  // When Enter is pressed while the textarea is blurred, we must also
+  // preventDefault and send — otherwise the browser inserts a newline
+  // into the newly-focused textarea instead of submitting the message.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (disabled) return;
-      // Yield if another handler (e.g. permission prompt) already consumed this event
       if (e.defaultPrevented) return;
-      // Skip if already focused on an input/textarea, or if modifier keys are held (shortcuts)
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      // Allow Backspace and Enter to focus + act, skip other non-printable keys
       if (e.key !== 'Backspace' && e.key !== 'Enter' && e.key.length !== 1) return;
       inputRef.current?.focus();
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendRef.current();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [disabled]);
 
-  // Unfocus textarea after 0.5s of no typing so global shortcuts (e.g. Shift
-  // to open session switcher) can be detected without conflicting with input
+  // Unfocus textarea after 1.5s of no typing so global shortcuts (e.g. Shift
+  // to open session switcher) can be detected without conflicting with input.
+  // 1.5s balances responsiveness of global shortcuts against natural typing
+  // pauses — 500ms was too aggressive and caused the textarea to blur during
+  // normal composition, especially after pasting text.
   const idleBlurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const el = inputRef.current;
@@ -76,7 +87,7 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
       if (idleBlurTimer.current) clearTimeout(idleBlurTimer.current);
       idleBlurTimer.current = setTimeout(() => {
         if (document.activeElement === el) el.blur();
-      }, 500);
+      }, 1500);
     };
     el.addEventListener('keydown', resetTimer);
     el.addEventListener('input', resetTimer);
@@ -161,6 +172,10 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
     // Reset height after clearing
     if (inputRef.current) inputRef.current.style.height = 'auto';
   }, [text, attachments, sendMessage, onCloseDrawer]);
+
+  // Keep sendRef pointing at the latest send so the global keydown handler
+  // (which can't depend on send without thrashing the listener) stays current
+  useEffect(() => { sendRef.current = send; }, [send]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
