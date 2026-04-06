@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # backup-common.sh — Shared utilities for backup hooks
-# Sourced by git-sync.sh, personal-sync.sh, session-start.sh
+# Sourced by sync.sh, session-start.sh, session-end-sync.sh
 # Design ref: backup-system-refactor-design (03-22-2026).md D1
 
 # NOTE: Do not set shell options (set -euo pipefail) in sourced libraries.

@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Last updated:** 2026-04-05
-**Feature location:** `core/hooks/lib/backup-common.sh` (utility functions), integrated into `personal-sync.sh`, `session-start.sh`, `session-end-sync.sh`
+**Feature location:** `core/hooks/lib/backup-common.sh` (utility functions), integrated into `sync.sh`, `session-start.sh`, `session-end-sync.sh`
 
 ## Purpose
 
@@ -60,7 +60,7 @@ Restore: pull --merge--> local index --regenerate--> topic cache files
 | Component | Role | Changes |
 |-----------|------|---------|
 | `backup-common.sh` | Utility functions: `get_device_name()`, `update_conversation_index()`, `merge_conversation_index()`, `regenerate_topic_cache()` | New functions added |
-| `personal-sync.sh` | Pre-push index build, per-backend push | Path filter + push logic per backend |
+| `sync.sh` | Pre-push index build, per-backend push | Path filter + push logic per backend |
 | `session-start.sh` | Pull remote index to staging, post-pull merge + cache regeneration | Per-backend pull + sequential post-pull |
 | `session-end-sync.sh` | Best-effort index update + push at session exit | Added after JSONL push |
 | `title-update.sh` | Unchanged — topic files remain the write mechanism | No changes |

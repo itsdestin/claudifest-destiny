@@ -35,7 +35,7 @@ Optimistic concurrency control via a centralized write registry and a PreToolUse
 Two components:
 
 1. **`write-guard.sh`** — A PreToolUse hook (fires before Write/Edit) that checks the registry and blocks conflicting writes.
-2. **Registry updates in `git-sync.sh`** — The existing PostToolUse hook updates the registry after each successful tracked write.
+2. **Registry updates in `sync.sh`** — The existing PostToolUse hook updates the registry after each successful tracked write.
 
 ### Write Registry
 
@@ -112,7 +112,7 @@ Added to `~/.claude/settings.json` (user-level settings, same file as existing h
 
 - **Depends on:**
   - `sha256sum` — available in Git Bash on Windows as `sha256sum.exe`
-  - `node` (Node.js) — for parsing stdin JSON (same as `git-sync.sh`)
+  - `node` (Node.js) — for parsing stdin JSON (same as `sync.sh`)
   - `tasklist` — for PID liveness check (Windows; `kill -0` doesn't work for Windows PIDs in Git Bash)
   - `~/.claude/.backup-lock/` — shared mutex with backup system to serialize registry access
   - Claude Code hook system — PreToolUse hook invocation with JSON on stdin; non-zero exit blocks the tool call

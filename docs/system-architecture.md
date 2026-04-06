@@ -31,7 +31,7 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 |------|-------|---------|
 | `session-start.sh` | SessionStart | Git pull, encyclopedia sync, MCP config extraction, version check, inbox check |
 | `statusline.sh` | Statusline | Renders sync status, model info, context remaining, toolkit version |
-| `git-sync.sh` | PostToolUse | Commits and syncs changes after file modifications (skips toolkit-owned symlinks) |
+| `sync.sh` | PostToolUse | Backs up personal data and system config to configured backends (Drive, GitHub, iCloud). Updates write registry. 15-min debounce. |
 | `write-guard.sh` | PreToolUse | Prevents writes to protected paths (specs, live system files) |
 | `worktree-guard.sh` | PreToolUse | Blocks branch switches in main plugin directory — enforces worktree usage for concurrent sessions |
 | `tool-router.sh` | PreToolUse | Blocks Claude.ai Gmail/Calendar MCP tools, redirects to GWS CLI |
@@ -41,7 +41,7 @@ Hooks are bash scripts that run automatically in response to Claude Code events.
 | `checklist-reminder.sh` | Stop | Reminds about system change checklist if system files were modified |
 | `usage-fetch.js` | PostToolUse | Tracks API usage statistics |
 | `announcement-fetch.js` | SessionStart | Fetches announcements from GitHub, caches to `~/.claude/.announcement-cache.json` |
-| `personal-sync.sh` | PostToolUse | Backs up personal data (memory, CLAUDE.md, config, encyclopedia, skills) to all configured backends: Drive, GitHub, iCloud (15-min debounce) |
+| `check-inbox.sh` | SessionStart | Checks configured inbox sources for unprocessed items |
 | `session-end-sync.sh` | SessionEnd | Ensures all conversation JSONL files are backed up on session exit (bypasses debounce) |
 | `done-sound.sh` | Stop | Plays audio notification when Claude finishes a task (cross-platform) |
 | `lib/hook-preamble.sh` | (sourced library) | Shared hook infrastructure: trap handlers, cleanup registration, error capture, portable timeout, log rotation, atomic writes |
@@ -122,11 +122,7 @@ The `/setup-wizard` skill is the primary entry point for both first-time install
 
 ## Backup and Sync
 
-**Git sync:** The `git-sync.sh` hook commits and pushes changes to a private git remote after file modifications. This provides cross-device sync and version history.
-
-**Google Drive sync:** rclone handles bidirectional sync for encyclopedia files and journal entries. Configured during setup with `rclone config` for Google Drive OAuth.
-
-**Personal data sync:** The `personal-sync.sh` hook (PostToolUse, 15-min debounce) backs up memory files, CLAUDE.md, and `toolkit-state/config.json` to all configured backends (Google Drive, GitHub, and/or iCloud). The `session-start.sh` hook pulls the latest personal data from the primary backend at the start of every session for cross-device continuity. On a brand-new device, the setup wizard or `/restore` command performs the initial pull.
+**Unified sync:** The `sync.sh` hook (PostToolUse, 15-min debounce) backs up all personal data and system config to configured backends (Google Drive, GitHub, and/or iCloud). This includes memory files, CLAUDE.md, encyclopedia, user-created skills, conversation transcripts, and system config (settings.json, keybindings.json, config.json). It also updates the write registry for the write guard. The `session-start.sh` hook pulls the latest personal data from configured backends at the start of every session for cross-device continuity. The `session-end-sync.sh` hook ensures conversation data is synced on session exit (bypasses debounce). On a brand-new device, the setup wizard or `/restore` command performs the initial pull.
 
 ## Memory System
 
@@ -250,7 +246,7 @@ For detailed guidance on each component type, ask Claude: "How do I create a new
 1. **Read the relevant spec(s)** before making any changes. If the feature has a spec, confirm you understand its mandates and design decisions.
 2. **Update CLAUDE.md fragments** (`core/templates/claude-md-fragments/`) if the change affects user-facing instructions, skill tables, or MCP server tables.
 3. **Update `.gitignore`** if new files or directories need to be tracked or excluded from version control.
-4. **Update `git-sync.sh`** if new paths need to be included in or excluded from automatic backup.
+4. **Update `sync.sh`** if new paths need to be included in or excluded from automatic backup.
 5. **Bump the spec version** if you changed a user mandate, reversed a design decision, or made an architectural shift. Batch multiple changes in one session into a single bump.
 6. **Update `README.md`** if the change is user-facing (new feature, changed command, removed capability).
 7. **Update `core/specs/INDEX.md`** if a spec was added, removed, or had its version bumped.
