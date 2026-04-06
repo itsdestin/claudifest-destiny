@@ -1099,6 +1099,8 @@ mkdir -p ~/.claude/skills
 # Core skills (always)
 ln -sf "$TOOLKIT_ROOT/core/skills/setup-wizard" ~/.claude/skills/setup-wizard
 ln -sf "$TOOLKIT_ROOT/core/skills/remote-setup" ~/.claude/skills/remote-setup
+ln -sf "$TOOLKIT_ROOT/core/skills/sync" ~/.claude/skills/sync
+ln -sf "$TOOLKIT_ROOT/core/skills/theme-builder" ~/.claude/skills/theme-builder
 
 # Life skills (if Life layer selected)
 for skill in encyclopedia-compile encyclopedia-interviewer encyclopedia-librarian encyclopedia-update fork-file google-drive journaling-assistant; do
@@ -1119,7 +1121,7 @@ Only run the blocks for layers the user selected in Phase 3.
 mkdir -p ~/.claude/commands
 
 # Core commands (always)
-for cmd in setup-wizard.md contribute.md toolkit.md toolkit-uninstall.md update.md health.md restore.md; do
+for cmd in setup-wizard.md contribute.md toolkit.md toolkit-uninstall.md update.md health.md restore.md appupdate.md diagnose.md; do
   ln -sf "$TOOLKIT_ROOT/core/commands/$cmd" ~/.claude/commands/$cmd
 done
 ```
@@ -1131,7 +1133,7 @@ mkdir -p ~/.claude/hooks
 
 # Core hooks (always — skip any the user chose to "keep yours" in Phase 2)
 # NOTE: statusline.sh is NOT a hook — it's configured separately via settings.json "statusLine"
-for hook in check-inbox.sh checklist-reminder.sh contribution-detector.sh done-sound.sh git-sync.sh personal-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh worktree-guard.sh write-guard.sh; do
+for hook in check-inbox.sh checklist-reminder.sh contribution-detector.sh done-sound.sh sync.sh session-end-sync.sh session-start.sh title-update.sh todo-capture.sh tool-router.sh worktree-guard.sh write-guard.sh; do
   ln -sf "$TOOLKIT_ROOT/core/hooks/$hook" ~/.claude/hooks/$hook
 done
 
@@ -1142,7 +1144,7 @@ done
 
 # Shared libraries used by hooks
 mkdir -p ~/.claude/hooks/lib
-for lib in backup-common.sh migrate.sh; do
+for lib in hook-preamble.sh backup-common.sh migrate.sh; do
   ln -sf "$TOOLKIT_ROOT/core/hooks/lib/$lib" ~/.claude/hooks/lib/$lib
 done
 
@@ -1199,14 +1201,17 @@ Hooks must also be registered in `~/.claude/settings.json` under the `hooks` key
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/git-sync.sh" }]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/personal-sync.sh" }]
+        "timeout": 120,
+        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/sync.sh" }]
       },
       {
         "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/title-update.sh" }]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "timeout": 120,
+        "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/session-end-sync.sh" }]
       }
     ],
     "Stop": [
