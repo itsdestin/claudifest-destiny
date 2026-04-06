@@ -34,7 +34,7 @@ Provides cross-device conversation topic/title continuity. Topics are stored loc
     "<session-id>": {
       "topic": "Human-readable conversation title",
       "lastActive": "2026-04-05T01:15:00.000Z",
-      "slug": "C--Users-desti",
+      "slug": "C--Users-username",
       "device": "DESKTOP-ABC-windows"
     }
   }

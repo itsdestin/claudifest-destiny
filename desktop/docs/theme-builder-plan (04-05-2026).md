@@ -190,7 +190,7 @@ describe('computeOnAccent', () => {
 - [ ] **Step 3: Run tests to verify they fail**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && npm test -- --reporter=verbose tests/theme-validator.test.ts
+cd $REPO_ROOT/desktop && npm test -- --reporter=verbose tests/theme-validator.test.ts
 ```
 
 Expected: FAIL — `Cannot find module '../src/renderer/themes/theme-validator'`
@@ -246,7 +246,7 @@ export function validateTheme(raw: unknown): ThemeDefinition {
 - [ ] **Step 5: Run tests to verify they pass**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && npm test -- --reporter=verbose tests/theme-validator.test.ts
+cd $REPO_ROOT/desktop && npm test -- --reporter=verbose tests/theme-validator.test.ts
 ```
 
 Expected: All 7 tests PASS.
@@ -254,7 +254,7 @@ Expected: All 7 tests PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && git add src/renderer/themes/theme-types.ts src/renderer/themes/theme-validator.ts tests/theme-validator.test.ts && git commit -m "feat(themes): add ThemeDefinition types and validation"
+cd $REPO_ROOT/desktop && git add src/renderer/themes/theme-types.ts src/renderer/themes/theme-validator.ts tests/theme-validator.test.ts && git commit -m "feat(themes): add ThemeDefinition types and validation"
 ```
 
 ---
@@ -336,7 +336,7 @@ Values are extracted from the existing `[data-theme]` blocks in `src/renderer/st
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && git add src/renderer/themes/builtin/ && git commit -m "feat(themes): add built-in themes as JSON files"
+cd $REPO_ROOT/desktop && git add src/renderer/themes/builtin/ && git commit -m "feat(themes): add built-in themes as JSON files"
 ```
 
 ---
@@ -476,7 +476,7 @@ Note: The CSS class names (`input-bar-container`, `assistant-bubble`, etc.) must
 - [ ] **Step 5: Verify no visual regressions by running the dev server**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && npm run dev
+cd $REPO_ROOT/desktop && npm run dev
 ```
 
 Open the app. All four built-in themes should look identical to before. The new CSS rules have no effect yet (no data attributes set, no class names matched).
@@ -484,7 +484,7 @@ Open the app. All four built-in themes should look identical to before. The new 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && git add src/renderer/styles/globals.css && git commit -m "feat(themes): add radius vars, layout selectors, background layer to CSS"
+cd $REPO_ROOT/desktop && git add src/renderer/styles/globals.css && git commit -m "feat(themes): add radius vars, layout selectors, background layer to CSS"
 ```
 
 ---
@@ -567,7 +567,7 @@ describe('buildLayoutAttrs', () => {
 - [ ] **Step 2: Run to verify failure**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && npm test -- --reporter=verbose tests/theme-engine.test.ts
+cd $REPO_ROOT/desktop && npm test -- --reporter=verbose tests/theme-engine.test.ts
 ```
 
 Expected: FAIL — module not found.
@@ -700,7 +700,7 @@ export function buildBackgroundStyle(bg: ThemeBackground | undefined): Record<st
 - [ ] **Step 5: Run tests to verify they pass**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && npm test -- --reporter=verbose tests/theme-engine.test.ts
+cd $REPO_ROOT/desktop && npm test -- --reporter=verbose tests/theme-engine.test.ts
 ```
 
 Expected: All 8 tests PASS.
@@ -708,7 +708,7 @@ Expected: All 8 tests PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && git add src/renderer/themes/theme-engine.ts tests/theme-engine.test.ts && git commit -m "feat(themes): add ThemeEngine pure functions with tests"
+cd $REPO_ROOT/desktop && git add src/renderer/themes/theme-engine.ts tests/theme-engine.test.ts && git commit -m "feat(themes): add ThemeEngine pure functions with tests"
 ```
 
 ---
@@ -833,7 +833,7 @@ If `setupIpcHandlers` doesn't already take a `win` parameter, check `src/main/ma
 - [ ] **Step 6: Verify watcher starts without errors**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && npm run dev
+cd $REPO_ROOT/desktop && npm run dev
 ```
 
 In the app, open DevTools console. There should be no errors. Create a test file:
@@ -847,7 +847,7 @@ The main process terminal should not crash (even if the theme is invalid — the
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && git add src/shared/types.ts src/main/preload.ts src/main/theme-watcher.ts src/main/ipc-handlers.ts && git commit -m "feat(themes): add theme IPC channels and file watcher"
+cd $REPO_ROOT/desktop && git add src/shared/types.ts src/main/preload.ts src/main/theme-watcher.ts src/main/ipc-handlers.ts && git commit -m "feat(themes): add theme IPC channels and file watcher"
 ```
 
 ---
@@ -1099,7 +1099,7 @@ Fix before running.
 - [ ] **Step 5: Run dev server and verify**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && npm run dev
+cd $REPO_ROOT/desktop && npm run dev
 ```
 
 1. All 4 builtin themes should switch correctly via the status bar pill.
@@ -1114,7 +1114,7 @@ The app should immediately switch to Tokyo Rain with the gradient background vis
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && git add src/renderer/state/theme-context.tsx src/renderer/App.tsx src/shared/types.ts src/main/preload.ts src/main/ipc-handlers.ts && git commit -m "feat(themes): wire ThemeEngine into ThemeContext with hot-reload"
+cd $REPO_ROOT/desktop && git add src/renderer/state/theme-context.tsx src/renderer/App.tsx src/shared/types.ts src/main/preload.ts src/main/ipc-handlers.ts && git commit -m "feat(themes): wire ThemeEngine into ThemeContext with hot-reload"
 ```
 
 ---
@@ -1278,7 +1278,7 @@ Save the file — the app should hot-reload and show subtle rain streaks.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && git add src/renderer/components/ThemeEffects.tsx src/renderer/App.tsx && git commit -m "feat(themes): add particle effects canvas layer (rain, dust, ember)"
+cd $REPO_ROOT/desktop && git add src/renderer/components/ThemeEffects.tsx src/renderer/App.tsx && git commit -m "feat(themes): add particle effects canvas layer (rain, dust, ember)"
 ```
 
 ---
@@ -1575,7 +1575,7 @@ import ThemeScreen from './ThemeScreen';
 - [ ] **Step 4: Run dev server and test**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && npm run dev
+cd $REPO_ROOT/desktop && npm run dev
 ```
 
 1. Open settings — should show the new theme grid.
@@ -1588,7 +1588,7 @@ cd /c/Users/desti/destinclaude/desktop && npm run dev
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /c/Users/desti/destinclaude/desktop && git add src/renderer/components/ThemeScreen.tsx src/renderer/components/SettingsPanel.tsx src/shared/types.ts src/main/preload.ts src/main/ipc-handlers.ts && git commit -m "feat(themes): add ThemeScreen manual editor in settings panel"
+cd $REPO_ROOT/desktop && git add src/renderer/components/ThemeScreen.tsx src/renderer/components/SettingsPanel.tsx src/shared/types.ts src/main/preload.ts src/main/ipc-handlers.ts && git commit -m "feat(themes): add ThemeScreen manual editor in settings panel"
 ```
 
 ---

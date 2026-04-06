@@ -52,7 +52,7 @@ Settings Panel
   "dark":   true,                  // controls highlight.js theme selection
 
   // Optional metadata
-  "author": "destin",
+  "author": "your-name",
   "created": "2026-04-05",
 
   // Color tokens (all 15 — required for custom themes, optional for partials)

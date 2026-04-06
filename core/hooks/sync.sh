@@ -197,7 +197,7 @@ sync_drive() {
             --update --max-depth 1 --include "*.md" 2>/dev/null || \
             log_backup "WARN" "Encyclopedia sync to Backup failed"
 
-        local _enc_remote_path="The Journal/System"
+        local _enc_remote_path="Encyclopedia/System"
         if [[ -f "$CONFIG_FILE" ]]; then
             local _enc_configured
             _enc_configured=$(grep -o '"encyclopedia_remote_path"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | head -1 | sed 's/.*"encyclopedia_remote_path"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//' || true)
@@ -205,7 +205,7 @@ sync_drive() {
         fi
         rclone copy "$CLAUDE_DIR/encyclopedia/" "gdrive:$DRIVE_ROOT/$_enc_remote_path/" \
             --update --max-depth 1 --include "*.md" 2>/dev/null || \
-            log_backup "WARN" "Encyclopedia sync to The Journal/System failed"
+            log_backup "WARN" "Encyclopedia sync to remote failed"
     fi
 
     # User-created skills
