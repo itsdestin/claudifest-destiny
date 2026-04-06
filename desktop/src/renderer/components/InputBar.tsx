@@ -70,6 +70,27 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
     return () => window.removeEventListener('keydown', handler);
   }, [disabled]);
 
+  // Unfocus textarea after 2.5s of no typing so global shortcuts (e.g. Shift
+  // to open session switcher) can be detected without conflicting with input
+  const idleBlurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const resetTimer = () => {
+      if (idleBlurTimer.current) clearTimeout(idleBlurTimer.current);
+      idleBlurTimer.current = setTimeout(() => {
+        if (document.activeElement === el) el.blur();
+      }, 2500);
+    };
+    el.addEventListener('keydown', resetTimer);
+    el.addEventListener('input', resetTimer);
+    return () => {
+      el.removeEventListener('keydown', resetTimer);
+      el.removeEventListener('input', resetTimer);
+      if (idleBlurTimer.current) clearTimeout(idleBlurTimer.current);
+    };
+  }, []);
+
   const addFiles = useCallback((paths: string[]) => {
     setAttachments((prev) => {
       const existing = new Set(prev.map((a) => a.path));

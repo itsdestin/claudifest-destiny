@@ -80,6 +80,8 @@ export default function SessionStrip({
 }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shiftNavIdx, setShiftNavIdx] = useState<number>(-1);
+  const shiftNavActive = useRef(false);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newCwd, setNewCwd] = useState('');
   const [dangerous, setDangerous] = useState(false);
@@ -119,6 +121,65 @@ export default function SessionStrip({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
+
+  // Shift-hold session switcher: hold Shift to open dropdown, arrow keys to
+  // navigate, release Shift to switch to the highlighted session
+  useEffect(() => {
+    let shiftAlone = true;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+
+      if (e.key === 'Shift' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        shiftAlone = true;
+        return;
+      }
+
+      // If Shift is held and user presses arrow keys, activate navigation
+      if (e.shiftKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+        e.preventDefault();
+        if (!shiftNavActive.current) {
+          // First arrow press while holding Shift — open dropdown
+          shiftNavActive.current = true;
+          shiftAlone = false;
+          const currentIdx = sessions.findIndex(s => s.id === activeSessionId);
+          setShiftNavIdx(currentIdx >= 0 ? currentIdx : 0);
+          setMenuOpen(true);
+        }
+        // Navigate
+        setShiftNavIdx(prev => {
+          if (e.key === 'ArrowDown') return Math.min(prev + 1, sessions.length - 1);
+          return Math.max(prev - 1, 0);
+        });
+        return;
+      }
+
+      // Any other key while Shift is held means it's not a bare Shift
+      if (e.shiftKey) shiftAlone = false;
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift' && shiftNavActive.current) {
+        // Release Shift — select the highlighted session and close
+        shiftNavActive.current = false;
+        setShiftNavIdx(idx => {
+          if (idx >= 0 && idx < sessions.length) {
+            onSelectSession(sessions[idx].id);
+          }
+          return -1;
+        });
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('keyup', onKeyUp, true);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('keyup', onKeyUp, true);
+    };
+  }, [sessions, activeSessionId, onSelectSession]);
 
   const handleEnter = useCallback((id: string) => {
     if (leaveTimer.current) { clearTimeout(leaveTimer.current); leaveTimer.current = null; }
@@ -359,13 +420,16 @@ export default function SessionStrip({
                       <div
                         key={s.id}
                         data-session-idx={idx}
+                        ref={shiftNavIdx === idx ? (el) => el?.scrollIntoView({ block: 'nearest' }) : undefined}
                         onPointerDown={(e) => handlePointerDown(e, s.id)}
                         onPointerMove={handlePointerMove}
                         onPointerUp={handlePointerUp}
                         className={`relative flex items-center pr-1 group/row select-none touch-none ${
-                          s.id === activeSessionId
-                            ? 'bg-inset text-fg'
-                            : 'text-fg-dim hover:bg-inset hover:text-fg'
+                          shiftNavIdx === idx
+                            ? 'bg-accent/20 text-fg'
+                            : s.id === activeSessionId
+                              ? 'bg-inset text-fg'
+                              : 'text-fg-dim hover:bg-inset hover:text-fg'
                         } ${isBeingDragged ? 'opacity-30' : ''}`}
                         style={{
                           animation: `row-fade-in 100ms ease both`,
