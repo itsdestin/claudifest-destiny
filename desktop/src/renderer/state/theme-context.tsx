@@ -32,6 +32,8 @@ const CYCLE_KEY = 'destincode-theme-cycle';
 const FONT_KEY = 'destincode-font';
 const DEFAULT_THEME = 'light';
 const DEFAULT_CYCLE = ['light', 'dark'];
+/** Reserved slug for live-preview during /theme-builder — auto-switches on write, reverts on delete. */
+const PREVIEW_SLUG = '_preview';
 
 interface ThemeContextValue {
   theme: string;
@@ -79,8 +81,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [font, setFontState] = useState(() => getStored(FONT_KEY, DEFAULT_FONT_FAMILY));
   const [userThemes, setUserThemes] = useState<LoadedTheme[]>([]);
 
-  const allThemes = [...BUILTIN_THEMES, ...userThemes];
-  const activeTheme = allThemes.find(t => t.slug === activeSlug) ?? BUILTIN_THEMES[0];
+  // All themes including _preview (for engine lookup)
+  const allThemesInternal = [...BUILTIN_THEMES, ...userThemes];
+  // Public list excludes _preview (UI pickers shouldn't show it)
+  const allThemes = allThemesInternal.filter(t => t.slug !== PREVIEW_SLUG);
+  const activeTheme = allThemesInternal.find(t => t.slug === activeSlug) ?? BUILTIN_THEMES[0];
 
   // Load user themes from disk on mount
   useEffect(() => {
@@ -105,6 +110,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     loadUserThemes();
   }, []);
 
+  // Track the slug the user had before preview auto-switch
+  const [prePreviewSlug, setPrePreviewSlug] = useState<string | null>(null);
+
   // Listen for hot-reload signal from main process
   useEffect(() => {
     const claude = (window as any).claude;
@@ -119,19 +127,41 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             if (idx >= 0) { const next = [...prev]; next[idx] = loaded; return next; }
             return [...prev, loaded];
           });
-          // Only switch to the reloaded theme if the user is already viewing it
-          setActiveSlug(prev => {
-            if (prev !== slug) return prev;
-            try { localStorage.setItem(STORAGE_KEY, slug); } catch {}
-            return slug;
-          });
+
+          if (slug === PREVIEW_SLUG) {
+            // Auto-switch to preview theme, remembering previous
+            setActiveSlug(prev => {
+              setPrePreviewSlug(p => p ?? prev); // only save if not already previewing
+              return slug;
+            });
+          } else {
+            // Only switch to the reloaded theme if the user is already viewing it
+            setActiveSlug(prev => {
+              if (prev !== slug) return prev;
+              try { localStorage.setItem(STORAGE_KEY, slug); } catch {}
+              return slug;
+            });
+          }
         } catch (e) {
           console.warn(`[ThemeProvider] Hot-reload failed for "${slug}":`, e);
+        }
+      }).catch(() => {
+        // readFile failed — theme was likely deleted
+        if (slug === PREVIEW_SLUG) {
+          // Preview theme removed — revert to pre-preview theme
+          setUserThemes(prev => prev.filter(t => t.slug !== PREVIEW_SLUG));
+          setActiveSlug(prev => {
+            if (prev !== PREVIEW_SLUG) return prev;
+            const revert = prePreviewSlug ?? DEFAULT_THEME;
+            setPrePreviewSlug(null);
+            try { localStorage.setItem(STORAGE_KEY, revert); } catch {}
+            return revert;
+          });
         }
       });
     });
     return cleanup;
-  }, []);
+  }, [prePreviewSlug]);
 
   // Apply theme to DOM whenever active theme changes
   useEffect(() => {
@@ -173,6 +203,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const cycleTheme = useCallback(() => {
     setActiveSlug(prev => {
+      // If currently previewing, exit preview and cycle from the pre-preview theme
+      if (prev === PREVIEW_SLUG && prePreviewSlug) {
+        setPrePreviewSlug(null);
+        try { localStorage.setItem(STORAGE_KEY, prePreviewSlug); } catch {}
+        return prePreviewSlug;
+      }
       const pool = allThemes.filter(t => cycleList.includes(t.slug));
       if (pool.length === 0) return prev;
       const idx = pool.findIndex(t => t.slug === prev);
@@ -180,7 +216,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       try { localStorage.setItem(STORAGE_KEY, next); } catch {}
       return next;
     });
-  }, [allThemes, cycleList]);
+  }, [allThemes, cycleList, prePreviewSlug]);
 
   const bgStyle = buildBackgroundStyle(activeTheme.background) as Record<string, string> | null;
   const patternStyle = buildPatternStyle(

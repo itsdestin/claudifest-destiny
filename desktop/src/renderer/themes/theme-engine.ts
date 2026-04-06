@@ -1,4 +1,4 @@
-import type { ThemeTokens, ThemeShape, ThemeFont, ThemeBackground, ThemeLayout, ThemeDefinition } from './theme-types';
+import type { ThemeTokens, ThemeShape, ThemeFont, ThemeBackground, ThemeLayout, ThemeEffects, ThemeDefinition } from './theme-types';
 
 /** Returns CSS custom property map for all 15 color tokens. */
 export function buildTokenCSS(tokens: ThemeTokens): Record<string, string> {
@@ -95,6 +95,54 @@ export function buildLayoutAttrs(layout: ThemeLayout | undefined): Record<string
   return result;
 }
 
+const EFFECT_IDS = ['effect-vignette', 'effect-noise', 'effect-scanlines'] as const;
+
+/** Creates or removes effect overlay divs based on theme effects config. */
+function applyEffects(effects: ThemeEffects | undefined): void {
+  const root = document.documentElement;
+
+  // Vignette
+  const vignetteVal = effects?.vignette ?? 0;
+  if (vignetteVal > 0) {
+    root.style.setProperty('--vignette-opacity', String(vignetteVal));
+    ensureEffectDiv('effect-vignette');
+  } else {
+    root.style.removeProperty('--vignette-opacity');
+    removeEffectDiv('effect-vignette');
+  }
+
+  // Noise
+  const noiseVal = effects?.noise ?? 0;
+  if (noiseVal > 0) {
+    root.style.setProperty('--noise-opacity', String(noiseVal));
+    ensureEffectDiv('effect-noise');
+  } else {
+    root.style.removeProperty('--noise-opacity');
+    removeEffectDiv('effect-noise');
+  }
+
+  // Scan-lines
+  const scanlines = effects?.['scan-lines'] ?? false;
+  if (scanlines) {
+    root.style.setProperty('--scanline-opacity', '0.08');
+    ensureEffectDiv('effect-scanlines');
+  } else {
+    root.style.removeProperty('--scanline-opacity');
+    removeEffectDiv('effect-scanlines');
+  }
+}
+
+function ensureEffectDiv(id: string): void {
+  if (document.getElementById(id)) return;
+  const div = document.createElement('div');
+  div.id = id;
+  document.body.appendChild(div);
+}
+
+function removeEffectDiv(id: string): void {
+  document.getElementById(id)?.remove();
+}
+
 const LAYOUT_ATTRS = ['data-input-style', 'data-bubble-style', 'data-header-style', 'data-statusbar-style'] as const;
 
 /** Applies a full ThemeDefinition to the live DOM. Only call from renderer process. */
@@ -179,6 +227,9 @@ export function applyThemeToDom(theme: ThemeDefinition): void {
 
   // 8. Theme font — inject Google Font <link> and set --font-sans/--font-mono
   applyThemeFont(theme.font);
+
+  // 9. Visual effects — create/remove overlay divs for vignette, noise, scan-lines
+  applyEffects(theme.effects);
 }
 
 const TOKEN_CSS_PROPS = [
@@ -201,9 +252,12 @@ export function clearThemeFromDom(): void {
     '--panels-blur', '--panel-glass',
     '--radius', '--radius-sm', '--radius-md', '--radius-lg', '--radius-xl', '--radius-2xl', '--radius-full',
     '--font-sans', '--font-mono',
+    '--vignette-opacity', '--noise-opacity', '--scanline-opacity',
   ];
   for (const p of propsToRemove) root.style.removeProperty(p);
   for (const a of LAYOUT_ATTRS) body.removeAttribute(a);
+  // Remove effect overlay divs
+  for (const id of EFFECT_IDS) removeEffectDiv(id);
   const customEl = document.getElementById('theme-custom') as HTMLStyleElement | null;
   if (customEl) customEl.textContent = '';
   // Remove injected Google Font link

@@ -62,6 +62,36 @@ Render them as concept cards by writing an HTML file to `screen_dir`. Follow the
 
 Tell the user the URL and ask them to look while iterating in chat.
 
+### Step 5b: Quick-Apply Live Preview (Optional)
+
+When the user selects a concept, you can optionally let them preview it live in the app by writing a minimal manifest to the reserved `_preview` slug:
+
+```bash
+mkdir -p ~/.claude/destinclaude-themes/_preview
+```
+
+Then write a `manifest.json` with **only** tokens, shape, layout, effects, and font — no asset references (no wallpaper, pattern, particle-shape, icons, mascot, cursor, or scrollbar paths). The app auto-switches to `_preview` when it detects the file, and auto-reverts when the file is deleted.
+
+```json
+{
+  "name": "Preview",
+  "slug": "_preview",
+  "dark": true,
+  "tokens": { "canvas": "#...", ... },
+  "shape": { "radius-sm": "..." },
+  "layout": { "input-style": "floating" },
+  "effects": { "vignette": 0.2, "scan-lines": true },
+  "font": { "family": "'Victor Mono', monospace", "google-font-url": "..." }
+}
+```
+
+**Rules:**
+- Never include asset paths in the preview manifest — they haven't been created yet and will 404
+- Effects that require assets (custom particles, patterns) should be omitted from the preview
+- The user can see colors, fonts, shape, layout, and screen-wide effects (vignette, noise, scan-lines) live
+- When done previewing, delete the `_preview` folder to revert: `rm -rf ~/.claude/destinclaude-themes/_preview`
+- Do NOT use quick-apply unless the user asks to see it live, or after Round 2 when they're deciding between final options
+
 ### Step 6: Two-Round Minimum (Mandatory)
 
 After the user picks a concept ("I like option 2", "go with Midnight Rain"), you MUST generate **3 refined variations** of that concept automatically — even if the user doesn't ask for another round. Explain: "Here are 3 refined takes on [name]. Pick your favorite, or tell me what to change."
@@ -214,8 +244,13 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
 9. **Embed the full `theme-preview.css` contents** in a `<style>` tag in the HTML `<head>`. Do NOT link to an external file.
 10. **Page layout**: show concept cards in a responsive grid (1-3 columns). The page background should be `#1a1a1a` (neutral dark) so all themes are evaluated against the same backdrop.
 11. **Pill bubble warning**: `data-bubble-style="pill"` is incompatible with tool cards — the fully-rounded ends cannot gracefully contain card content. Only use pill style for text-heavy aesthetic themes, or accept that tool-containing bubbles will clip at the curves.
-12. **Font selection**: Every theme MUST include a font choice via `--font-sans` and `--font-mono` in its CSS variables. Pick a font that reinforces the theme's vibe — e.g. a rounded sans-serif for playful themes, a strict monospace for hacker themes, a serif for literary themes. Use Google Fonts (web-safe) or well-known system fonts. The concept card scoping div must set both `--font-sans` and `--font-mono` so the mockup renders in the theme's chosen font. The manifest stores this as `font.family`.
-13. **Layout presets are preview-only**: `data-input-style`, `data-bubble-style`, `data-header-style`, and `data-statusbar-style` render correctly in the concept browser but are **not yet wired** to the real app's React components. Users will see the correct colors/fonts/radius from their theme, but layout preset differences (floating input, pill bubbles) won't apply at runtime until a future app update adds class-based selectors to those components.
+12. **Font selection**: Every theme MUST include a font choice via `--font-sans` and `--font-mono` in its CSS variables. Pick a font that reinforces the theme's vibe — e.g. a rounded sans-serif for playful themes, a strict monospace for hacker themes, a serif for literary themes. Use Google Fonts (web-safe) or well-known system fonts. The concept card scoping div must set both `--font-sans` and `--font-mono` so the mockup renders in the theme's chosen font. If using a Google Font, add `<link href="https://fonts.googleapis.com/css2?family=FONTNAME:wght@400;600;700&display=swap" rel="stylesheet">` in the HTML `<head>` so the font renders in the concept browser. The manifest stores this as `font.family`.
+13. **Visual effects overlays**: For themes with vignette, noise, or scan-lines, add overlay divs inside `.app-mockup` (after the pattern-overlay, before panels):
+    - Vignette: `<div class="effect-vignette" style="--vignette-opacity: 0.2;"></div>`
+    - Noise: `<div class="effect-noise" style="--noise-opacity: 0.04;"></div>`
+    - Scan-lines: `<div class="effect-scanlines" style="--scanline-opacity: 0.08;"></div>`
+    These are cosmetic overlays — only include them when the theme concept uses these effects.
+14. **Layout presets work in the app.** `data-input-style`, `data-bubble-style`, `data-header-style`, and `data-statusbar-style` are wired to the real app's DOM via the theme engine. Bubble, header, and status bar presets apply at runtime. Input style presets require the `input-bar-container` class on the input wrapper — ensure the manifest includes the intended `input-style` value.
 
 ---
 
@@ -681,6 +716,51 @@ Common refinements:
 - `edge-dim` should be the edge color with 50% alpha (append `80` to hex)
 - For glassmorphism: set `panels-blur: 8-16`, `panels-opacity: 0.6-0.85`, and ensure `canvas` has a visible gradient/image
 
+### Contrast Requirements (Mandatory)
+
+Before rendering a concept, verify these contrast ratios mentally. If any fail, adjust the tokens before rendering.
+
+**Hard requirements (WCAG AA — must pass):**
+- `fg` on `canvas` — 4.5:1 minimum. This is body text; it must be readable.
+- `on-accent` on `accent` — 4.5:1 minimum. Buttons and user bubbles must be readable.
+- `fg` on `inset` — 4.5:1 minimum. Assistant bubbles must be readable.
+
+**Soft requirements (should pass, can bend for atmosphere):**
+- `fg-2` on `canvas` — 3.5:1 minimum. Secondary text should be comfortable to read.
+- `edge` must be visually distinct from both `canvas` and `panel`. If the user can't tell where a panel ends, the border is too subtle.
+
+**No requirements (decorative — creative freedom):**
+- `fg-dim`, `fg-muted`, `fg-faint` — These tokens exist to de-emphasize. Low contrast is intentional and allowed.
+
+**Quick mental check:** On a dark theme, if `canvas` is below `#1a1a1a`, `fg` should be above `#c0c0c0`. On a light theme, if `canvas` is above `#e0e0e0`, `fg` should be below `#333333`.
+
+### Surface Luminance Ordering
+
+For **dark themes** (`dark: true`):
+```
+luminance(canvas) ≤ luminance(well) ≤ luminance(panel) ≤ luminance(inset)
+```
+Surfaces get progressively lighter as they are more "raised" or nested.
+
+For **light themes** (`dark: false`):
+```
+luminance(canvas) ≥ luminance(well) ≥ luminance(panel) ≥ luminance(inset)
+```
+Surfaces get progressively darker as they are more "raised" or nested.
+
+Breaking this ordering makes the UI feel inverted and confusing. The `well` token is the deepest recess; `inset` is the most raised nested surface.
+
+### Palette Temperature Guidelines
+
+Use these as starting points when interpreting the user's vibe — not as rigid constraints:
+
+- **Warm** (cozy, autumn, firelight, amber): Canvas in warm grays/browns `#1a1208`–`#2a1e10`. Accent in amber/gold `#d4a030`–`#ffc060`. Foreground in cream/warm white `#f0e0c0`–`#f8ecd0`.
+- **Cool** (ocean, ice, moonlight, serene): Canvas in blue-grays `#0a1018`–`#141e2a`. Accent in teal/cyan `#40b0c0`–`#80d0e0`. Foreground in cool white `#d0dae0`–`#e8f0f4`.
+- **Neon** (cyberpunk, synthwave, electric): Canvas in near-black `#080810`–`#10101a`. Accent in hot magenta/cyan `#ff004c`–`#00ffff`. Use `custom_css` for glow effects (`box-shadow`, `text-shadow`).
+- **Pastel** (soft, kawaii, dreamy): Canvas in light pastels `#f0e8f0`–`#faf0f4` (usually `dark: false`). Accent in medium pastels `#ff88aa`–`#88bbff`. Keep effects minimal — pastels compete with heavy effects.
+- **Earth** (forest, stone, natural): Canvas in deep greens/browns `#0a0f08`–`#1a1810`. Accent in moss/terracotta `#6a8a4a`–`#c07040`. Pattern overlays work well (leaf shapes, organic lines).
+- **Monochrome** (minimal, clean, editorial): Pick one hue family and vary only saturation and lightness. Accent is the same hue at full saturation. Elegant but can feel sterile — add texture via pattern overlays.
+
 ### Glassmorphism panels-opacity
 
 When `panels-opacity < 1`, the app renders panel backgrounds as semi-transparent RGBA (panel hex color with the specified alpha). This lets the background gradient/image show through blurred panels. The concept card must replicate this by computing the `--panel-glass` CSS variable:
@@ -689,6 +769,40 @@ When `panels-opacity < 1`, the app renders panel backgrounds as semi-transparent
 panel hex: #161B22, panels-opacity: 0.75
 -> --panel-glass: rgba(22, 27, 34, 0.75)
 ```
+
+### Effect Intensity Starting Points
+
+These are calibrated defaults for ambient, daily-driver themes. Increase for dramatic/immersive themes ("blizzard", "cyberpunk rave"), decrease for minimal/productivity themes.
+
+| Effect | Default Range | Too Low | Too High |
+|--------|--------------|---------|----------|
+| `particle-count` | 20–30 | <10 (invisible) | >50 (distracting, perf hit) |
+| `particle-speed` | 0.3–0.5 | <0.1 (frozen) | >0.8 (frantic) |
+| `particle-drift` | 0.2–0.4 | 0 (straight lines) | >0.7 (chaotic) |
+| `particle-size-range` | [4, 12] | [1, 3] (invisible) | [20, 40] (dominant) |
+| `vignette` | 0.15–0.25 | <0.05 (invisible) | >0.4 (tunnel vision) |
+| `noise` | 0.02–0.05 | <0.01 (invisible) | >0.1 (TV static) |
+| `panels-blur` | 12–20px | <6 (barely frosted) | >30 (everything lost) |
+| `panels-opacity` | 0.70–0.85 | <0.5 (can't read through it) | >0.95 (no glass effect) |
+| `pattern-opacity` | 0.04–0.08 | <0.02 (invisible) | >0.15 (overpowering) |
+
+### Dark vs. Light Mode Auto-Detection
+
+When interpreting the user's prompt, consider which mode the vibe naturally suggests:
+
+- **Usually dark:** cyberpunk, neon, midnight, space, ocean depths, noir, moody
+- **Usually light:** pastel, kawaii, cottagecore, minimal, paper, cream, summer
+- **Could go either way:** autumn, forest, vintage, retro, steampunk
+
+When the vibe is ambiguous, include at least one dark and one light concept among the 3 options in Round 1. This gives the user a choice early rather than discovering they wanted the opposite after multiple rounds.
+
+### Exemplar Theme Reference
+
+For a complete, production-quality theme manifest with all features, read:
+```
+desktop/src/renderer/themes/community/golden-sunbreak/manifest.json
+```
+This demonstrates correct token ratios, glassmorphism values, effect calibration, asset paths, layout presets, and custom CSS. Use it as a quality reference — not a template to copy from.
 
 ---
 

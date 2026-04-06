@@ -5,6 +5,10 @@
  *
  * CONTRACT: Class names and CSS properties MUST match
  * desktop/src/renderer/styles/globals.css + Tailwind @theme block.
+ *
+ * SYNC CHECK: Run `node core/skills/theme-builder/scripts/sync-check.cjs`
+ * to verify this file stays in sync with globals.css.
+ * Last synced: 2026-04-06
  */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,11 +58,61 @@ body {
   opacity: 1;
 }
 
-/* Glassmorphism */
+/* Glassmorphism — base rule for all panel surfaces */
 [data-panels-blur] .bg-panel {
   backdrop-filter: blur(var(--panels-blur, 0px));
   -webkit-backdrop-filter: blur(var(--panels-blur, 0px));
   background-color: var(--panel-glass, var(--panel));
+}
+
+/* Header bar — heavy frosted glass, floats over chat so content scrolls behind */
+[data-panels-blur] .header-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+/* Status bar — heavy frosted glass */
+[data-panels-blur] .status-bar {
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+/* Input bar — heavy frosted glass */
+[data-panels-blur] .input-bar-container {
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+/* Assistant bubbles — lighter frosted glass */
+[data-panels-blur] .chat-bubble.assistant,
+[data-panels-blur] .assistant-bubble,
+[data-panels-blur] .bg-inset {
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  background-color: color-mix(in srgb, var(--inset) 90%, transparent);
+}
+
+/* User bubbles — frosted accent */
+[data-panels-blur] .chat-bubble.user,
+[data-panels-blur] .user-bubble,
+[data-panels-blur] .bg-accent {
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  background-color: color-mix(in srgb, var(--accent) 90%, transparent);
+}
+
+/* Chat area needs top padding when glassmorphism is active
+   so content scrolls behind the header */
+[data-panels-blur] .chat-area {
+  padding-top: 3rem;
 }
 
 /* Layout presets — input */
@@ -82,8 +136,10 @@ body {
 [data-bubble-style="pill"] .assistant-bubble,
 [data-bubble-style="pill"] .user-bubble {
   border-radius: var(--radius-full, 9999px);
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
 [data-bubble-style="flat"] .chat-bubble,
 [data-bubble-style="flat"] .assistant-bubble,
@@ -124,11 +180,15 @@ body {
   background: var(--panel);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* Scrollbar — matches app responsive sizing */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+@media (min-width: 640px) {
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+}
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+::-webkit-scrollbar-corner { background: transparent; }
 
 /* Particle badge (static — animation is app-only) */
 .particle-indicator {
@@ -288,7 +348,9 @@ body {
   position: relative;
 }
 
-/* Pattern overlay — repeating SVG pattern between wallpaper and panels */
+/* Pattern overlay — repeating SVG pattern between wallpaper and panels.
+   Opacity is set dynamically via inline style from theme's pattern-opacity value.
+   Default 0.06 matches theme-engine.ts buildPatternStyle() fallback. */
 .pattern-overlay {
   position: absolute;
   inset: 0;
@@ -296,7 +358,55 @@ body {
   pointer-events: none;
   background-repeat: repeat;
   background-size: 40px 40px;
-  opacity: 0.06;
+  opacity: var(--pattern-opacity, 0.06);
+}
+
+/* App-level #theme-pattern div (matches globals.css) */
+#theme-pattern {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Visual effects — vignette, noise, scan-lines
+   Applied via overlay divs in the mockup. Theme manifest fields:
+   effects.vignette (0-1), effects.noise (0-1), effects.scan-lines (bool)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.effect-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0, var(--vignette-opacity, 0)) 100%);
+}
+
+.effect-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: var(--noise-opacity, 0);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+.effect-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: var(--scanline-opacity, 0.08);
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.15) 1px,
+    rgba(0, 0, 0, 0.15) 2px
+  );
 }
 
 /* Ensure panels render above pattern overlay */
