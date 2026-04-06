@@ -35,6 +35,12 @@ const IPC = {
   TRANSCRIPT_EVENT: 'transcript:event',
   SESSION_BROWSE: 'session:browse',
   SESSION_HISTORY: 'session:history',
+  // Theme system
+  THEME_RELOAD: 'theme:reload',   // Main -> Renderer: a theme file changed
+  THEME_LIST: 'theme:list',       // Renderer -> Main: get list of user theme slugs
+  THEME_READ_FILE: 'theme:read-file', // Renderer -> Main: read a user theme JSON by slug
+  THEME_WRITE_FILE: 'theme:write-file',
+  THEME_READ_ASSET: 'theme:read-asset',
 } as const;
 
 contextBridge.exposeInMainWorld('claude', {
@@ -146,4 +152,14 @@ contextBridge.exposeInMainWorld('claude', {
   getGitHubAuth: () => ipcRenderer.invoke('github:auth'),
   // Async IPC — renderer must await this (was sendSync before v2.2.0)
   getHomePath: (): Promise<string> => ipcRenderer.invoke('get-home-path'),
+  theme: {
+    list: () => ipcRenderer.invoke(IPC.THEME_LIST),
+    readFile: (slug: string) => ipcRenderer.invoke(IPC.THEME_READ_FILE, slug),
+    writeFile: (slug: string, content: string) => ipcRenderer.invoke(IPC.THEME_WRITE_FILE, slug, content),
+    onReload: (handler: (slug: string) => void) => {
+      const wrapped = (_event: IpcRendererEvent, slug: string) => handler(slug);
+      ipcRenderer.on(IPC.THEME_RELOAD, wrapped);
+      return () => ipcRenderer.removeListener(IPC.THEME_RELOAD, wrapped);
+    },
+  },
 });

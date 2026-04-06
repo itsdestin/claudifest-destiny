@@ -13,9 +13,9 @@ interface SessionEntry {
 }
 
 const MODE_CONFIG: Record<PermissionMode, { label: string; shortLabel: string; color: string; bg: string; border: string }> = {
-  normal:        { label: 'NORMAL',             shortLabel: 'NORMAL',  color: '#9CA3AF', bg: 'rgba(156,163,175,0.15)', border: 'rgba(156,163,175,0.25)' },
-  'auto-accept': { label: 'ACCEPT CHANGES',     shortLabel: 'ACCEPT',  color: '#A78BFA', bg: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.25)' },
-  plan:          { label: 'PLAN MODE',           shortLabel: 'PLAN',    color: '#2DD4BF', bg: 'rgba(45,212,191,0.15)',  border: 'rgba(45,212,191,0.25)' },
+  normal:        { label: 'NORMAL',             shortLabel: 'NORMAL',  color: 'var(--fg-muted)', bg: 'var(--inset)',  border: 'var(--edge-dim)' },
+  'auto-accept': { label: 'ACCEPT CHANGES',     shortLabel: 'ACCEPT',  color: 'var(--accent)',   bg: 'var(--well)',   border: 'var(--edge)' },
+  plan:          { label: 'PLAN MODE',           shortLabel: 'PLAN',    color: 'var(--fg-2)',     bg: 'var(--inset)',  border: 'var(--edge)' },
   bypass:        { label: 'BYPASS PERMISSIONS',  shortLabel: 'BYPASS',  color: '#FA8072', bg: 'rgba(250,128,114,0.15)', border: 'rgba(250,128,114,0.25)' },
 };
 

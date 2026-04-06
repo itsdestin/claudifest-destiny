@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useTheme, THEMES, type ThemeName } from '../state/theme-context';
+import { useTheme } from '../state/theme-context';
 
 interface StatusData {
   usage: {
@@ -89,13 +89,6 @@ const warnStyles = {
   warn: 'bg-[#FF9800]/15 text-[#FF9800] border-[#FF9800]/25',
 };
 
-const THEME_LABELS: Record<ThemeName, string> = {
-  light: 'Light',
-  dark: 'Dark',
-  midnight: 'Midnight',
-  creme: 'Crème',
-};
-
 // --- Widget visibility customizer ---
 
 type WidgetId = 'usage-5h' | 'usage-7d' | 'context' | 'sync-warnings' | 'theme' | 'version';
@@ -157,7 +150,7 @@ function PencilIcon() {
 export default function StatusBar({ statusData, onRunSync }: Props) {
   const { usage, updateStatus, contextPercent, syncStatus, syncWarnings } = statusData;
   const warnings = parseSyncWarnings(syncWarnings);
-  const { theme, cycleTheme } = useTheme();
+  const { activeTheme, cycleTheme } = useTheme();
   const { visible, toggle } = useWidgetVisibility();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -274,7 +267,7 @@ export default function StatusBar({ statusData, onRunSync }: Props) {
           className="px-1.5 py-0.5 rounded bg-panel border border-edge-dim cursor-pointer hover:bg-inset transition-colors"
           title="Click to cycle theme"
         >
-          {THEME_LABELS[theme]}
+          {activeTheme.name}
         </button>
       )}
 

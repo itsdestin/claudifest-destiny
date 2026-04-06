@@ -26,7 +26,7 @@ export default function LinkableText({ text }: Props) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[#66AAFF] hover:text-[#88CCFF] underline break-all"
+        className="text-link hover:text-link-hover underline break-all"
       >
         {url}
       </a>,

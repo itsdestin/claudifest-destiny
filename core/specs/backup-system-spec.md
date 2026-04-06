@@ -142,6 +142,16 @@ The manual `restore.sh` script (in the private config repo) remains available as
 
 ### Sync Flow (`sync.sh`)
 
+1. **Parse stdin JSON** — extracts `tool_input.file_path`, normalizes backslashes to forward slashes.
+2. **Path filter** — matches against the synced scope table above. Exits silently if no match. Explicit exclusions (machine-specific files) checked first.
+3. **Symlink filter** — exits if the file is a toolkit-owned symlink (toolkit code belongs in the public repo, not personal backup).
+4. **Update write registry** — immediately records `{pid, timestamp, content_hash}` for the written file in `~/.claude/.write-registry.json`. This happens before the debounce check — the registry must reflect every write, not just sync cycles.
+5. **Backend check** — exits if `PERSONAL_SYNC_BACKEND` is `"none"` or unconfigured.
+6. **Mutex** — acquires `~/.claude/toolkit-state/.sync-lock/` via `mkdir` (atomic). Exits if another sync is running.
+7. **Debounce** — checks `~/.claude/toolkit-state/.sync-marker`. Exits if last sync was less than 15 minutes ago.
+8. **Multi-backend sync** — iterates over comma-separated backends (Drive, GitHub, iCloud). Failure in one does not block others.
+9. **Update marker** — writes current timestamp to `.sync-marker` after sync completes.
+
 ### Key State Files
 
 | File | Purpose | Written by |

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { isAndroid } from '../platform';
-import { useTheme, THEMES, type ThemeName } from '../state/theme-context';
-
-// Local Font Access API — available in Chromium/Electron
-declare function queryLocalFonts(): Promise<{ family: string; fullName: string; postScriptName: string; style: string }[]>;
+import ThemeScreen from './ThemeScreen';
+import { useTheme } from '../state/theme-context';
 
 interface RemoteConfig {
   enabled: boolean;
@@ -82,7 +81,7 @@ export default function SettingsPanel({ open, onClose, onSendInput, hasActiveSes
           </div>
 
           {isAndroid() ? (
-            <AndroidSettings open={open} onClose={onClose} />
+            <AndroidSettings open={open} onClose={onClose} onSendInput={onSendInput} />
           ) : (
             <DesktopSettings
               open={open}
@@ -115,142 +114,55 @@ function Toggle({ enabled, onToggle, color = 'green' }: { enabled: boolean; onTo
   );
 }
 
-// ─── Theme selector (shared) ───────────────────────────────────────────────
 
-const THEME_LABELS: Record<ThemeName, string> = {
-  light: 'Light',
-  dark: 'Dark',
-  midnight: 'Midnight',
-  creme: 'Crème',
-};
+// ─── Tier selector popup (Android) ────────────────────────────────────────
 
-const THEME_DESCRIPTIONS: Record<ThemeName, string> = {
-  light: 'Neutral grays, easy on the eyes',
-  dark: 'Pure neutral dark',
-  midnight: 'Deep navy with blue tint',
-  creme: 'Warm parchment tones',
-};
+// ─── Theme popup button ────────────────────────────────────────────────────
 
-// Preview swatches — the 4 surface colors for each theme
-const THEME_SWATCHES: Record<ThemeName, { canvas: string; panel: string; inset: string; fg: string; accent: string }> = {
-  light:    { canvas: '#F2F2F2', panel: '#EAEAEA', inset: '#E0E0E0', fg: '#1A1A1A', accent: '#1A1A1A' },
-  dark:     { canvas: '#111111', panel: '#191919', inset: '#222222', fg: '#E0E0E0', accent: '#D4D4D4' },
-  midnight: { canvas: '#0D1117', panel: '#161B22', inset: '#21262D', fg: '#C9D1D9', accent: '#B1BAC4' },
-  creme:    { canvas: '#F0E6D6', panel: '#EBE1D1', inset: '#DDD1BE', fg: '#2C2418', accent: '#3D3229' },
-};
-
-/** Extract display name from font CSS value (strips quotes and fallbacks) */
-function fontDisplayName(font: string): string {
-  const first = font.split(',')[0].trim();
-  return first.replace(/^['"]|['"]$/g, '');
-}
-
-// Fallback fonts shown when queryLocalFonts() is unavailable (remote browser)
-const FALLBACK_FONTS = [
-  'Arial', 'Cascadia Mono', 'Cascadia Code', 'Consolas', 'Courier New',
-  'Fira Code', 'Georgia', 'Helvetica', 'Inter', 'JetBrains Mono',
-  'Menlo', 'Monaco', 'Roboto', 'San Francisco', 'Segoe UI',
-  'SF Mono', 'Source Code Pro', 'System UI', 'Times New Roman', 'Verdana',
-];
-
-function ThemeSelector() {
-  const { theme, setTheme, cycleList, setCycleList, font, setFont } = useTheme();
+/** Compact "Appearance" row — opens ThemeScreen in a centered popup modal */
+function ThemeButton({ onSendInput }: { onSendInput?: (text: string) => void }) {
+  const { activeTheme, font } = useTheme();
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<'main' | 'fonts'>('main');
-  const [fontSearch, setFontSearch] = useState('');
-  const [systemFonts, setSystemFonts] = useState<string[] | null>(null);
-  const [fontsLoading, setFontsLoading] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
 
-  const toggleCycle = useCallback((t: ThemeName) => {
-    const isIn = cycleList.includes(t);
-    if (isIn) {
-      if (cycleList.length <= 1) return;
-      setCycleList(cycleList.filter((x) => x !== t));
-    } else {
-      setCycleList(THEMES.filter((x) => cycleList.includes(x) || x === t));
-    }
-  }, [cycleList, setCycleList]);
+  const fontName = font.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+  const { canvas, panel, inset, accent } = activeTheme.tokens;
 
-  // Close on click outside
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        // Reset view when closing
-        setTimeout(() => setView('main'), 300);
-      }
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // Load system fonts when font view opens
-  useEffect(() => {
-    if (view !== 'fonts' || systemFonts !== null) return;
-    setFontsLoading(true);
-
-    if (typeof queryLocalFonts === 'function') {
-      queryLocalFonts().then((fonts: any[]) => {
-        const families = new Set<string>();
-        for (const f of fonts) families.add(f.family);
-        const sorted = [...families].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-        setSystemFonts(sorted);
-        setFontsLoading(false);
-      }).catch(() => {
-        setSystemFonts(FALLBACK_FONTS);
-        setFontsLoading(false);
-      });
-    } else {
-      setSystemFonts(FALLBACK_FONTS);
-      setFontsLoading(false);
-    }
-  }, [view, systemFonts]);
-
-  // Auto-focus search when entering font view
-  useEffect(() => {
-    if (view === 'fonts') {
-      setTimeout(() => searchRef.current?.focus(), 50);
-    }
-  }, [view]);
-
-  const filteredFonts = systemFonts?.filter((f) =>
-    f.toLowerCase().includes(fontSearch.toLowerCase())
-  ) ?? [];
-
-  const currentFontName = fontDisplayName(font);
-  const sw = THEME_SWATCHES[theme];
-
   return (
     <section>
       <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Appearance</h3>
 
-      {/* Current theme row */}
       <button
-        onClick={() => { setView('main'); setOpen(true); }}
+        onClick={() => setOpen(true)}
         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
       >
         <div className="flex rounded overflow-hidden shrink-0" style={{ width: 32, height: 20 }}>
-          <div style={{ flex: 1, background: sw.canvas }} />
-          <div style={{ flex: 1, background: sw.panel }} />
-          <div style={{ flex: 1, background: sw.inset }} />
-          <div style={{ flex: 1, background: sw.accent }} />
+          <div style={{ flex: 1, background: canvas }} />
+          <div style={{ flex: 1, background: panel }} />
+          <div style={{ flex: 1, background: inset }} />
+          <div style={{ flex: 1, background: accent }} />
         </div>
         <div className="flex-1 min-w-0">
-          <span className="text-xs text-fg font-medium">{THEME_LABELS[theme]}</span>
-          <span className="text-[10px] text-fg-muted ml-2">{currentFontName}</span>
+          <span className="text-xs text-fg font-medium">{activeTheme.name}</span>
+          <span className="text-[10px] text-fg-muted ml-2">{fontName}</span>
         </div>
         <svg className="w-3.5 h-3.5 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </button>
 
-      {/* Popup overlay */}
-      {open && (
+      {open && createPortal(
         <>
-          <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => { setOpen(false); setTimeout(() => setView('main'), 300); }} />
+          <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => setOpen(false)} />
           <div
             ref={popupRef}
             className="fixed z-[61] rounded-xl bg-panel border border-edge shadow-2xl overflow-hidden"
@@ -258,175 +170,20 @@ function ThemeSelector() {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 'min(340px, 85vw)',
-              maxHeight: '80vh',
+              width: 'min(480px, 88vw)',
+              height: 'min(600px, 80vh)',
             }}
           >
-            {view === 'main' ? (
-              <>
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-edge">
-                  <h3 className="text-sm font-bold text-fg">Appearance</h3>
-                  <button onClick={() => { setOpen(false); setTimeout(() => setView('main'), 300); }} className="text-fg-muted hover:text-fg-2 text-lg leading-none">✕</button>
-                </div>
-
-                <div className="p-3 space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 52px)' }}>
-                  {/* Theme cards */}
-                  {THEMES.map((t) => {
-                    const s = THEME_SWATCHES[t];
-                    const isActive = theme === t;
-                    const inCycle = cycleList.includes(t);
-                    return (
-                      <div
-                        key={t}
-                        className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-                          isActive ? 'border-accent bg-accent/10' : 'border-edge-dim hover:border-edge'
-                        }`}
-                      >
-                        <button
-                          onClick={() => { setTheme(t); setOpen(false); setTimeout(() => setView('main'), 300); }}
-                          className="flex items-start gap-3 flex-1 min-w-0 text-left"
-                        >
-                          <div className="shrink-0 rounded-md overflow-hidden border border-edge-dim" style={{ width: 56, height: 40, background: s.canvas }}>
-                            <div style={{ height: 6, background: s.panel, borderBottom: `1px solid ${s.inset}` }} />
-                            <div style={{ padding: '3px 4px' }}>
-                              <div style={{ height: 3, width: '80%', borderRadius: 1, background: s.fg, opacity: 0.4, marginBottom: 2 }} />
-                              <div style={{ height: 3, width: '55%', borderRadius: 1, background: s.fg, opacity: 0.25, marginBottom: 3 }} />
-                              <div style={{ height: 5, width: '100%', borderRadius: 2, background: s.inset }} />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-xs font-medium ${isActive ? 'text-fg' : 'text-fg-2'}`}>{THEME_LABELS[t]}</span>
-                              {isActive && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-accent text-on-accent">Active</span>}
-                            </div>
-                            <p className="text-[10px] text-fg-muted mt-0.5">{THEME_DESCRIPTIONS[t]}</p>
-                            <div className="flex gap-1 mt-1.5">
-                              {[s.canvas, s.panel, s.inset, s.accent, s.fg].map((color, i) => (
-                                <div key={i} className="w-3.5 h-3.5 rounded-full border border-edge-dim" style={{ background: color }} />
-                              ))}
-                            </div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleCycle(t); }}
-                          className={`shrink-0 mt-1 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                            inCycle ? 'bg-accent border-accent' : 'bg-transparent border-edge hover:border-fg-dim'
-                          }`}
-                          title={inCycle ? 'Remove from quick cycle' : 'Add to quick cycle'}
-                        >
-                          {inCycle && (
-                            <svg className="w-3 h-3 text-on-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-
-                  <p className="text-[9px] text-fg-faint text-center pt-1">
-                    Checked themes appear in the status bar cycle
-                  </p>
-
-                  {/* Divider */}
-                  <div className="border-t border-edge-dim my-1" />
-
-                  {/* Font row — opens font browser */}
-                  <button
-                    onClick={() => { setView('fonts'); setFontSearch(''); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-edge-dim hover:border-edge transition-colors text-left"
-                  >
-                    <span className="text-lg shrink-0 leading-none text-fg-dim">Aa</span>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs text-fg font-medium">Font</span>
-                      <p className="text-[10px] text-fg-muted truncate" style={{ fontFamily: font }}>{currentFontName}</p>
-                    </div>
-                    <svg className="w-3.5 h-3.5 text-fg-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Font browser header */}
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-edge">
-                  <button
-                    onClick={() => setView('main')}
-                    className="text-fg-muted hover:text-fg-2 shrink-0"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <h3 className="text-sm font-bold text-fg">Font</h3>
-                  <button onClick={() => { setOpen(false); setTimeout(() => setView('main'), 300); }} className="text-fg-muted hover:text-fg-2 text-lg leading-none ml-auto">✕</button>
-                </div>
-
-                {/* Search */}
-                <div className="px-3 pt-3 pb-2">
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    value={fontSearch}
-                    onChange={(e) => setFontSearch(e.target.value)}
-                    placeholder="Search fonts..."
-                    className="w-full px-3 py-1.5 rounded-lg bg-well border border-edge-dim text-xs text-fg placeholder-fg-muted focus:outline-none focus:border-fg-dim"
-                  />
-                </div>
-
-                {/* Font list */}
-                <div className="overflow-y-auto px-1 pb-2" style={{ maxHeight: 'calc(80vh - 120px)' }}>
-                  {fontsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <span className="text-xs text-fg-muted">Loading fonts...</span>
-                    </div>
-                  ) : filteredFonts.length === 0 ? (
-                    <div className="flex items-center justify-center py-8">
-                      <span className="text-xs text-fg-muted">No fonts found</span>
-                    </div>
-                  ) : (
-                    filteredFonts.map((f) => {
-                      const isSelected = currentFontName === f;
-                      return (
-                        <button
-                          key={f}
-                          onClick={() => {
-                            setFont(`'${f}', sans-serif`);
-                          }}
-                          className={`w-full flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-left transition-colors ${
-                            isSelected
-                              ? 'bg-accent/10 border border-accent'
-                              : 'hover:bg-inset/50 border border-transparent'
-                          }`}
-                        >
-                          <span
-                            className={`text-sm flex-1 truncate ${isSelected ? 'text-fg font-medium' : 'text-fg-2'}`}
-                            style={{ fontFamily: `'${f}', sans-serif` }}
-                          >
-                            {f}
-                          </span>
-                          {isSelected && (
-                            <svg className="w-3.5 h-3.5 text-accent shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </>
-            )}
+            <ThemeScreen onClose={() => setOpen(false)} onSendInput={onSendInput} />
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </section>
   );
 }
 
-// ─── Tier selector popup (Android) ────────────────────────────────────────
+// ─── Tier selector popup ───────────────────────────────────────────────────
 
 const TIER_OPTIONS = [
   { id: 'CORE', name: 'Core', desc: 'Personal assistant — journal, inbox, briefings' },
@@ -532,7 +289,7 @@ interface PairedDevice {
   password: string;
 }
 
-function AndroidSettings({ open, onClose }: { open: boolean; onClose: () => void }) {
+function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClose: () => void; onSendInput: (text: string) => void }) {
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState('CORE');
   const [directories, setDirectories] = useState<{ label: string; path: string }[]>([]);
@@ -672,34 +429,39 @@ function AndroidSettings({ open, onClose }: { open: boolean; onClose: () => void
     <>
       <div className="flex-1 px-4 py-4 space-y-6">
 
-        <ThemeSelector />
+        <ThemeButton onSendInput={onSendInput} />
 
-        <TierSelector tier={tier} onSetTier={handleSetTier} />
+        {/* Tier & directories are local-only — hide when connected to remote desktop */}
+        {!remoteConnected && (
+          <>
+            <TierSelector tier={tier} onSetTier={handleSetTier} />
 
-        {/* Project Directories */}
-        <section>
-          <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Project Directories</h3>
-          {directories.length > 0 ? (
-            <div className="space-y-1">
-              {directories.map(dir => (
-                <div key={dir.path} className="flex items-center justify-between py-1.5 px-2 rounded bg-inset/50">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-xs text-fg-2 block truncate">{dir.label}</span>
-                    <span className="text-[10px] text-fg-faint block truncate font-mono">{dir.path}</span>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveDirectory(dir.path)}
-                    className="text-fg-faint hover:text-red-400 text-sm leading-none px-1 shrink-0 ml-2"
-                  >
-                    ✕
-                  </button>
+            {/* Project Directories */}
+            <section>
+              <h3 className="text-[10px] font-medium text-fg-muted tracking-wider uppercase mb-3">Project Directories</h3>
+              {directories.length > 0 ? (
+                <div className="space-y-1">
+                  {directories.map(dir => (
+                    <div key={dir.path} className="flex items-center justify-between py-1.5 px-2 rounded bg-inset/50">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs text-fg-2 block truncate">{dir.label}</span>
+                        <span className="text-[10px] text-fg-faint block truncate font-mono">{dir.path}</span>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveDirectory(dir.path)}
+                        className="text-fg-faint hover:text-red-400 text-sm leading-none px-1 shrink-0 ml-2"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[10px] text-fg-faint">No custom directories. Home (~) is always available.</p>
-          )}
-        </section>
+              ) : (
+                <p className="text-[10px] text-fg-faint">No custom directories. Home (~) is always available.</p>
+              )}
+            </section>
+          </>
+        )}
 
         {/* Connect to Desktop */}
         <section>
@@ -965,7 +727,7 @@ function DesktopSettings({ open, onClose, onSendInput, hasActiveSession }: {
     <>
       <div className="flex-1 px-4 py-4 space-y-6">
 
-        <ThemeSelector />
+        <ThemeButton onSendInput={onSendInput} />
 
         {/* Setup banner — shown when no clients connected */}
         {!hasClients && (

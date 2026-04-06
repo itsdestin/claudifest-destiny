@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, nativeImage, protocol } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -12,6 +12,7 @@ import { RemoteConfig } from './remote-config';
 import { scanSkills } from './skill-scanner';
 import { IPC } from '../shared/types';
 import { log, rotateLog } from './logger';
+import { registerThemeProtocol } from './theme-protocol';
 
 // macOS and Linux Electron apps may inherit a minimal PATH that's missing
 // common tool locations (Homebrew, nvm, Volta, pipx, cargo). macOS Finder/Dock
@@ -52,6 +53,11 @@ const remoteServer = new RemoteServer(sessionManager, hookRelay, remoteConfig, s
 
 // Dev server URL — configurable via env var, defaults to Vite's default
 const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+
+// Must be called before app.whenReady() — Electron requirement
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'theme-asset', privileges: { bypassCSP: true, supportFetchAPI: true, stream: true } },
+]);
 
 function createWindow() {
   const iconPath = path.join(__dirname, '../../assets/icon.png');
@@ -181,6 +187,7 @@ app.whenReady().then(async () => {
   // Remove the default menu bar (File, Edit, View, Window, Help)
   Menu.setApplicationMenu(null);
 
+  registerThemeProtocol();
   createWindow();
 });
 

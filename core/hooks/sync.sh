@@ -44,7 +44,6 @@ case "$FILE_PATH" in
     */projects/*/memory/*) ;;
     */CLAUDE.md) ;;
     */encyclopedia/*) ;;
-    */conversation-index.json) ;;
     */skills/*)
         if type is_toolkit_owned &>/dev/null && is_toolkit_owned "$FILE_PATH"; then
             exit 0

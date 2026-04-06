@@ -1,7 +1,15 @@
 import React, { useState, useCallback } from 'react';
 
 const BRAILLE_CHARS = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-const COLORS = ['#B0B0B0', '#D0D0D0', '#85C1E9', '#A8D8A8', '#D4A5D4'];
+function getThemeColors(): string[] {
+  const style = getComputedStyle(document.documentElement);
+  const accent = style.getPropertyValue('--accent').trim() || '#85C1E9';
+  const fg2 = style.getPropertyValue('--fg-2').trim() || '#D0D0D0';
+  const fgDim = style.getPropertyValue('--fg-dim').trim() || '#B0B0B0';
+  const fgMuted = style.getPropertyValue('--fg-muted').trim() || '#A8D8A8';
+  const fgFaint = style.getPropertyValue('--fg-faint').trim() || '#D4A5D4';
+  return [fgDim, fg2, accent, fgMuted, fgFaint];
+}
 const PARTICLE_COUNT = 5;
 
 interface Particle {
@@ -28,12 +36,13 @@ export default function BrailleBurst({ children, onTrigger, disabled, className,
 
   const burst = useCallback(() => {
     if (disabled) return;
+    const colors = getThemeColors();
     const batch: Particle[] = [];
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       batch.push({
         id: ++idCounter,
         char: BRAILLE_CHARS[Math.floor(Math.random() * BRAILLE_CHARS.length)],
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        color: colors[Math.floor(Math.random() * colors.length)],
         angle: (360 / PARTICLE_COUNT) * i + (Math.random() * 20 - 10),
         dist: 8 + Math.random() * 6,
         delay: Math.random() * 60,

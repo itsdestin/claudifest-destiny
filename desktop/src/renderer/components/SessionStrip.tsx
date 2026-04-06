@@ -459,7 +459,7 @@ export default function SessionStrip({
                     <span>Resume</span>
                   </button>
                   {/* Gradient divider */}
-                  <div className="w-px my-0.5" style={{ background: 'linear-gradient(to bottom, transparent, #555555, transparent)' }} />
+                  <div className="w-px my-0.5" style={{ background: 'linear-gradient(to bottom, transparent, var(--fg-faint), transparent)' }} />
                   <button
                     onClick={() => setShowNewForm(true)}
                     className="flex-1 px-3 py-2 text-sm text-fg-dim hover:bg-inset hover:text-fg transition-colors flex items-center justify-center gap-1.5"
