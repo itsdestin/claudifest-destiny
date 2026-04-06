@@ -18,11 +18,6 @@ import CommandDrawer from './components/CommandDrawer';
 import TrustGate, { useTrustGateActive } from './components/TrustGate';
 import SettingsPanel from './components/SettingsPanel';
 import ResumeBrowser from './components/ResumeBrowser';
-import Marketplace from './components/Marketplace';
-import SkillManager from './components/SkillManager';
-import SkillEditor from './components/SkillEditor';
-import ShareSheet from './components/ShareSheet';
-import CreatePromptSheet from './components/CreatePromptSheet';
 import type { SkillEntry, PermissionMode } from '../shared/types';
 import FirstRunView from './components/FirstRunView';
 import { getPlatform, isRemoteMode, onConnectionModeChange } from './platform';
@@ -63,15 +58,45 @@ function AppInner() {
   const inputBarRef = useRef<InputBarHandle>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsBadge, setSettingsBadge] = useState(false);
+  const [skills, setSkills] = useState<SkillEntry[]>([]);
   // Track which sessions the user has "seen" (switched to after activity completed)
   const [viewedSessions, setViewedSessions] = useState<Set<string>>(new Set());
   const [resumeInfo, setResumeInfo] = useState<Map<string, { claudeSessionId: string; projectSlug: string }>>(new Map());
   const [resumeRequested, setResumeRequested] = useState(false);
-  const [managerOpen, setManagerOpen] = useState(false);
-  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
-  const [editorSkillId, setEditorSkillId] = useState<string | null>(null);
-  const [shareSkillId, setShareSkillId] = useState<string | null>(null);
-  const [createPromptOpen, setCreatePromptOpen] = useState(false);
+  const [isFirstRun, setIsFirstRun] = useState<boolean | null>(null); // null = loading
+  const handleFirstRunComplete = useCallback(() => setIsFirstRun(false), []);
+
+  const [model, setModel] = useState<ModelAlias>('sonnet');
+  const [pendingModel, setPendingModel] = useState<ModelAlias | null>(null);
+  const consecutiveFailures = useRef(0);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Check first-run state with a 3-second safety timeout — never hang the app
+  useEffect(() => {
+    let resolved = false;
+    const resolve = (value: boolean) => {
+      if (!resolved) { resolved = true; setIsFirstRun(value); }
+    };
+    const timeout = setTimeout(() => resolve(false), 3000);
+
+    (window as any).claude?.firstRun?.getState?.()
+      .then((state: any) => {
+        clearTimeout(timeout);
+        resolve(!!(state && state.currentStep !== 'COMPLETE'));
+      })
+      .catch(() => { clearTimeout(timeout); resolve(false); });
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Load persisted model preference on mount
+  useEffect(() => {
+    (window.claude as any).model?.getPreference().then((m: string) => {
+      if (MODELS.includes(m as any)) {
+        setModel(m as ModelAlias);
+      }
+    }).catch(() => {});
+  }, []);
 
   usePromptDetector();
   const dispatch = useChatDispatch();
@@ -411,6 +436,24 @@ function AppInner() {
       });
     }).catch(() => {});
   }, [dispatch]);
+
+  // Load skills once on mount
+  useEffect(() => {
+    window.claude.skills.list().then((list) => {
+      // Inject built-in resume skill at the top
+      const resumeSkill: SkillEntry = {
+        id: '_resume',
+        displayName: 'Resume Session',
+        description: 'Resume a previous conversation',
+        category: 'personal',
+        prompt: '',
+        source: 'destinclaude',
+        type: 'prompt',
+        visibility: 'published',
+      };
+      setSkills([resumeSkill, ...list]);
+    }).catch(console.error);
+  }, []);
 
   // Flush and reload session state when connection mode changes (local ↔ remote).
   // On Android, switching to remote means the WebSocket now talks to the desktop server —
@@ -755,9 +798,9 @@ function AppInner() {
                   open={drawerOpen}
                   searchMode={drawerSearchMode}
                   onSelect={handleSelectSkill}
-                  onClose={() => setDrawerOpen(false)}
-                  onOpenManager={() => setManagerOpen(true)}
-                  onOpenMarketplace={() => setMarketplaceOpen(true)}
+                  onClose={handleCloseDrawer}
+                  onOpenManager={() => {}}
+                  onOpenMarketplace={() => {}}
                 />
               )}
             </div>
@@ -827,26 +870,10 @@ function AppInner() {
         onClose={() => setResumeRequested(false)}
         onResume={handleResumeSession}
       />
-      {marketplaceOpen && (
-        <Marketplace onClose={() => setMarketplaceOpen(false)} />
-      )}
-      {managerOpen && (
-        <SkillManager
-          onClose={() => setManagerOpen(false)}
-          onOpenMarketplace={() => { setManagerOpen(false); setMarketplaceOpen(true); }}
-          onOpenShareSheet={(id) => setShareSkillId(id)}
-          onOpenEditor={(id) => setEditorSkillId(id)}
-          onOpenCreatePrompt={() => setCreatePromptOpen(true)}
-        />
-      )}
-      {editorSkillId && (
-        <SkillEditor skillId={editorSkillId} onClose={() => setEditorSkillId(null)} />
-      )}
-      {shareSkillId && (
-        <ShareSheet skillId={shareSkillId} onClose={() => setShareSkillId(null)} />
-      )}
-      {createPromptOpen && (
-        <CreatePromptSheet onClose={() => setCreatePromptOpen(false)} />
+      {toast && (
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-panel border border-edge text-sm text-fg shadow-lg">
+          {toast}
+        </div>
       )}
     </div>
   );
