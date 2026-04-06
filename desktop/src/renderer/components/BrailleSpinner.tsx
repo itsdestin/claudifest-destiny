@@ -2,13 +2,15 @@ import React, { useSyncExternalStore } from 'react';
 
 const FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
-const COLORS = [
-  '#B0B0B0',
-  '#D0D0D0',
-  '#85C1E9',
-  '#A8D8A8',
-  '#D4A5D4',
-];
+function getThemeColors(): string[] {
+  const style = getComputedStyle(document.documentElement);
+  const accent = style.getPropertyValue('--accent').trim() || '#85C1E9';
+  const fg2 = style.getPropertyValue('--fg-2').trim() || '#D0D0D0';
+  const fgDim = style.getPropertyValue('--fg-dim').trim() || '#B0B0B0';
+  const fgMuted = style.getPropertyValue('--fg-muted').trim() || '#A8D8A8';
+  const fgFaint = style.getPropertyValue('--fg-faint').trim() || '#D4A5D4';
+  return [fgDim, fg2, accent, fgMuted, fgFaint];
+}
 
 // Shared animation driver — one requestAnimationFrame loop for all spinners.
 // Replaces per-instance setIntervals (2 timers × N spinners) with a single
@@ -29,7 +31,7 @@ function tick(now: number) {
     changed = true;
   }
   if (now - lastColorTick >= 600) {
-    colorIndex = (colorIndex + 1) % COLORS.length;
+    colorIndex = (colorIndex + 1) % 5;
     lastColorTick = now;
     changed = true;
   }
@@ -80,7 +82,7 @@ export default function BrailleSpinner({ size = 'sm', colorCycle = true }: Props
     <span
       className={`${sizeClass[size]} leading-none shrink-0 inline-block text-center`}
       style={{
-        color: colorCycle ? COLORS[colorIndex] : COLORS[0],
+        color: colorCycle ? getThemeColors()[colorIndex] : getThemeColors()[0],
         width: '1em',  // Fixed width prevents layout reflow from variable-width braille glyphs
       }}
     >

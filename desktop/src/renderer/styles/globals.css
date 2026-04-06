@@ -26,6 +26,8 @@
   --scrollbar-thumb: #C0C0C0;
   --scrollbar-hover: #999999;
   --code: #8B6914;
+  --link: #2563EB;
+  --link-hover: #1D4ED8;
   --hl-theme: light;
   color-scheme: light;
   --radius-sm: 4px;
@@ -54,6 +56,8 @@
   --scrollbar-thumb: #333333;
   --scrollbar-hover: #555555;
   --code: #D4A843;
+  --link: #66AAFF;
+  --link-hover: #88CCFF;
   --hl-theme: dark;
   color-scheme: dark;
   --radius-sm: 4px;
@@ -82,6 +86,8 @@
   --scrollbar-thumb: #30363D;
   --scrollbar-hover: #484F58;
   --code: #C9A84C;
+  --link: #58A6FF;
+  --link-hover: #79C0FF;
   --hl-theme: dark;
   color-scheme: dark;
   --radius-sm: 4px;
@@ -110,6 +116,8 @@
   --scrollbar-thumb: #CBBFB0;
   --scrollbar-hover: #A89A8A;
   --code: #7A5D2E;
+  --link: #5B4A1E;
+  --link-hover: #3D3219;
   --hl-theme: light;
   color-scheme: light;
   --radius-sm: 4px;
@@ -155,6 +163,10 @@
 
   /* Inline code text color */
   --color-code: var(--code);
+
+  /* Link colors */
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
 
   /* Status colors — constant across all themes */
   --color-green-400: #4CAF50;

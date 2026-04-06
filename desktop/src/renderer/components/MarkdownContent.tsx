@@ -107,14 +107,14 @@ const mdComponents = {
   a({ href, children, ...props }: any) {
     const isSafeHref = href && /^(https?:|mailto:)/.test(href);
     if (!isSafeHref) {
-      return <span className="text-[#66AAFF]">{children}</span>;
+      return <span className="text-link">{children}</span>;
     }
     return (
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[#66AAFF] hover:text-[#88CCFF] underline"
+        className="text-link hover:text-link-hover underline"
         {...props}
       >
         {children}
