@@ -1,17 +1,20 @@
 ---
 title: "/sync Skill Enhancement — Unified Interactive Hub"
-version: 1.1
-status: approved
+version: 1.2
+status: implemented
 date: 2026-03-26
-updated: 2026-03-31
+updated: 2026-04-05
 affects:
   - skills/sync/SKILL.md
+  - core/hooks/sync.sh (was personal-sync.sh, renamed in PR #103)
   - core/hooks/session-start.sh
-  - core/hooks/personal-sync.sh
   - core/hooks/contribution-detector.sh
-  - skill-creator skill (external, at ~/.claude/skills/skill-creator/)
+  - skill-creator skill (external, at ~/.claude/skills/skill-creator/) — not yet updated
   - ~/.claude/toolkit-state/skill-routes.json (new)
 changelog:
+  - version: 1.2
+    date: 2026-04-05
+    summary: "Implemented — SKILL.md rewritten with §7 (backend reconfig), §8 (skill routing), hub-and-return UX, stale git-sync refs removed. Hook plumbing was already done in f6bc923. Reconciled with sync consolidation (PR #103)."
   - version: 1.1
     date: 2026-03-31
     summary: "Reconcile with Infrastructure Safety sprint (PR #99) — account for hook-preamble, mutex, _capture_err, stash-before-pull, --skip-links, and config parsing changes"
