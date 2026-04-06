@@ -217,7 +217,7 @@ export default function ChatView({ sessionId, visible, resumeInfo }: Props) {
         flexDirection: 'column',
       }}
     >
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pt-4 pb-1">
+      <div ref={scrollContainerRef} className="chat-scroll flex-1 overflow-y-auto pt-4 pb-1">
         {state.timeline.length === 0 && !state.isThinking ? (
           <div className="flex items-center justify-center h-full text-fg-muted text-sm">
             Start a conversation with Claude

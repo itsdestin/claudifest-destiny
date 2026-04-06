@@ -297,11 +297,22 @@ html, body, #root {
   background-color: transparent !important;
 }
 
-/* Header bar — frosted glass with blur */
+/* Header bar — frosted glass overlay, content scrolls underneath */
 [data-panels-blur] .header-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
   backdrop-filter: blur(var(--panels-blur, 0px));
   -webkit-backdrop-filter: blur(var(--panels-blur, 0px));
   background-color: var(--panel-glass, var(--panel));
+}
+
+/* Chat scroll area extends behind header — extra top padding so
+   content starts below the header but scrolls up behind it */
+[data-panels-blur] .chat-scroll {
+  padding-top: 3rem; /* 48px ≈ h-10 header (40px) + 8px breathing room */
 }
 
 /* Status bar — frosted glass with blur */

@@ -737,7 +737,7 @@ function AppInner() {
   return (
     <div className="flex w-screen h-full bg-canvas text-fg">
       {/* Main area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         {sessions.length > 0 && sessionId && currentSession ? (
           <>
             <HeaderBar
