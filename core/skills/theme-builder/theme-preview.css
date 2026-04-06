@@ -36,6 +36,7 @@ body {
 .border-edge-dim { border-color: var(--edge-dim); }
 
 /* Radius */
+.rounded      { border-radius: var(--radius, 4px); }
 .rounded-sm   { border-radius: var(--radius-sm, 4px); }
 .rounded-md   { border-radius: var(--radius-md, 8px); }
 .rounded-lg   { border-radius: var(--radius-lg, 12px); }

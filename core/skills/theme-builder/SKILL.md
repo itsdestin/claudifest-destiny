@@ -91,7 +91,7 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
   --fg-muted: #HEX; --fg-faint: #HEX;
   --edge: #HEX; --edge-dim: #HEX80;
   --scrollbar-thumb: #HEX; --scrollbar-hover: #HEX;
-  --radius-sm: Npx; --radius-md: Npx; --radius-lg: Npx; --radius-xl: Npx; --radius-2xl: Npx; --radius-full: 9999px;
+  --radius: Npx; --radius-sm: Npx; --radius-md: Npx; --radius-lg: Npx; --radius-xl: Npx; --radius-2xl: Npx; --radius-full: 9999px;
 ">
   <!-- Theme name + vibe -->
   <h2 class="text-fg" style="font-size:16px; font-weight:700;">Theme Name</h2>
@@ -456,9 +456,12 @@ Write `<slug>/manifest.json` matching this schema exactly:
   },
 
   "shape": {
+    "radius": "Npx",
     "radius-sm": "Npx",
     "radius-md": "Npx",
     "radius-lg": "Npx",
+    "radius-xl": "Npx",
+    "radius-2xl": "Npx (max 36)",
     "radius-full": "9999px"
   },
 
@@ -518,6 +521,34 @@ Write `<slug>/manifest.json` matching this schema exactly:
 - `icons`, `cursor`, `scrollbar`, and `mascot` sections are all optional — only include them if you actually generated the assets
 - `particle-shape` is only used when `particles` is `"custom"`
 - `pattern` and `pattern-opacity` are only needed when a pattern SVG was generated
+
+### Shape / Radius Rules
+
+The `shape` block controls border-radius for all UI elements. The radius scale is consumed by Tailwind utilities (`rounded-sm` through `rounded-2xl`) and by the computed `--radius-toggle` variable (used for nested toggle buttons). Follow these constraints:
+
+**Always include the full scale.** Set all 7 keys: `radius`, `radius-sm`, `radius-md`, `radius-lg`, `radius-xl`, `radius-2xl`, `radius-full`. Omitting `radius` (the base) causes bare `rounded` classes to fall back to the CSS default, creating inconsistency.
+
+**Maximum safe values:**
+
+| Key | Default | Max recommended | Why |
+|-----|---------|-----------------|-----|
+| `radius` | 4px | 8px | Base for tiny elements (checkboxes, inline badges) |
+| `radius-sm` | 4px | 10px | Status bar pills, small buttons |
+| `radius-md` | 8px | 16px | Toggle containers, dropdown menus, quick chips |
+| `radius-lg` | 12px | 20px | Tool cards, modals |
+| `radius-xl` | 16px | 28px | Settings panels, large cards |
+| `radius-2xl` | 24px | 36px | Chat bubbles — must stay ≤ 36px (see below) |
+| `radius-full` | 9999px | 9999px | Always 9999px (pill shapes) |
+
+**Critical constraint — `radius-2xl` ≤ 36px.** Chat bubbles use `rounded-2xl` and have `px-5` (20px) horizontal / `pt-4` (16px) vertical padding. For the first line of text to clear the top-left curve, the radius must satisfy `r × 0.29 < min(paddingX, paddingY)`, which gives `r < 16 / 0.29 ≈ 55px`. However, visual comfort requires more clearance than the mathematical minimum — **36px is the practical ceiling** for a natural look.
+
+**Proportionality.** Keep a consistent scale factor across the tiers. Good patterns:
+- **Soft** (1.5× defaults): 6 / 6 / 12 / 18 / 24 / 36 / 9999
+- **Rounded** (2× defaults): 8 / 8 / 16 / 24 / 32 / 36 / 9999 (note: 2xl capped at 36)
+- **Sharp** (0.5× defaults): 2 / 2 / 4 / 6 / 8 / 12 / 9999
+- **Flat**: 0 / 0 / 0 / 0 / 0 / 0 / 9999 (only pills stay round)
+
+**The `--radius-toggle` variable** is derived automatically as `calc(var(--radius-md) - 2px)` in CSS. Do NOT set it in the manifest — it computes from `radius-md`. This controls the inner rounding of toggle buttons (Chat/Terminal) nested inside `rounded-md` containers.
 
 ### Step 6: Write Custom CSS Aggressively
 
