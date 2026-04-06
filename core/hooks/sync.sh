@@ -112,10 +112,20 @@ fi
 [[ -z "$BACKEND" || "$BACKEND" == "none" ]] && exit 0
 
 # --- Mutex: prevent concurrent sync instances ---
+# Portable PID liveness check (kill -0 doesn't work for Windows PIDs in Git Bash)
+_sync_pid_alive() {
+    local pid="$1"
+    [[ -z "$pid" || "$pid" == "0" ]] && return 1
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*) tasklist //FI "PID eq $pid" 2>/dev/null | grep -q "^[^ ]" ;;
+        *) kill -0 "$pid" 2>/dev/null ;;
+    esac
+}
+
 LOCK_DIR="$CLAUDE_DIR/toolkit-state/.sync-lock"
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     _lock_pid=$(cat "$LOCK_DIR/pid" 2>/dev/null || echo 0)
-    if kill -0 "$_lock_pid" 2>/dev/null; then
+    if _sync_pid_alive "$_lock_pid"; then
         exit 0  # Another sync is running
     fi
     rm -rf "$LOCK_DIR"

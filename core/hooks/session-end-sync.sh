@@ -35,7 +35,7 @@ _capture_err "session-end sync $SESSION_ID" \
 # Conversation index — update from topic files and push (best-effort within timeout)
 if type update_conversation_index &>/dev/null; then
     update_conversation_index 2>/dev/null || true
-    local _INDEX_FILE="$CLAUDE_DIR/conversation-index.json"
+    _INDEX_FILE="$CLAUDE_DIR/conversation-index.json"
     if [[ -f "$_INDEX_FILE" ]]; then
         _capture_err "session-end index sync" \
             rclone copyto "$_INDEX_FILE" \
