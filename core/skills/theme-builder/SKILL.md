@@ -46,7 +46,8 @@ Analyze the user's prompt and determine the mode **automatically** — never ask
 Generate **3 genuinely different interpretations** of the prompt. Not 3 slight variations — 3 different creative takes. For each concept, decide:
 
 - A palette (all 15 tokens — see Token Design Rules)
-- Shape radius values
+- Shape radius values (including `--radius` for bare rounding and `--radius-toggle` for nested toggles)
+- A font choice — pick a Google Font or system font that reinforces the theme vibe. Set `--font-sans` and `--font-mono`. Examples: `'Victor Mono'` for cyberpunk, `'Comic Neue'` for playful, `'IBM Plex Mono'` for corporate, `'Fira Code'` for hacker, `'Merriweather'` for literary. Include `@import url(...)` for the Google Font in the concept card `<head>`.
 - Background type (solid, gradient, or image)
 - Layout presets (input-style, bubble-style, header-style, statusbar-style)
 - Effects (particles, custom particle shapes, scan-lines, vignette, noise)
@@ -92,6 +93,8 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
   --edge: #HEX; --edge-dim: #HEX80;
   --scrollbar-thumb: #HEX; --scrollbar-hover: #HEX;
   --radius: Npx; --radius-sm: Npx; --radius-md: Npx; --radius-lg: Npx; --radius-xl: Npx; --radius-2xl: Npx; --radius-full: 9999px;
+  --radius-toggle: calc(var(--radius-md) - 2px);
+  --font-sans: 'CHOSEN FONT', 'Cascadia Mono', monospace; --font-mono: 'CHOSEN FONT', 'Cascadia Mono', monospace;
 ">
   <!-- Theme name + vibe -->
   <h2 class="text-fg" style="font-size:16px; font-weight:700;">Theme Name</h2>
@@ -151,6 +154,10 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
     <div class="header-bar bg-panel">
       <span style="font-size:14px;">&#9679;</span>
       DestinCode
+      <div class="header-toggle">
+        <span class="toggle-btn active">Chat</span>
+        <span class="toggle-btn">Term</span>
+      </div>
     </div>
 
     <div class="chat-area">
@@ -164,6 +171,12 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
       <div class="chat-bubble assistant">
         Sure! Let me walk you through it.
       </div>
+    </div>
+
+    <div class="chips-row bg-canvas">
+      <div class="chip">Journal</div>
+      <div class="chip">Git Status</div>
+      <div class="chip">Review PR</div>
     </div>
 
     <div class="input-bar-container bg-panel">
@@ -194,12 +207,15 @@ Every concept card MUST render an **app mockup** that uses the exact same CSS cl
    - `data-panels-blur` attribute on `.app-mockup` (or a wrapper)
    - `style="--panels-blur: Npx; --panel-glass: rgba(R,G,B,OPACITY);"` on the same element
    - Compute `--panel-glass` from the panel hex color + `panels-opacity` value
-5. **Background layer**: Set `#theme-bg` inside `.app-mockup` with the exact `background` and `opacity` from the concept's background config. For solid backgrounds, omit the `#theme-bg` div entirely.
+5. **Background layer**: Set `#theme-bg` inside `.app-mockup` with the exact `background` and `opacity` from the concept's background config. For solid backgrounds, omit the `#theme-bg` div entirely. Note: at runtime the app sets `background-image` directly on `<body>` (not via a z-index div), so wallpaper themes need the glassmorphism `custom_css` block to make `.app-shell` transparent.
 6. **Pattern overlay**: Use `.pattern-overlay` inside `.app-mockup` with a data-URI SVG `background-image` and `background-size` to show repeating patterns. Set opacity via the `opacity` style property. Use data-URI inline SVGs so the pattern is visible in the preview without external files.
 7. **Asset preview row**: Show thumbnails for planned assets. For wallpapers in brand mode, show the image you plan to download. For generated SVGs, show a tiny inline data-URI preview. For items that will be generated later, use a colored placeholder with an icon label.
 8. **Particles are label-only** in the preview. Show a `.particle-indicator` badge with the preset name (e.g. "rain", "custom hearts", "brand stars"). Omit it for `"none"`.
 9. **Embed the full `theme-preview.css` contents** in a `<style>` tag in the HTML `<head>`. Do NOT link to an external file.
 10. **Page layout**: show concept cards in a responsive grid (1-3 columns). The page background should be `#1a1a1a` (neutral dark) so all themes are evaluated against the same backdrop.
+11. **Pill bubble warning**: `data-bubble-style="pill"` is incompatible with tool cards — the fully-rounded ends cannot gracefully contain card content. Only use pill style for text-heavy aesthetic themes, or accept that tool-containing bubbles will clip at the curves.
+12. **Font selection**: Every theme MUST include a font choice via `--font-sans` and `--font-mono` in its CSS variables. Pick a font that reinforces the theme's vibe — e.g. a rounded sans-serif for playful themes, a strict monospace for hacker themes, a serif for literary themes. Use Google Fonts (web-safe) or well-known system fonts. The concept card scoping div must set both `--font-sans` and `--font-mono` so the mockup renders in the theme's chosen font. The manifest stores this as `font.family`.
+13. **Layout presets are preview-only**: `data-input-style`, `data-bubble-style`, `data-header-style`, and `data-statusbar-style` render correctly in the concept browser but are **not yet wired** to the real app's React components. Users will see the correct colors/fonts/radius from their theme, but layout preset differences (floating input, pill bubbles) won't apply at runtime until a future app update adds class-based selectors to those components.
 
 ---
 
@@ -460,9 +476,12 @@ Write `<slug>/manifest.json` matching this schema exactly:
     "radius-sm": "Npx",
     "radius-md": "Npx",
     "radius-lg": "Npx",
-    "radius-xl": "Npx",
-    "radius-2xl": "Npx (max 36)",
     "radius-full": "9999px"
+  },
+
+  "font": {
+    "family": "'Font Name', 'Cascadia Mono', monospace",
+    "google-font-url": "https://fonts.googleapis.com/css2?family=Font+Name:wght@400;600;700&display=swap"
   },
 
   "background": {
@@ -521,34 +540,9 @@ Write `<slug>/manifest.json` matching this schema exactly:
 - `icons`, `cursor`, `scrollbar`, and `mascot` sections are all optional — only include them if you actually generated the assets
 - `particle-shape` is only used when `particles` is `"custom"`
 - `pattern` and `pattern-opacity` are only needed when a pattern SVG was generated
-
-### Shape / Radius Rules
-
-The `shape` block controls border-radius for all UI elements. The radius scale is consumed by Tailwind utilities (`rounded-sm` through `rounded-2xl`) and by the computed `--radius-toggle` variable (used for nested toggle buttons). Follow these constraints:
-
-**Always include the full scale.** Set all 7 keys: `radius`, `radius-sm`, `radius-md`, `radius-lg`, `radius-xl`, `radius-2xl`, `radius-full`. Omitting `radius` (the base) causes bare `rounded` classes to fall back to the CSS default, creating inconsistency.
-
-**Maximum safe values:**
-
-| Key | Default | Max recommended | Why |
-|-----|---------|-----------------|-----|
-| `radius` | 4px | 8px | Base for tiny elements (checkboxes, inline badges) |
-| `radius-sm` | 4px | 10px | Status bar pills, small buttons |
-| `radius-md` | 8px | 16px | Toggle containers, dropdown menus, quick chips |
-| `radius-lg` | 12px | 20px | Tool cards, modals |
-| `radius-xl` | 16px | 28px | Settings panels, large cards |
-| `radius-2xl` | 24px | 36px | Chat bubbles — must stay ≤ 36px (see below) |
-| `radius-full` | 9999px | 9999px | Always 9999px (pill shapes) |
-
-**Critical constraint — `radius-2xl` ≤ 36px.** Chat bubbles use `rounded-2xl` and have `px-5` (20px) horizontal / `pt-4` (16px) vertical padding. For the first line of text to clear the top-left curve, the radius must satisfy `r × 0.29 < min(paddingX, paddingY)`, which gives `r < 16 / 0.29 ≈ 55px`. However, visual comfort requires more clearance than the mathematical minimum — **36px is the practical ceiling** for a natural look.
-
-**Proportionality.** Keep a consistent scale factor across the tiers. Good patterns:
-- **Soft** (1.5× defaults): 6 / 6 / 12 / 18 / 24 / 36 / 9999
-- **Rounded** (2× defaults): 8 / 8 / 16 / 24 / 32 / 36 / 9999 (note: 2xl capped at 36)
-- **Sharp** (0.5× defaults): 2 / 2 / 4 / 6 / 8 / 12 / 9999
-- **Flat**: 0 / 0 / 0 / 0 / 0 / 0 / 9999 (only pills stay round)
-
-**The `--radius-toggle` variable** is derived automatically as `calc(var(--radius-md) - 2px)` in CSS. Do NOT set it in the manifest — it computes from `radius-md`. This controls the inner rounding of toggle buttons (Chat/Terminal) nested inside `rounded-md` containers.
+- `font.family` is applied to `--font-sans` and `--font-mono` CSS variables. Always include `'Cascadia Mono', monospace` as fallbacks
+- `font.google-font-url` is a Google Fonts `@import` URL. The app injects this into the `<head>` at theme load time. Omit if using a system font
+- `shape.radius` controls bare `rounded` elements (status bar pills, quick chips, permission buttons). Defaults to `radius-sm` if omitted
 
 ### Step 6: Write Custom CSS Aggressively
 
@@ -558,6 +552,65 @@ Use the `custom_css` field for visual effects the schema cannot express. Include
 ```css
 ::selection { background: rgba(ACCENT_R, ACCENT_G, ACCENT_B, 0.3); color: ACCENT_ON; }
 ```
+
+**REQUIRED when `panels-blur > 0` (glassmorphism themes with wallpaper):**
+
+When a theme has `background.panels-blur > 0`, the app sets `data-panels-blur` on `<html>` and renders the wallpaper on `<body>`. You MUST include the following glassmorphism CSS block in `custom_css`. The wallpaper shows through because the app makes the body background the wallpaper image — all content layers above need to be either transparent or frosted glass.
+
+Adjust the opacity percentages to taste (lower = more transparent/wallpaper visible):
+- **Bars** (header, status, input): 78-88% panel opacity, blur 20-28px
+- **Assistant bubbles** (bg-inset): 80-90% inset opacity, blur 12-20px
+- **User bubbles** (bg-accent): 50-80% accent opacity, blur 12-20px
+
+```css
+/* Make main app shell transparent so body wallpaper shows through */
+[data-panels-blur] .app-shell { background-color: transparent !important; }
+
+/* Header bar — frosted glass overlay, chat scrolls underneath */
+[data-panels-blur] .header-bar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 82%, transparent);
+}
+
+/* Push chat content below the overlaid header (h-10 = 40px) */
+[data-panels-blur] .chat-scroll { padding-top: 3rem; }
+
+/* Status bar — frosted glass */
+[data-panels-blur] .status-bar {
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 82%, transparent);
+}
+
+/* Input bar — frosted glass */
+[data-panels-blur] .border-t.shrink-0:has(form) {
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) 82%, transparent);
+}
+
+/* Assistant chat bubbles — semi-transparent with subtle blur */
+[data-panels-blur] .bg-inset {
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  background-color: color-mix(in srgb, var(--inset) 85%, transparent);
+}
+
+/* User message bubbles — semi-transparent accent */
+[data-panels-blur] .bg-accent {
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  background-color: color-mix(in srgb, var(--accent) 65%, transparent);
+}
+```
+
+Key notes for glassmorphism:
+- `color-mix(in srgb, var(--token) N%, transparent)` creates semi-transparent versions of theme tokens without needing to know their RGB values
+- `saturate(1.2)` boosts the blurred wallpaper color through the frost — makes it feel warm/alive rather than washed out
+- The header becomes `position: absolute` so chat content scrolls underneath the frosted bar
+- The terminal view also gets frosted glass automatically (handled by TerminalView.tsx when `data-panels-blur` is set)
 
 **Consider including (when they fit the theme):**
 ```css
@@ -608,7 +661,7 @@ After the theme pack is written, every refinement the user requests goes directl
 Common refinements:
 - "More X color" -> adjust `tokens.accent` or relevant token
 - "Rounder edges" -> increase `shape.radius-*` values
-- "More glassmorphism" -> increase `background.panels-blur`, lower `panels-opacity` to 0.7
+- "More glassmorphism" -> increase `background.panels-blur`, lower `panels-opacity` to 0.7, adjust `custom_css` opacity percentages in `color-mix()` calls (lower = more transparent)
 - "Add rain particles" -> set `effects.particles: "rain"`
 - "Custom particles" -> set `effects.particles: "custom"`, generate a new particle shape SVG, update `effects.particle-shape`
 - "Change the pattern" -> regenerate `assets/pattern.svg`, adjust `background.pattern-opacity`
