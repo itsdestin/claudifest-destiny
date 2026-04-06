@@ -333,8 +333,20 @@ _session_sync_background() {
                             --update 2>/dev/null &
                         # Only copy top-level .md files — exclude subdirectories to prevent
                         # contamination loops where stray dirs get mirrored into the cache.
-                        rclone copy "$DRIVE_SOURCE/encyclopedia/" "$CLAUDE_DIR/encyclopedia/" \
-                            --update --max-depth 1 --include "*.md" 2>/dev/null &
+                        # Encyclopedia — skip if vault is active
+                        if [[ "$(config_get 'vault_enabled' 'false')" != "true" ]]; then
+                            rclone copy "$DRIVE_SOURCE/encyclopedia/" "$CLAUDE_DIR/encyclopedia/" \
+                                --update --max-depth 1 --include "*.md" 2>/dev/null &
+                        fi
+                        # Vault files — pull if present
+                        if [[ "$(config_get 'vault_enabled' 'false')" == "true" ]]; then
+                            rclone copyto "$DRIVE_SOURCE/vault-header.json" "$CLAUDE_DIR/vault-header.json" \
+                                --checksum 2>/dev/null &
+                            local _VAULT_DIR="$CLAUDE_DIR/vault"
+                            mkdir -p "$_VAULT_DIR"
+                            rclone copy "$DRIVE_SOURCE/vault/" "$_VAULT_DIR/" \
+                                --checksum --include '*.enc' 2>/dev/null &
+                        fi
                         # Conversations — pull per-slug (Design ref: D3)
                         # Use --ignore-existing to prevent overwriting local files
                         # with older Drive versions (direction-aware: local is authoritative)
@@ -372,7 +384,15 @@ _session_sync_background() {
                         [[ -d "$REPO_DIR/memory" ]] && rsync -a --update "$REPO_DIR/memory/" "$CLAUDE_DIR/projects/" 2>/dev/null || true
                         [[ -f "$REPO_DIR/CLAUDE.md" ]] && rsync -a --update "$REPO_DIR/CLAUDE.md" "$CLAUDE_DIR/" 2>/dev/null || true
                         [[ -f "$REPO_DIR/system-backup/config.json" ]] && rsync -a --update "$REPO_DIR/system-backup/config.json" "$CLAUDE_DIR/toolkit-state/" 2>/dev/null || true
-                        [[ -d "$REPO_DIR/encyclopedia" ]] && rsync -a --update "$REPO_DIR/encyclopedia/" "$CLAUDE_DIR/encyclopedia/" 2>/dev/null || true
+                        if [[ "$(config_get 'vault_enabled' 'false')" != "true" ]]; then
+                            [[ -d "$REPO_DIR/encyclopedia" ]] && rsync -a --update "$REPO_DIR/encyclopedia/" "$CLAUDE_DIR/encyclopedia/" 2>/dev/null || true
+                        fi
+                        # Vault files
+                        if [[ -f "$REPO_DIR/vault-header.json" ]]; then
+                            cp "$REPO_DIR/vault-header.json" "$CLAUDE_DIR/vault-header.json" 2>/dev/null || true
+                            local _VAULT_DIR="$CLAUDE_DIR/vault"
+                            [[ -d "$REPO_DIR/vault" ]] && { mkdir -p "$_VAULT_DIR"; cp -r "$REPO_DIR/vault"/* "$_VAULT_DIR/" 2>/dev/null || true; }
+                        fi
                         # Conversations
                         if [[ -d "$REPO_DIR/conversations" ]]; then
                             local _conv_slug _cs_name
@@ -407,7 +427,15 @@ _session_sync_background() {
                         [[ -d "$ICLOUD_PATH/memory" ]] && rsync -a --update "$ICLOUD_PATH/memory/" "$CLAUDE_DIR/projects/" 2>/dev/null || true
                         [[ -f "$ICLOUD_PATH/CLAUDE.md" ]] && rsync -a --update "$ICLOUD_PATH/CLAUDE.md" "$CLAUDE_DIR/" 2>/dev/null || true
                         [[ -f "$ICLOUD_PATH/system-backup/config.json" ]] && rsync -a --update "$ICLOUD_PATH/system-backup/config.json" "$CLAUDE_DIR/toolkit-state/" 2>/dev/null || true
-                        [[ -d "$ICLOUD_PATH/encyclopedia" ]] && rsync -a --update "$ICLOUD_PATH/encyclopedia/" "$CLAUDE_DIR/encyclopedia/" 2>/dev/null || true
+                        if [[ "$(config_get 'vault_enabled' 'false')" != "true" ]]; then
+                            [[ -d "$ICLOUD_PATH/encyclopedia" ]] && rsync -a --update "$ICLOUD_PATH/encyclopedia/" "$CLAUDE_DIR/encyclopedia/" 2>/dev/null || true
+                        fi
+                        # Vault files
+                        if [[ -f "$ICLOUD_PATH/vault-header.json" ]]; then
+                            cp "$ICLOUD_PATH/vault-header.json" "$CLAUDE_DIR/vault-header.json" 2>/dev/null || true
+                            local _VAULT_DIR="$CLAUDE_DIR/vault"
+                            [[ -d "$ICLOUD_PATH/vault" ]] && { mkdir -p "$_VAULT_DIR"; cp -r "$ICLOUD_PATH/vault"/* "$_VAULT_DIR/" 2>/dev/null || true; }
+                        fi
                         # Conversations
                         if [[ -d "$ICLOUD_PATH/conversations" ]]; then
                             local _conv_slug _cs_name
@@ -721,6 +749,13 @@ if debounce_check "$SYNC_DEBOUNCE_MARKER" "$SYNC_DEBOUNCE_MINUTES"; then
     disown
 else
     echo "skipped $(date +%s)" > "$SYNC_STATUS_FILE" 2>/dev/null
+fi
+
+# Vault status
+if type config_get &>/dev/null && [[ "$(config_get 'vault_enabled' 'false')" == "true" ]]; then
+    if [[ ! -f "$CLAUDE_DIR/.vault-state/.unlocked" ]]; then
+        echo "{\"hookSpecificOutput\": \"Journal vault locked — unlock to access encyclopedia and journal files\"}" >&2
+    fi
 fi
 
 # --- Announcement fetch (background) ---
