@@ -236,7 +236,7 @@ export default function StatusBar({ statusData, onRunSync, model, onCycleModel, 
       {permissionMode && (
         <button
           onClick={onCyclePermission}
-          className="px-1.5 py-0.5 rounded border cursor-pointer hover:brightness-125 transition-colors"
+          className="px-1.5 py-0.5 rounded-sm border cursor-pointer hover:brightness-125 transition-colors"
           style={{
             backgroundColor: PERMISSION_DISPLAY[permissionMode].bg,
             color: PERMISSION_DISPLAY[permissionMode].color,

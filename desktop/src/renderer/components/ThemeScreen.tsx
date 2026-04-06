@@ -145,7 +145,7 @@ export default function ThemeScreen({ onClose, onSendInput }: Props) {
                           : [...cycleList, t.slug]
                       );
                     }}
-                    className="absolute top-1 right-1 w-4 h-4 rounded border flex items-center justify-center"
+                    className="absolute top-1 right-1 w-4 h-4 rounded-sm border flex items-center justify-center"
                     style={{ background: inCycle ? t.tokens.accent : 'transparent', borderColor: inCycle ? t.tokens.accent : '#555' }}
                     title={inCycle ? 'Remove from cycle' : 'Add to cycle'}
                   >
@@ -169,7 +169,7 @@ export default function ThemeScreen({ onClose, onSendInput }: Props) {
                     type="color"
                     value={activeTheme.tokens.accent}
                     onChange={e => updateAccent(e.target.value)}
-                    className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
+                    className="w-6 h-6 rounded-sm cursor-pointer border-0 bg-transparent"
                   />
                   <span className="text-[10px] text-fg-muted font-mono">{activeTheme.tokens.accent}</span>
                 </div>
@@ -192,7 +192,7 @@ export default function ThemeScreen({ onClose, onSendInput }: Props) {
                 <select
                   value={activeTheme.effects?.particles ?? 'none'}
                   onChange={e => updateParticles(e.target.value)}
-                  className="bg-inset text-fg-2 text-[10px] rounded border border-edge-dim px-2 py-0.5"
+                  className="bg-inset text-fg-2 text-[10px] rounded-sm border border-edge-dim px-2 py-0.5"
                 >
                   {PARTICLE_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>

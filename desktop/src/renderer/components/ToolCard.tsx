@@ -268,7 +268,7 @@ function PermissionButtons({ requestId, suggestions, onResponded, onFailed }: {
         ref={el => { buttonsRef.current[0] = el; }}
         disabled={responding}
         onClick={() => handleRespond({ decision: { behavior: 'allow' } })}
-        className={`px-3 ${pad} text-xs font-medium rounded bg-green-600/60 hover:bg-green-600/80 text-green-100 transition-colors disabled:opacity-50 ${focusIdx === 0 ? ring : ''}`}
+        className={`px-3 ${pad} text-xs font-medium rounded-sm bg-green-600/60 hover:bg-green-600/80 text-green-100 transition-colors disabled:opacity-50 ${focusIdx === 0 ? ring : ''}`}
       >
         Yes
       </button>
@@ -277,7 +277,7 @@ function PermissionButtons({ requestId, suggestions, onResponded, onFailed }: {
           ref={el => { buttonsRef.current[1] = el; }}
           disabled={responding}
           onClick={() => handleRespond({ decision: { behavior: 'allow' }, updatedPermissions: [suggestions![0]] })}
-          className={`px-3 ${pad} text-xs font-medium rounded bg-blue-600/60 hover:bg-blue-600/80 text-blue-100 transition-colors disabled:opacity-50 ${focusIdx === 1 ? ring : ''}`}
+          className={`px-3 ${pad} text-xs font-medium rounded-sm bg-blue-600/60 hover:bg-blue-600/80 text-blue-100 transition-colors disabled:opacity-50 ${focusIdx === 1 ? ring : ''}`}
         >
           Always Allow
         </button>
@@ -286,7 +286,7 @@ function PermissionButtons({ requestId, suggestions, onResponded, onFailed }: {
         ref={el => { buttonsRef.current[hasSuggestions ? 2 : 1] = el; }}
         disabled={responding}
         onClick={() => handleRespond({ decision: { behavior: 'deny' } })}
-        className={`px-3 ${pad} text-xs font-medium rounded bg-red-600/60 hover:bg-red-600/80 text-red-100 transition-colors disabled:opacity-50 ${focusIdx === (hasSuggestions ? 2 : 1) ? ring : ''}`}
+        className={`px-3 ${pad} text-xs font-medium rounded-sm bg-red-600/60 hover:bg-red-600/80 text-red-100 transition-colors disabled:opacity-50 ${focusIdx === (hasSuggestions ? 2 : 1) ? ring : ''}`}
       >
         No
       </button>
@@ -361,7 +361,7 @@ export default function ToolCard({ tool, sessionId }: Props) {
           {Object.keys(tool.input).length > 0 && (
             <div>
               <div className="text-[10px] uppercase tracking-wider text-fg-muted mb-1">Input</div>
-              <pre className="text-xs text-fg-dim bg-panel rounded p-2 overflow-auto max-h-48">
+              <pre className="text-xs text-fg-dim bg-panel rounded-sm p-2 overflow-auto max-h-48">
                 {JSON.stringify(tool.input, null, 2)}
               </pre>
             </div>
@@ -369,7 +369,7 @@ export default function ToolCard({ tool, sessionId }: Props) {
           {tool.response && (
             <div>
               <div className="text-[10px] uppercase tracking-wider text-fg-muted mb-1">Response</div>
-              <pre className="text-xs text-fg-dim bg-panel rounded p-2 overflow-auto max-h-48">
+              <pre className="text-xs text-fg-dim bg-panel rounded-sm p-2 overflow-auto max-h-48">
                 {tool.response}
               </pre>
             </div>
@@ -377,7 +377,7 @@ export default function ToolCard({ tool, sessionId }: Props) {
           {tool.error && (
             <div>
               <div className="text-[10px] uppercase tracking-wider text-red-500 mb-1">Error</div>
-              <pre className="text-xs text-red-400 bg-panel rounded p-2 overflow-auto max-h-48">
+              <pre className="text-xs text-red-400 bg-panel rounded-sm p-2 overflow-auto max-h-48">
                 {tool.error}
               </pre>
             </div>

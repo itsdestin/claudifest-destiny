@@ -422,7 +422,7 @@ export default function SessionStrip({
         <div className="relative" ref={menuRef}>
           <button
             onClick={handleMenuToggle}
-            className="flex items-center justify-center w-5 h-5 ml-1 rounded hover:bg-inset transition-colors text-fg-muted hover:text-fg-2"
+            className="flex items-center justify-center w-5 h-5 ml-1 rounded-sm hover:bg-inset transition-colors text-fg-muted hover:text-fg-2"
             title="All Sessions"
           >
             <svg className={`w-3 h-3 transition-transform ${menuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -479,7 +479,7 @@ export default function SessionStrip({
                           <span className="text-[13px] leading-snug flex-1 min-w-0 line-clamp-2">{s.name}</span>
                           <span className="shrink-0 flex items-center gap-1.5 ml-auto">
                             {s.permissionMode === 'bypass' && (
-                              <span className="text-[9px] font-medium px-1 py-0.5 rounded bg-[#DD4444]/20 text-[#DD4444]">
+                              <span className="text-[9px] font-medium px-1 py-0.5 rounded-sm bg-[#DD4444]/20 text-[#DD4444]">
                                 DANGER
                               </span>
                             )}
@@ -491,7 +491,7 @@ export default function SessionStrip({
                         <button
                           onClick={(e) => { e.stopPropagation(); if (!suppressClick.current) onCloseSession(s.id); }}
                           onPointerDown={(e) => e.stopPropagation()}
-                          className="shrink-0 w-5 h-5 flex items-center justify-center rounded text-fg-faint hover:text-[#DD4444] hover:bg-inset opacity-0 group-hover/row:opacity-100 transition-all"
+                          className="shrink-0 w-5 h-5 flex items-center justify-center rounded-sm text-fg-faint hover:text-[#DD4444] hover:bg-inset opacity-0 group-hover/row:opacity-100 transition-all"
                           title="Close Session"
                         >
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

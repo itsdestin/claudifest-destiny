@@ -26,7 +26,7 @@ export default function GameOverlay({ connection }: Props) {
   }
 
   return (
-    <div className="absolute inset-0 bg-canvas/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-10 rounded">
+    <div className="absolute inset-0 bg-canvas/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-10 rounded-sm">
       <div className="flex flex-col items-center gap-1">
         <span className={`text-3xl font-black ${headlineClass}`}>{headline}</span>
         {winner && winner !== 'draw' && (

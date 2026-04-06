@@ -110,7 +110,7 @@ export default function CommandDrawer({ open, searchMode, onSelect, onClose, onO
             {/* Pencil icon — opens Skill Manager */}
             <button
               onClick={() => { onClose(); onOpenManager(); }}
-              className="shrink-0 p-1 rounded hover:bg-inset text-fg-muted hover:text-fg transition-colors"
+              className="shrink-0 p-1 rounded-sm hover:bg-inset text-fg-muted hover:text-fg transition-colors"
               title="Manage skills"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

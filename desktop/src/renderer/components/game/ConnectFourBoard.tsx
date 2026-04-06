@@ -93,7 +93,7 @@ export default function ConnectFourBoard({ connection }: Props) {
             return (
               <div
                 key={col}
-                className={`flex flex-col gap-1 rounded cursor-pointer transition-colors ${
+                className={`flex flex-col gap-1 rounded-sm cursor-pointer transition-colors ${
                   canMove && isHovered ? 'bg-blue-600/50' : ''
                 }`}
                 onMouseEnter={() => setHoveredCol(col)}

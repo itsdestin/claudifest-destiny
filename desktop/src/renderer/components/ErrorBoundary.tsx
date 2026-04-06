@@ -31,7 +31,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
           </span>
           <button
             onClick={() => this.setState({ error: null })}
-            className="mt-2 px-3 py-1 rounded bg-inset hover:bg-edge text-fg-2 transition-colors"
+            className="mt-2 px-3 py-1 rounded-sm bg-inset hover:bg-edge text-fg-2 transition-colors"
           >
             Retry
           </button>

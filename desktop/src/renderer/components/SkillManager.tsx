@@ -286,7 +286,7 @@ function MySkillsContent({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-fg truncate">{skill.displayName}</span>
-                  <span className={`text-[9px] font-medium px-1 py-0.5 rounded shrink-0 ${typeBadgeStyles[skill.type] || typeBadgeStyles.plugin}`}>
+                  <span className={`text-[9px] font-medium px-1 py-0.5 rounded-sm shrink-0 ${typeBadgeStyles[skill.type] || typeBadgeStyles.plugin}`}>
                     {skill.type === 'prompt' ? 'Prompt' : 'Plugin'}
                   </span>
                 </div>
@@ -298,7 +298,7 @@ function MySkillsContent({
                 {/* Star */}
                 <button
                   onClick={() => onToggleFavorite(skill.id)}
-                  className="p-1.5 rounded hover:bg-well transition-colors"
+                  className="p-1.5 rounded-sm hover:bg-well transition-colors"
                   title={favSet.has(skill.id) ? 'Remove from favorites' : 'Add to favorites'}
                 >
                   <svg className={`w-4 h-4 ${favSet.has(skill.id) ? 'text-[#f0ad4e] fill-current' : 'text-fg-muted'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} fill={favSet.has(skill.id) ? 'currentColor' : 'none'}>
@@ -309,7 +309,7 @@ function MySkillsContent({
                 {/* Edit */}
                 <button
                   onClick={() => onEdit(skill.id)}
-                  className="p-1.5 rounded hover:bg-well transition-colors text-fg-muted hover:text-fg"
+                  className="p-1.5 rounded-sm hover:bg-well transition-colors text-fg-muted hover:text-fg"
                   title="Edit"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -320,7 +320,7 @@ function MySkillsContent({
                 {/* Share */}
                 <button
                   onClick={() => onShare(skill.id)}
-                  className="p-1.5 rounded hover:bg-well transition-colors text-fg-muted hover:text-fg"
+                  className="p-1.5 rounded-sm hover:bg-well transition-colors text-fg-muted hover:text-fg"
                   title="Share"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -332,7 +332,7 @@ function MySkillsContent({
                 {skill.source === 'self' && skill.type === 'prompt' && (
                   <button
                     onClick={() => onDelete(skill.id)}
-                    className="p-1.5 rounded hover:bg-well transition-colors text-fg-muted hover:text-red-400"
+                    className="p-1.5 rounded-sm hover:bg-well transition-colors text-fg-muted hover:text-red-400"
                     title="Delete"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -380,7 +380,7 @@ function QuickChipsContent({
             chipList.map((chip, i) => (
               <span
                 key={i}
-                className="shrink-0 h-6 px-2.5 rounded bg-panel border border-edge-dim text-[11px] text-fg-2 flex items-center"
+                className="shrink-0 h-6 px-2.5 rounded-sm bg-panel border border-edge-dim text-[11px] text-fg-2 flex items-center"
               >
                 {chip.label}
               </span>
@@ -408,7 +408,7 @@ function QuickChipsContent({
             <button
               onClick={() => onMove(index, -1)}
               disabled={index === 0}
-              className="p-1 rounded hover:bg-inset text-fg-muted hover:text-fg disabled:opacity-30 transition-colors"
+              className="p-1 rounded-sm hover:bg-inset text-fg-muted hover:text-fg disabled:opacity-30 transition-colors"
               title="Move up"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -420,7 +420,7 @@ function QuickChipsContent({
             <button
               onClick={() => onMove(index, 1)}
               disabled={index === chipList.length - 1}
-              className="p-1 rounded hover:bg-inset text-fg-muted hover:text-fg disabled:opacity-30 transition-colors"
+              className="p-1 rounded-sm hover:bg-inset text-fg-muted hover:text-fg disabled:opacity-30 transition-colors"
               title="Move down"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -431,7 +431,7 @@ function QuickChipsContent({
             {/* Remove */}
             <button
               onClick={() => onRemove(index)}
-              className="p-1 rounded hover:bg-inset text-fg-muted hover:text-red-400 transition-colors"
+              className="p-1 rounded-sm hover:bg-inset text-fg-muted hover:text-red-400 transition-colors"
               title="Remove"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -463,7 +463,7 @@ function QuickChipsContent({
                 <button
                   key={skill.id}
                   onClick={() => onAddChip(skill)}
-                  className="flex items-center gap-2 py-2 px-2 rounded hover:bg-inset text-left transition-colors"
+                  className="flex items-center gap-2 py-2 px-2 rounded-sm hover:bg-inset text-left transition-colors"
                 >
                   <span className="text-xs font-medium text-fg truncate">{skill.displayName}</span>
                   <span className="text-[10px] text-fg-muted truncate">{skill.description}</span>

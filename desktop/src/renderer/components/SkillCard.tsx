@@ -43,7 +43,7 @@ export default function SkillCard({ skill, onClick, variant = 'drawer', installe
       >
         <div className="flex justify-between items-start">
           <span className="text-sm font-medium text-fg leading-tight">{skill.displayName}</span>
-          <span className={`text-[9px] font-medium px-1 py-0.5 rounded shrink-0 ml-1 ${
+          <span className={`text-[9px] font-medium px-1 py-0.5 rounded-sm shrink-0 ml-1 ${
             skill.source === 'destinclaude' ? sourceBadgeStyles.destinclaude :
             typeBadgeStyles[skill.type] || sourceBadgeStyles.plugin
           }`}>
@@ -61,13 +61,13 @@ export default function SkillCard({ skill, onClick, variant = 'drawer', installe
           </span>
         </div>
         {installed ? (
-          <div className="text-center text-[#4CAF50] text-[11px] py-1 mt-2 border border-[#4CAF50]/40 rounded">
+          <div className="text-center text-[#4CAF50] text-[11px] py-1 mt-2 border border-[#4CAF50]/40 rounded-sm">
             Installed
           </div>
         ) : onInstall ? (
           <button
             onClick={(e) => { e.stopPropagation(); onInstall(skill); }}
-            className="w-full bg-accent text-on-accent text-[11px] font-medium py-1 mt-2 rounded hover:brightness-110 transition-colors"
+            className="w-full bg-accent text-on-accent text-[11px] font-medium py-1 mt-2 rounded-sm hover:brightness-110 transition-colors"
           >
             Get
           </button>
@@ -84,7 +84,7 @@ export default function SkillCard({ skill, onClick, variant = 'drawer', installe
     >
       <span className="text-sm font-medium text-fg leading-tight">{skill.displayName}</span>
       <span className="text-[11px] text-fg-muted mt-1 leading-snug line-clamp-2 flex-1">{skill.description}</span>
-      <span className={`text-[9px] font-medium px-1 py-0.5 rounded mt-2 self-start ${
+      <span className={`text-[9px] font-medium px-1 py-0.5 rounded-sm mt-2 self-start ${
         skill.source === 'destinclaude' ? sourceBadgeStyles.destinclaude :
         typeBadgeStyles[skill.type] || sourceBadgeStyles.plugin
       }`}>

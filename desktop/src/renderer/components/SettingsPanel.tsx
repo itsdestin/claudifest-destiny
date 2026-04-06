@@ -145,7 +145,7 @@ function ThemeButton({ onSendInput }: { onSendInput?: (text: string) => void }) 
         onClick={() => setOpen(true)}
         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-inset/50 hover:bg-inset transition-colors text-left"
       >
-        <div className="flex rounded overflow-hidden shrink-0" style={{ width: 32, height: 20 }}>
+        <div className="flex rounded-sm overflow-hidden shrink-0" style={{ width: 32, height: 20 }}>
           <div style={{ flex: 1, background: canvas }} />
           <div style={{ flex: 1, background: panel }} />
           <div style={{ flex: 1, background: inset }} />
@@ -305,7 +305,7 @@ function RemoteButton({
                               <p className="text-[10px] text-fg-muted mt-2 text-center font-mono">{tailscale.url}</p>
                               <button
                                 onClick={onCopyLink}
-                                className="w-full mt-2 px-3 py-1 rounded bg-inset hover:bg-edge text-[10px] text-fg-dim"
+                                className="w-full mt-2 px-3 py-1 rounded-sm bg-inset hover:bg-edge text-[10px] text-fg-dim"
                               >
                                 {copied ? 'Copied!' : 'Copy link'}
                               </button>
@@ -313,7 +313,7 @@ function RemoteButton({
                           ) : (
                             <button
                               onClick={() => onSetShowSetupQR(true)}
-                              className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium"
+                              className="w-full px-3 py-1.5 rounded-sm bg-blue-600 hover:bg-blue-500 text-xs font-medium"
                             >
                               Set Up Remote Access
                             </button>
@@ -323,7 +323,7 @@ function RemoteButton({
                             <button
                               onClick={onRunSetup}
                               disabled={!hasActiveSession}
-                              className="w-full px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-full px-3 py-1.5 rounded-sm bg-blue-600 hover:bg-blue-500 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                               title={!hasActiveSession ? 'Create a session first' : ''}
                             >
                               Set Up Remote Access
@@ -359,12 +359,12 @@ function RemoteButton({
                             value={newPassword}
                             onChange={(e) => onSetNewPassword(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && onSetPassword()}
-                            className="flex-1 px-2 py-1 rounded bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
+                            className="flex-1 px-2 py-1 rounded-sm bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
                           />
                           <button
                             onClick={onSetPassword}
                             disabled={!newPassword.trim() || passwordStatus === 'saving'}
-                            className="px-2 py-1 rounded bg-inset hover:bg-edge text-xs disabled:opacity-50"
+                            className="px-2 py-1 rounded-sm bg-inset hover:bg-edge text-xs disabled:opacity-50"
                           >
                             {passwordStatus === 'saved' ? '✓' : passwordStatus === 'saving' ? '...' : 'Set'}
                           </button>
@@ -380,7 +380,7 @@ function RemoteButton({
                             <button
                               key={opt.value}
                               onClick={() => onSetKeepAwake(opt.value)}
-                              className={`flex-1 px-1.5 py-1 rounded text-[10px] transition-colors ${
+                              className={`flex-1 px-1.5 py-1 rounded-sm text-[10px] transition-colors ${
                                 config?.keepAwakeHours === opt.value
                                   ? 'bg-accent text-on-accent font-medium'
                                   : 'bg-inset text-fg-dim hover:bg-edge'
@@ -408,7 +408,7 @@ function RemoteButton({
 
                         <div className="space-y-1">
                           {clients.map(client => (
-                            <div key={client.id} className="flex items-center justify-between py-1.5 px-2 rounded bg-inset/50">
+                            <div key={client.id} className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-inset/50">
                               <div>
                                 <span className="text-xs text-fg-2 font-mono">{client.ip}</span>
                                 <span className="text-[10px] text-fg-faint ml-2">{timeAgo(client.connectedAt)}</span>
@@ -445,7 +445,7 @@ function RemoteButton({
                         <p className="text-[10px] text-fg-muted mt-2 text-center font-mono">{tailscale.url}</p>
                         <button
                           onClick={onCopyLink}
-                          className="w-full mt-2 px-3 py-1.5 rounded bg-inset hover:bg-edge text-xs"
+                          className="w-full mt-2 px-3 py-1.5 rounded-sm bg-inset hover:bg-edge text-xs"
                         >
                           {copied ? 'Copied!' : 'Copy Link'}
                         </button>
@@ -483,7 +483,7 @@ function RemoteButton({
                           <button
                             onClick={onRunSetup}
                             disabled={!hasActiveSession}
-                            className="px-3 py-1.5 rounded bg-inset hover:bg-edge text-xs disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-sm bg-inset hover:bg-edge text-xs disabled:opacity-50"
                           >
                             Install with Setup Skill
                           </button>
@@ -584,7 +584,7 @@ function TierSelector({ tier, onSetTier }: { tier: string; onSetTier: (t: string
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className={`text-xs font-medium ${isActive ? 'text-fg' : 'text-fg-2'}`}>{t.name}</span>
-                        {isActive && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-accent text-on-accent">Active</span>}
+                        {isActive && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-sm bg-accent text-on-accent">Active</span>}
                       </div>
                       <p className="text-[10px] text-fg-muted mt-0.5">{t.desc}</p>
                     </div>
@@ -761,7 +761,7 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
               {directories.length > 0 ? (
                 <div className="space-y-1">
                   {directories.map(dir => (
-                    <div key={dir.path} className="flex items-center justify-between py-1.5 px-2 rounded bg-inset/50">
+                    <div key={dir.path} className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-inset/50">
                       <div className="min-w-0 flex-1">
                         <span className="text-xs text-fg-2 block truncate">{dir.label}</span>
                         <span className="text-[10px] text-fg-faint block truncate font-mono">{dir.path}</span>
@@ -798,7 +798,7 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
               <button
                 onClick={handleDisconnect}
                 disabled={connecting}
-                className="w-full px-3 py-1.5 rounded bg-inset hover:bg-edge text-xs text-fg-2 disabled:opacity-50"
+                className="w-full px-3 py-1.5 rounded-sm bg-inset hover:bg-edge text-xs text-fg-2 disabled:opacity-50"
               >
                 {connecting ? 'Disconnecting...' : 'Disconnect — Return to Local'}
               </button>
@@ -815,7 +815,7 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
           {!remoteConnected && pairedDevices.length > 0 && (
             <div className="space-y-1 mb-3">
               {pairedDevices.map(device => (
-                <div key={`${device.host}:${device.port}`} className="flex items-center justify-between py-2 px-3 rounded bg-inset/50">
+                <div key={`${device.host}:${device.port}`} className="flex items-center justify-between py-2 px-3 rounded-sm bg-inset/50">
                   <button
                     onClick={() => handleConnectToDesktop(device)}
                     disabled={connecting}
@@ -845,13 +845,13 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
             <div className="space-y-2">
               <button
                 onClick={handleScanQr}
-                className="w-full px-3 py-2 rounded bg-accent text-on-accent text-xs font-medium active:brightness-110"
+                className="w-full px-3 py-2 rounded-sm bg-accent text-on-accent text-xs font-medium active:brightness-110"
               >
                 Scan QR Code
               </button>
               <button
                 onClick={() => setShowConnectForm(true)}
-                className="w-full px-3 py-2 rounded border border-edge text-fg-dim text-xs active:bg-inset"
+                className="w-full px-3 py-2 rounded-sm border border-edge text-fg-dim text-xs active:bg-inset"
               >
                 Enter Manually
               </button>
@@ -865,7 +865,7 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
                   placeholder="My Desktop"
-                  className="w-full px-2 py-1.5 rounded bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
+                  className="w-full px-2 py-1.5 rounded-sm bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
                 />
               </div>
               <div>
@@ -875,7 +875,7 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
                   value={formHost}
                   onChange={e => setFormHost(e.target.value)}
                   placeholder="100.x.x.x"
-                  className="w-full px-2 py-1.5 rounded bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
+                  className="w-full px-2 py-1.5 rounded-sm bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
                 />
               </div>
               <div>
@@ -885,7 +885,7 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
                   value={formPort}
                   onChange={e => setFormPort(e.target.value)}
                   placeholder="9900"
-                  className="w-full px-2 py-1.5 rounded bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
+                  className="w-full px-2 py-1.5 rounded-sm bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
                 />
               </div>
               <div>
@@ -895,20 +895,20 @@ function AndroidSettings({ open, onClose, onSendInput }: { open: boolean; onClos
                   value={formPassword}
                   onChange={e => setFormPassword(e.target.value)}
                   placeholder="Remote access password"
-                  className="w-full px-2 py-1.5 rounded bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
+                  className="w-full px-2 py-1.5 rounded-sm bg-well border border-edge-dim text-xs text-fg focus:outline-none focus:border-fg-muted"
                 />
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowConnectForm(false)}
-                  className="px-3 py-1.5 rounded bg-inset hover:bg-edge text-xs text-fg-2"
+                  className="px-3 py-1.5 rounded-sm bg-inset hover:bg-edge text-xs text-fg-2"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveDevice}
                   disabled={!formHost.trim()}
-                  className="flex-1 px-3 py-1.5 rounded bg-accent text-on-accent text-xs font-medium disabled:opacity-50 active:brightness-110"
+                  className="flex-1 px-3 py-1.5 rounded-sm bg-accent text-on-accent text-xs font-medium disabled:opacity-50 active:brightness-110"
                 >
                   Save & Connect
                 </button>

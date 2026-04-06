@@ -72,7 +72,7 @@ function LobbyScreen({ connection, incognito, onToggleIncognito }: Props) {
         {onToggleIncognito && (
           <button
             onClick={onToggleIncognito}
-            className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+            className={`text-[10px] px-1.5 py-0.5 rounded-sm transition-colors ${
               incognito
                 ? 'bg-inset text-fg-2 hover:bg-edge'
                 : 'text-fg-muted hover:text-fg-2'

@@ -117,7 +117,7 @@ export default function ShareSheet({ skillId, onClose }: ShareSheetProps) {
               <span className="flex-1 text-[11px] text-fg-muted truncate select-all">{shareLink}</span>
               <button
                 onClick={handleCopy}
-                className="shrink-0 text-[11px] font-medium px-2 py-1 rounded bg-accent text-on-accent hover:brightness-110 transition-colors"
+                className="shrink-0 text-[11px] font-medium px-2 py-1 rounded-sm bg-accent text-on-accent hover:brightness-110 transition-colors"
               >
                 {copied ? 'Copied!' : 'Copy'}
               </button>

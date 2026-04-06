@@ -58,7 +58,7 @@ export default function PromptCard({ prompt, sessionId, onSelect }: Props) {
               <button
                 key={btn.label}
                 onClick={() => onSelect(btn.input, btn.label)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${intentStyles[buttonIntent(btn.label)]}`}
+                className={`px-3 py-1 text-xs font-medium rounded-sm transition-colors ${intentStyles[buttonIntent(btn.label)]}`}
               >
                 {btn.label}
               </button>

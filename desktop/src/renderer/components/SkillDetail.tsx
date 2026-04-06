@@ -167,7 +167,7 @@ export default function SkillDetail({ skillId, onBack }: Props) {
 
         {/* Stats row */}
         <div className="flex items-center justify-center gap-3 mb-4 text-xs text-fg-muted">
-          <span className={`font-medium px-1.5 py-0.5 rounded ${typeBadgeStyles[detail.type] || typeBadgeStyles.plugin}`}>
+          <span className={`font-medium px-1.5 py-0.5 rounded-sm ${typeBadgeStyles[detail.type] || typeBadgeStyles.plugin}`}>
             {detail.type === 'prompt' ? 'Prompt' : 'Plugin'}
           </span>
           {detail.installs != null && (
@@ -192,7 +192,7 @@ export default function SkillDetail({ skillId, onBack }: Props) {
             <h4 className="text-xs font-semibold text-fg-muted uppercase tracking-wide mb-1">Tags</h4>
             <div className="flex flex-wrap gap-1">
               {detail.tags.map(tag => (
-                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-inset text-fg-muted border border-edge-dim">
+                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-sm bg-inset text-fg-muted border border-edge-dim">
                   {tag}
                 </span>
               ))}

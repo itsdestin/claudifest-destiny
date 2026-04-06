@@ -166,7 +166,7 @@ export default function Marketplace({ onClose }: MarketplaceProps) {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortOption)}
-          className="text-[11px] bg-well border border-edge-dim rounded px-2 py-1 text-fg-muted focus:outline-none focus:border-accent"
+          className="text-[11px] bg-well border border-edge-dim rounded-sm px-2 py-1 text-fg-muted focus:outline-none focus:border-accent"
         >
           {SORT_OPTIONS.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
