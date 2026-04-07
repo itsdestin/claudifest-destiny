@@ -598,9 +598,34 @@ Use the `custom_css` field for visual effects the schema cannot express. Include
 ::selection { background: rgba(ACCENT_R, ACCENT_G, ACCENT_B, 0.3); color: ACCENT_ON; }
 ```
 
-**REQUIRED when `panels-blur > 0` (glassmorphism themes with wallpaper):**
+**REQUIRED when the theme has a wallpaper image (`background.type: "image"`):**
 
-When a theme has `background.panels-blur > 0`, the app sets `data-panels-blur` on `<html>` and renders the wallpaper on `<body>`. You MUST include the following glassmorphism CSS block in `custom_css`. The wallpaper shows through because the app makes the body background the wallpaper image — all content layers above need to be either transparent or frosted glass.
+The wallpaper and pattern MUST be added as `body::before` and `body::after` fixed overlays in `custom_css`. This is the **only** way for backgrounds to be visible in terminal view — the terminal uses a WebGL canvas that is opaque, so `body` background-image (which sits behind everything) cannot show through it. Fixed pseudo-element overlays render ON TOP of the WebGL canvas with `pointer-events: none`, making them visible in both chat and terminal views.
+
+```css
+/* Wallpaper overlay — visible in both chat and terminal views */
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background: url('theme-asset://SLUG/assets/wallpaper.EXT') center/cover no-repeat;
+  opacity: 0.6; /* adjust to taste — lower = subtler */
+  pointer-events: none; z-index: 0;
+}
+
+/* Pattern overlay — repeating SVG on top of wallpaper */
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: url('theme-asset://SLUG/assets/pattern.svg');
+  background-size: 30px 30px; background-repeat: repeat;
+  opacity: 0.10;
+  pointer-events: none; z-index: 0;
+}
+```
+
+Omit `body::after` if the theme has no pattern. Omit `body::before` if the theme uses a gradient or solid background (no wallpaper image). Use `theme-asset://SLUG/...` URLs to reference local theme assets.
+
+**ALSO REQUIRED when `panels-blur > 0` (glassmorphism themes):**
+
+When a theme has `background.panels-blur > 0`, the app sets `data-panels-blur` on `<html>` and renders the wallpaper on `<body>`. You MUST include the following glassmorphism CSS block in `custom_css`. The glassmorphism effect blurs the body background through frosted panels in chat view — all content layers above need to be either transparent or frosted glass.
 
 Adjust the opacity percentages to taste (lower = more transparent/wallpaper visible):
 - **Bars** (header, status, input): 78-88% panel opacity, blur 20-28px
@@ -655,7 +680,7 @@ Key notes for glassmorphism:
 - `color-mix(in srgb, var(--token) N%, transparent)` creates semi-transparent versions of theme tokens without needing to know their RGB values
 - `saturate(1.2)` boosts the blurred wallpaper color through the frost — makes it feel warm/alive rather than washed out
 - The header becomes `position: absolute` so chat content scrolls underneath the frosted bar
-- The terminal view also gets frosted glass automatically (handled by TerminalView.tsx when `data-panels-blur` is set)
+- The terminal view uses a WebGL canvas that is always opaque — backgrounds are visible in terminal view ONLY via the `body::before`/`body::after` fixed overlays (see above), NOT via body background-image transparency
 
 **Consider including (when they fit the theme):**
 ```css
