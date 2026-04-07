@@ -13,21 +13,18 @@ function CaptionButtons() {
   const claude = (window as any).claude;
   if (!claude?.window) return null;
 
+  const btnClass = "p-1 rounded-[var(--radius-toggle)] transition-colors text-fg-dim hover:text-fg-2 flex items-center justify-center";
+
   return (
-    <div className="caption-strip" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-      <button className="caption-btn" onClick={() => claude.window.minimize()} title="Minimize">
-        <svg width="8" height="1" viewBox="0 0 8 1"><rect fill="currentColor" width="8" height="1" /></svg>
+    <div className="flex bg-inset rounded-md p-0.5 gap-0.5">
+      <button className={btnClass} onClick={() => claude.window.minimize()} title="Minimize">
+        <svg className="w-3 h-3" viewBox="0 0 10 10"><rect fill="currentColor" y="5" width="10" height="1" /></svg>
       </button>
-      <button className="caption-btn" onClick={() => claude.window.maximize()} title="Maximize">
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1">
-          <rect x="0.5" y="0.5" width="7" height="7" />
-        </svg>
+      <button className={btnClass} onClick={() => claude.window.maximize()} title="Maximize">
+        <svg className="w-3 h-3" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="1" y="1" width="8" height="8" /></svg>
       </button>
-      <button className="caption-btn caption-btn-close" onClick={() => claude.window.close()} title="Close">
-        <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.2">
-          <line x1="0" y1="0" x2="8" y2="8" />
-          <line x1="8" y1="0" x2="0" y2="8" />
-        </svg>
+      <button className={`${btnClass} hover:!bg-red-500 hover:!text-white`} onClick={() => claude.window.close()} title="Close">
+        <svg className="w-3 h-3" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.4"><line x1="1" y1="1" x2="9" y2="9" /><line x1="9" y1="1" x2="1" y2="9" /></svg>
       </button>
     </div>
   );
@@ -175,10 +172,9 @@ export default function HeaderBar({
           </button>
         </div>
 
+        {/* Custom caption buttons (Windows/Linux only) */}
+        {showCaptionButtons && <CaptionButtons />}
       </div>
-
-      {/* Custom caption buttons — fixed to top-right corner above the header content */}
-      {showCaptionButtons && <CaptionButtons />}
     </div>
   );
 }
