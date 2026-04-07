@@ -475,6 +475,10 @@ html, body, #root {
 /* Floating chrome — elevate all chrome bars into detached, rounded cards.
    Activated by layout.chrome-style: "floating" in a theme manifest.
    Individual element *-style overrides still take precedence (later in cascade). */
+[data-chrome-style="floating"] .chrome-wrapper {
+  background-color: transparent !important;
+}
+
 [data-chrome-style="floating"] .header-bar {
   margin: 6px 8px 0;
   border-radius: var(--radius-lg);

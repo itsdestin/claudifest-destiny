@@ -171,6 +171,9 @@ body {
 }
 /* Floating chrome — elevate all bars into detached rounded cards.
    Activated by layout.chrome-style: "floating" in a theme manifest. */
+[data-chrome-style="floating"] .chrome-wrapper {
+  background-color: transparent !important;
+}
 [data-chrome-style="floating"] .header-bar {
   margin: 6px 8px 0;
   border-radius: var(--radius-lg, 16px);
