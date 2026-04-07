@@ -17,7 +17,7 @@ interface StatusData {
   syncWarnings: string | null;
 }
 
-const MODELS = ['sonnet', 'opus[1m]', 'haiku'] as const;
+const MODELS = ['haiku', 'sonnet', 'opus[1m]'] as const;
 type ModelAlias = typeof MODELS[number];
 
 const MODEL_DISPLAY: Record<ModelAlias, { label: string; color: string; bg: string; border: string }> = {

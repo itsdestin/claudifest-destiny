@@ -640,6 +640,54 @@ export class RemoteServer {
         this.respond(client.ws, type, id, result);
         break;
       }
+      case 'model:get-preference': {
+        const modelPrefPath = path.join(os.homedir(), '.claude', 'destincode-model.json');
+        try {
+          const raw = await fs.promises.readFile(modelPrefPath, 'utf8');
+          const parsed = JSON.parse(raw);
+          this.respond(client.ws, type, id, parsed.model || 'sonnet');
+        } catch {
+          this.respond(client.ws, type, id, 'sonnet');
+        }
+        break;
+      }
+      case 'model:set-preference': {
+        const modelPrefPath = path.join(os.homedir(), '.claude', 'destincode-model.json');
+        const model = payload.model || payload;
+        try {
+          await fs.promises.mkdir(path.dirname(modelPrefPath), { recursive: true });
+          await fs.promises.writeFile(modelPrefPath, JSON.stringify({ model }));
+          this.respond(client.ws, type, id, true);
+        } catch {
+          this.respond(client.ws, type, id, false);
+        }
+        break;
+      }
+      case 'defaults:get': {
+        const defaultsPrefPath = path.join(os.homedir(), '.claude', 'destincode-defaults.json');
+        const DEFAULTS_INITIAL = { skipPermissions: false, model: 'sonnet', projectFolder: '' };
+        try {
+          const raw = await fs.promises.readFile(defaultsPrefPath, 'utf8');
+          this.respond(client.ws, type, id, { ...DEFAULTS_INITIAL, ...JSON.parse(raw) });
+        } catch {
+          this.respond(client.ws, type, id, { ...DEFAULTS_INITIAL });
+        }
+        break;
+      }
+      case 'defaults:set': {
+        const defaultsPrefPath = path.join(os.homedir(), '.claude', 'destincode-defaults.json');
+        const DEFAULTS_INITIAL = { skipPermissions: false, model: 'sonnet', projectFolder: '' };
+        try {
+          let current = { ...DEFAULTS_INITIAL };
+          try { current = { ...current, ...JSON.parse(await fs.promises.readFile(defaultsPrefPath, 'utf8')) }; } catch {}
+          const merged = { ...current, ...payload };
+          await fs.promises.writeFile(defaultsPrefPath, JSON.stringify(merged, null, 2));
+          this.respond(client.ws, type, id, merged);
+        } catch {
+          this.respond(client.ws, type, id, null);
+        }
+        break;
+      }
       case 'get-home-path': {
         this.respond(client.ws, type, id, os.homedir());
         break;

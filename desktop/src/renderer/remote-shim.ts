@@ -470,6 +470,10 @@ export function installShim(): void {
       setPreference: (model: string) => invoke('model:set-preference', { model }),
       switch: (sessionId: string, model: string) => invoke('model:switch', { sessionId, model }),
     },
+    defaults: {
+      get: () => invoke('defaults:get'),
+      set: (updates: Record<string, any>) => invoke('defaults:set', updates),
+    },
     // First-run is desktop-only — return COMPLETE so the renderer never enters first-run mode
     firstRun: {
       getState: () => Promise.resolve({ currentStep: 'COMPLETE' }),
