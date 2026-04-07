@@ -11,6 +11,7 @@ export interface InputBarHandle {
 interface Props {
   sessionId: string;
   disabled?: boolean;
+  minimal?: boolean;
   onOpenDrawer?: (searchMode: boolean) => void;
   onCloseDrawer?: () => void;
   onDrawerSearch?: (query: string) => void;
@@ -34,7 +35,7 @@ function fileNameFromPath(p: string): string {
   return p.replace(/\\/g, '/').split('/').pop() || p;
 }
 
-const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId, disabled, onOpenDrawer, onCloseDrawer, onDrawerSearch, onResumeCommand }, ref) {
+const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId, disabled, minimal, onOpenDrawer, onCloseDrawer, onDrawerSearch, onResumeCommand }, ref) {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -176,7 +177,17 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    send();
+    if (minimal && sessionId) {
+      const val = inputRef.current?.value ?? text;
+      window.claude.session.sendInput(sessionId, val + '\r');
+      setText('');
+      if (inputRef.current) {
+        inputRef.current.value = '';
+        inputRef.current.style.height = 'auto';
+      }
+    } else {
+      send();
+    }
   };
 
   const handleChip = useCallback(
@@ -231,7 +242,7 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      <QuickChips onChipTap={handleChip} />
+      {!minimal && <QuickChips onChipTap={handleChip} />}
 
       {attachments.length > 0 && (
         <div className="flex gap-2 px-3 py-2 overflow-x-auto">
@@ -271,14 +282,16 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
           >
             <AttachIcon className="w-5 h-5" />
           </BrailleBurst>
-          <BrailleBurst
-            onTrigger={() => onOpenDrawer?.(false)}
-            disabled={disabled}
-            className="shrink-0 text-fg-dim hover:text-fg disabled:opacity-30 transition-colors"
-            title="Browse skills"
-          >
-            <CompassIcon className="w-5 h-5" />
-          </BrailleBurst>
+          {!minimal && (
+            <BrailleBurst
+              onTrigger={() => onOpenDrawer?.(false)}
+              disabled={disabled}
+              className="shrink-0 text-fg-dim hover:text-fg disabled:opacity-30 transition-colors"
+              title="Browse skills"
+            >
+              <CompassIcon className="w-5 h-5" />
+            </BrailleBurst>
+          )}
           <textarea
             ref={inputRef}
             value={text}
@@ -302,7 +315,18 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
               // Enter sends, Shift+Enter inserts newline
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                send();
+                if (minimal && sessionId) {
+                  // Terminal mode: send text + Enter directly to PTY
+                  const val = inputRef.current?.value ?? text;
+                  window.claude.session.sendInput(sessionId, val + '\r');
+                  setText('');
+                  if (inputRef.current) {
+                    inputRef.current.value = '';
+                    inputRef.current.style.height = 'auto';
+                  }
+                } else {
+                  send();
+                }
               }
             }}
             onPaste={handlePaste}
@@ -312,7 +336,7 @@ const InputBar = forwardRef<InputBarHandle, Props>(function InputBar({ sessionId
           />
           <button
             type="submit"
-            disabled={disabled || (!text.trim() && attachments.length === 0)}
+            disabled={disabled || (!minimal && !text.trim() && attachments.length === 0)}
             className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-accent hover:brightness-110 disabled:opacity-30 transition-colors"
           >
             <svg className="w-4 h-4 text-on-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -19,19 +19,6 @@ export default function TerminalToolbar({ sessionId }: TerminalToolbarProps) {
     setCtrlActive(prev => !prev);
   }, []);
 
-  const handleKey = useCallback((key: string) => {
-    if (ctrlActive) {
-      // Convert to control code: 'c' -> \x03, 'd' -> \x04, etc.
-      const code = key.toLowerCase().charCodeAt(0) - 96;
-      if (code >= 1 && code <= 26) {
-        send(String.fromCharCode(code));
-      }
-      setCtrlActive(false);
-    } else {
-      send(key);
-    }
-  }, [ctrlActive, send]);
-
   return (
     <div className="flex items-center gap-1 px-2 py-1 bg-panel border-t border-edge-dim shrink-0 overflow-x-auto">
       <ToolbarButton
@@ -42,16 +29,38 @@ export default function TerminalToolbar({ sessionId }: TerminalToolbarProps) {
       <ToolbarButton label="Esc" onClick={() => send('\x1b')} />
       <ToolbarButton label="Tab" onClick={() => send('\t')} />
       <div className="w-px h-5 bg-edge-dim mx-1" />
-      <ToolbarButton label="↑" onClick={() => send('\x1b[A')} />
-      <ToolbarButton label="↓" onClick={() => send('\x1b[B')} />
       <ToolbarButton label="←" onClick={() => send('\x1b[D')} />
       <ToolbarButton label="→" onClick={() => send('\x1b[C')} />
-      <div className="w-px h-5 bg-edge-dim mx-1" />
-      <ToolbarButton label="c" small onClick={() => handleKey('c')} title={ctrlActive ? 'Ctrl+C' : 'c'} />
-      <ToolbarButton label="d" small onClick={() => handleKey('d')} title={ctrlActive ? 'Ctrl+D' : 'd'} />
-      <ToolbarButton label="z" small onClick={() => handleKey('z')} title={ctrlActive ? 'Ctrl+Z' : 'z'} />
-      <ToolbarButton label="l" small onClick={() => handleKey('l')} title={ctrlActive ? 'Ctrl+L (clear)' : 'l'} />
     </div>
+  );
+}
+
+/**
+ * Floating up/down arrow buttons — rendered separately above the bottom bar
+ * so they overlay the terminal view without taking up space in the flex layout.
+ */
+export function TerminalScrollButtons({ sessionId }: TerminalToolbarProps) {
+  const send = useCallback((input: string) => {
+    window.claude.session.sendInput(sessionId, input);
+  }, [sessionId]);
+
+  return (
+    <div className="absolute bottom-2 right-2 flex flex-col gap-1.5 z-10 pointer-events-auto">
+      <ScrollButton label="↑" onClick={() => send('\x1b[A')} />
+      <ScrollButton label="↓" onClick={() => send('\x1b[B')} />
+    </div>
+  );
+}
+
+function ScrollButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-10 h-10 rounded-md text-base font-medium bg-inset text-fg-muted hover:text-fg hover:bg-well transition-colors select-none flex items-center justify-center border border-edge-dim"
+    >
+      {label}
+    </button>
   );
 }
 
@@ -59,13 +68,11 @@ function ToolbarButton({
   label,
   onClick,
   active = false,
-  small = false,
   title,
 }: {
   label: string;
   onClick: () => void;
   active?: boolean;
-  small?: boolean;
   title?: string;
 }) {
   return (
@@ -74,7 +81,7 @@ function ToolbarButton({
       onClick={onClick}
       title={title || label}
       className={`
-        ${small ? 'min-w-[28px] px-1.5' : 'min-w-[36px] px-2'} py-1 rounded text-xs font-medium
+        min-w-[36px] px-2 py-1 rounded text-xs font-medium
         transition-colors select-none
         ${active
           ? 'bg-accent text-on-accent'

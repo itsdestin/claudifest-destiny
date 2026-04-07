@@ -457,13 +457,22 @@ export default function SessionStrip({
         <div
           ref={dropdownRef}
           className="fixed w-72 bg-panel border border-edge rounded-lg shadow-lg overflow-hidden z-[9000]"
-          style={{
-            top: triggerBtnRef.current ? triggerBtnRef.current.getBoundingClientRect().bottom + 4 : 0,
-            left: triggerBtnRef.current
-              ? triggerBtnRef.current.getBoundingClientRect().left + triggerBtnRef.current.getBoundingClientRect().width / 2
-              : '50%',
-            animation: 'dropdown-in 120ms cubic-bezier(0.16, 1, 0.3, 1) both',
-          }}
+          style={(() => {
+            const triggerRect = triggerBtnRef.current?.getBoundingClientRect();
+            const pillRect = pillBarRef.current?.getBoundingClientRect();
+            const pillCenter = pillRect
+              ? pillRect.left + pillRect.width / 2
+              : undefined;
+            const halfDropdown = 144; // w-72 = 288px / 2
+            return {
+              top: triggerRect ? triggerRect.bottom + 4 : 0,
+              left: pillCenter != null
+                ? Math.min(Math.max(halfDropdown, pillCenter), window.innerWidth - halfDropdown)
+                : '50%',
+              transform: 'translateX(-50%)',
+              animation: 'dropdown-in 120ms cubic-bezier(0.16, 1, 0.3, 1) both',
+            };
+          })()}
         >
           {sessions.length > 0 && (
             <div className="py-1">

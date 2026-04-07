@@ -786,6 +786,9 @@ function AppInner() {
   // Parse announcement
   const announcementText = statusData.announcement?.message || null;
 
+  // Terminal mode on touch/remote platforms — show minimal input with special keys
+  const isTerminalTouch = currentViewMode === 'terminal' && getPlatform() !== 'electron';
+
   // Report header/bottom bar heights to native Android side for terminal overlay sizing.
   // Must be before early returns to maintain consistent hook ordering across renders.
   useEffect(() => {
@@ -913,16 +916,16 @@ function AppInner() {
                   onOpenMarketplace={() => setMarketplaceOpen(true)}
                 />
               )}
-              {getPlatform() === 'android' && currentViewMode === 'terminal' && sessionId && (
+              {isTerminalTouch && sessionId && (
                 <TerminalScrollButtons sessionId={sessionId} />
               )}
             </div>
-            {(currentViewMode === 'chat' || getPlatform() === 'android') && (
+            {(currentViewMode === 'chat' || getPlatform() !== 'electron') && (
               <div ref={bottomBarRef} className="bg-canvas">
-                {getPlatform() === 'android' && currentViewMode === 'terminal' && sessionId && (
+                {isTerminalTouch && sessionId && (
                   <TerminalToolbar sessionId={sessionId} />
                 )}
-                <ChatInputBar ref={inputBarRef} sessionId={sessionId} onOpenDrawer={handleOpenDrawer} onCloseDrawer={handleCloseDrawer} onDrawerSearch={setDrawerFilter} disabled={trustGateActive || !sessionInitialized} minimal={getPlatform() === 'android' && currentViewMode === 'terminal'} onResumeCommand={() => setResumeRequested(true)} />
+                <ChatInputBar ref={inputBarRef} sessionId={sessionId} onOpenDrawer={handleOpenDrawer} onCloseDrawer={handleCloseDrawer} onDrawerSearch={setDrawerFilter} disabled={trustGateActive || !sessionInitialized} minimal={isTerminalTouch} onResumeCommand={() => setResumeRequested(true)} />
                 <StatusBar
                   statusData={{
                     usage: statusData.usage,
