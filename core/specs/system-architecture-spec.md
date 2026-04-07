@@ -1,7 +1,7 @@
 # System Design — Spec
 
-**Version:** 1.6
-**Last updated:** 2026-04-05
+**Version:** 1.7
+**Last updated:** 2026-04-07
 **Feature location:** `~/.claude/` (entire system)
 
 ## Purpose
@@ -33,10 +33,10 @@ Canonical architecture reference for the user's Claude Code automation system. F
 | Component | Location | Authoritative Spec |
 |-----------|----------|-------------------|
 | 10 skills (3 layers) | `~/.claude/skills/{name}/` (symlinked from toolkit) | Each skill's `specs/{name}-spec.md` |
-| 15 hooks | `~/.claude/hooks/` (symlinked from toolkit) | `backup-system-spec.md` (sync, session-start), `write-guard-spec.md`, `worktree-guard-spec.md`, `statusline-spec.md` (title-update), this spec (checklist-reminder, done-sound) |
+| 16 hooks | `~/.claude/hooks/` (symlinked from toolkit) | `backup-system-spec.md` (sync, session-start, session-end-sync), `write-guard-spec.md`, `worktree-guard-spec.md`, `statusline-spec.md` (title-update), this spec (checklist-reminder, done-sound) |
 | 7 MCP servers | Configured in `~/.claude.json`, definitions in `core/mcp-manifest.json` | `destinclaude-spec.md` (registration); individual servers documented in CLAUDE.md |
 | Statusline | `~/.claude/statusline.sh` + hooks | `statusline-spec.md` |
-| Encyclopedia system | `~/.claude/encyclopedia/` (cache), `gdrive:Claude/The Journal/System/` (source of truth) | `encyclopedia-system-spec.md` |
+| Encyclopedia system | `~/.claude/encyclopedia/` (cache), `gdrive:{DRIVE_ROOT}/The Journal/System/` (source of truth) | `encyclopedia-system-spec.md` |
 | Backup/sync | `core/hooks/sync.sh` + `session-start.sh` | `backup-system-spec.md` |
 | Write guard | `core/hooks/write-guard.sh` | `write-guard-spec.md` |
 | Memory system | `~/.claude/projects/{project-key}/memory/` | `memory-system-spec.md` |
@@ -59,13 +59,13 @@ Local (~/.claude/)
   │     └── iCloud: same scope
   │         Note: No local git repo required; cloud backends provide version history
   │
-  ├── Drive Archive (gdrive:Claude/Backup/)
+  ├── Drive Archive (gdrive:{DRIVE_ROOT}/Backup/)
   │     ├── Triggered: on each sync cycle (best-effort)
   │     ├── Scope: specs/, skills/, CLAUDE.md, conversation transcripts
   │     ├── Format: timestamped folders (MM-DD-YYYY @ TIMEpm)/
   │     └── Policy: write-only, append-only, no pruning, best-effort
   │
-  └── Encyclopedia (gdrive:Claude/The Journal/System/)
+  └── Encyclopedia (gdrive:{DRIVE_ROOT}/The Journal/System/)
         ├── Source of truth: 8 modular files on Drive
         ├── Local cache: ~/.claude/encyclopedia/ (synced at session start)
         ├── Read: skills read from local cache
@@ -87,6 +87,7 @@ Local (~/.claude/)
 | `todo-capture.sh` | UserPromptSubmit | `.*` | Capture task mentions from user prompts to Todoist | None |
 | `checklist-reminder.sh` | Stop | `.*` | Remind Claude to verify system change checklist if system files were modified | Reads `.write-registry.json` |
 | `done-sound.sh` | Stop | `.*` | Play a chime sound when Claude finishes | None |
+| `session-end-sync.sh` | SessionEnd | `.*` | Sync current session JSONL + conversation index to configured backends (no debounce) | None |
 | `check-inbox.sh` | (utility) | — | Check inbox providers for items, called by session-start.sh | None |
 | ~~`sync-encyclopedia.sh`~~ | — | — | Removed — encyclopedia sync consolidated into `sync.sh` | — |
 | `announcement-fetch.js` | (utility) | — | Fetch broadcast announcements from GitHub repo | Writes `.announcement-cache.json` |
@@ -116,6 +117,7 @@ Local (~/.claude/)
 **End:**
 - `checklist-reminder.sh` (Stop) checks write registry for system file modifications
 - If system files were touched: injects checklist reminder into Claude's context
+- `session-end-sync.sh` (SessionEnd) syncs current session JSONL + conversation index to configured backends (bypasses debounce)
 
 ### 5. Enforcement Mechanisms
 
@@ -183,3 +185,4 @@ See [GitHub Issues](https://github.com/itsdestin/destinclaude/issues) for known 
 | 2026-03-26 | 1.4 | Session lifecycle updated: network operations now run as debounced background process instead of blocking session start. Sync failures surfaced via .sync-warnings | Update | owner | |
 | 2026-03-26 | 1.5 | Added mandate: Claude must never direct users to run commands — all commands run via Bash tool; only GUI interactions (e.g., browser sign-in) are acceptable user actions | Mandate | owner | |
 | 2026-04-05 | 1.6 | Sync consolidation: replaced git-sync.sh + personal-sync.sh with unified sync.sh. Updated component table, dependency relationships, data flow (removed Git section, added multi-backend sync), hook architecture table (2 rows → 1), execution order note, and session lifecycle. | Update | owner | |
+| 2026-04-07 | 1.7 | Added session-end-sync.sh to hook table and session lifecycle End section. Updated hook count 15→16. Parameterized literal gdrive:Claude/ paths to gdrive:{DRIVE_ROOT}/. | Update | owner | |
