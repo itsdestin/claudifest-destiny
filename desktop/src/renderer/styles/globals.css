@@ -414,7 +414,7 @@ html, body, #root {
 /* Input styles */
 [data-input-style="floating"] .input-bar-container {
   margin: 8px 12px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-2xl);
   box-shadow: 0 2px 16px rgba(0,0,0,0.2);
 }
 
