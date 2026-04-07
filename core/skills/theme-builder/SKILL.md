@@ -832,7 +832,7 @@ When the vibe is ambiguous, include at least one dark and one light concept amon
 
 For a complete, production-quality theme manifest with all features, read:
 ```
-desktop/src/renderer/themes/community/golden-sunbreak/manifest.json
+destincode/desktop/src/renderer/themes/community/golden-sunbreak/manifest.json
 ```
 This demonstrates correct token ratios, glassmorphism values, effect calibration, asset paths, layout presets, and custom CSS. Use it as a quality reference — not a template to copy from.
 
@@ -855,7 +855,7 @@ This demonstrates correct token ratios, glassmorphism values, effect calibration
 ## Rules
 
 - NEVER modify files in `src/renderer/themes/builtin/` — those are built-in themes
-- NEVER write to any path inside the app bundle (`desktop/src/`)
+- NEVER write to any path inside the app bundle (`destincode/desktop/src/`)
 - Always validate that `slug` is kebab-case with no spaces
 - If the user gives a theme name with spaces, auto-convert: "Tokyo Rain" -> "tokyo-rain"
 - All asset paths in manifest.json MUST be relative to the theme folder (e.g. `assets/wallpaper.png`)
