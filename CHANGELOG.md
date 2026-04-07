@@ -2,6 +2,26 @@
 
 All notable changes to DestinClaude will be documented in this file.
 
+## [2.3.0] - 2026-04-07
+
+### Changed
+- **Repo restructure** — Desktop app moved to `itsdestin/destincode`. The destinclaude repo is now toolkit-only (skills, hooks, commands, specs).
+- **README** — Repositioned as the toolkit supplementing the DestinCode app, not the main product.
+- **Landing page** — Redesigned `docs/index.html` for DestinCode as a product page.
+- **CI** — Deleted dead `release.yml` stub that was failing on every push. Only `auto-tag.yml` remains.
+- **install-app.sh** — Updated to use unified `v*` tags instead of `desktop-v*`.
+
+### Fixed
+- **Theme builder** — Corrected wallpaper/pattern overlay approach, differentiated input styles under glassmorphism, disabled WebGL renderer when glassmorphism is active.
+- **Theme preview** — CSS-based card preview fallback, always-visible Preview button, static asset serving rules.
+- **Orphaned hook** — Removed stale sync-encyclopedia hook reference from hooks-manifest.
+- **Path references** — Updated remaining `desktop/` path references in theme-builder and remote-access specs.
+- **Execute bits** — Set +x on install-app.sh and migrations/2.2.0.sh.
+
+### Added
+- **Theme marketplace** — Browse, install, preview, and publish community themes from the desktop app.
+- **Theme preview generator** — Playwright-based preview generation with pattern overlays and custom_css support.
+
 ## [2.2.1] - 2026-03-30
 
 ### Fixed
