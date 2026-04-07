@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Last updated:** 2026-03-26
-**Feature location:** `desktop/src/main/remote-server.ts`, `desktop/src/main/remote-config.ts`, `core/skills/remote-setup/SKILL.md`
+**Feature location:** `destincode/desktop/src/main/remote-server.ts`, `destincode/desktop/src/main/remote-config.ts`, `core/skills/remote-setup/SKILL.md`
 
 ## Purpose
 
@@ -29,9 +29,9 @@ Remote access allows users to control DestinCode from any device on their networ
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| Remote server | `desktop/src/main/remote-server.ts` | HTTP + WebSocket server, auth, event broadcasting |
-| Remote config | `desktop/src/main/remote-config.ts` | Reads/writes `~/.claude/destincode-remote.json` |
-| Remote shim | `desktop/src/renderer/remote-shim.ts` | Replaces Electron IPC with WebSocket transport for browser clients |
+| Remote server | `destincode/desktop/src/main/remote-server.ts` | HTTP + WebSocket server, auth, event broadcasting |
+| Remote config | `destincode/desktop/src/main/remote-config.ts` | Reads/writes `~/.claude/destincode-remote.json` |
+| Remote shim | `destincode/desktop/src/renderer/remote-shim.ts` | Replaces Electron IPC with WebSocket transport for browser clients |
 | Remote setup skill | `core/skills/remote-setup/SKILL.md` | Guided Tailscale + password configuration |
 | Config file | `~/.claude/destincode-remote.json` | Password hash, port, enabled flag, Tailscale trust |
 

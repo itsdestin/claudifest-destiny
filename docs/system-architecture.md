@@ -186,14 +186,10 @@ Personal data is protected through multiple layers:
 
 ## DestinCode Desktop App
 
-An Electron + React GUI that wraps Claude Code CLI. Located at `desktop/` in the toolkit repo.
+An Electron + React GUI that wraps Claude Code CLI. Now lives in the [destincode repo](https://github.com/itsdestin/destincode) at `desktop/`.
 
-- **Main process** (`desktop/src/main/`) — SessionManager (PTY pool, multi-session), TranscriptWatcher (JSONL file watcher, primary chat state source), HookRelay (permissions only — named pipe server for permission request/response flow), IPC handlers, StatusPoller (centralized async status file polling), structured logger (`logger.ts`), shared transcript reader (`transcript-utils.ts`)
-- **Renderer** (`desktop/src/renderer/`) — Terminal view (xterm.js), chat view (message bubbles, tool cards), command drawer (skill discovery), PartyKit-powered Connect 4 multiplayer game
-- **Hook scripts** (`desktop/hook-scripts/`) — Relay scripts that forward Claude Code hook events to the desktop app via named pipe. Includes `relay-blocking.js` for bidirectional permission hooks (holds socket open for approve/deny response, 300s timeout, fail-closed)
-- **Permission hooks** — Blocking permission relay: when Claude Code requests tool approval, the desktop app shows Yes/Always Allow/No buttons on a ToolCard. The relay holds the hook socket open until the user responds or the 300s timeout expires (auto-deny). Design doc at `docs/superpowers/specs/2026-03-23-blocking-permission-hooks-design.md`
-- **Build** — Cross-platform via electron-builder (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`); CI build workflow at `.github/workflows/build.yml`
-- **Install** — Optional, offered during setup-wizard Phase 5b or bootstrap; runs `desktop/scripts/install-app.sh`
+- **Build** — Cross-platform via electron-builder (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`); CI workflow at `destincode/.github/workflows/build-desktop.yml`, triggered by `desktop-v*` tags
+- **Install** — Optional, offered during setup-wizard Phase 5b or bootstrap; runs `scripts/install-app.sh` (downloads from destincode releases)
 
 ## State Files
 
@@ -214,9 +210,10 @@ Three GitHub Actions workflows handle versioning, releases, and builds:
 |----------|---------|---------|
 | `auto-tag.yml` | Push to `master` that changes `plugin.json` | Detects version bump, creates and pushes a `vX.Y.Z` git tag |
 | `release.yml` | Push of a `v*` tag | Extracts the matching section from `CHANGELOG.md` and creates a GitHub Release |
-| `build.yml` | Push of a `v*` tag | Builds cross-platform DestinCode desktop app installers (Windows `.exe`, macOS `.dmg`, Linux `.AppImage`) |
 
-**Release flow:** The `/release` skill orchestrates the full release process — 7 parallel review agents validate changes, then it bumps `VERSION`, `plugin.json`, and `desktop/package.json`, generates the CHANGELOG entry, captures the Claude Code version, triggers a build verification, commits, tags, and pushes. From there, `auto-tag.yml` creates the tag → tag push triggers `release.yml` → GitHub Release published with changelog notes → `build.yml` builds and attaches desktop installers.
+Desktop app builds are now in the destincode repo (`build-desktop.yml`, triggered by `desktop-v*` tags).
+
+**Release flow:** The `/release` skill orchestrates the toolkit release — 7 parallel review agents validate changes, then it bumps `VERSION` and `plugin.json`, generates the CHANGELOG entry, captures the Claude Code version, commits, tags, and pushes. From there, `auto-tag.yml` creates the tag → tag push triggers `release.yml` → GitHub Release published with changelog notes. Desktop releases are managed separately in the destincode repo.
 
 **Versioning policy** (documented in CHANGELOG.md):
 - **Major (X.0.0)** — Breaking changes requiring `/setup-wizard` re-run or manual migration
