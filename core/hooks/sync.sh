@@ -111,6 +111,9 @@ fi
 
 [[ -z "$BACKEND" || "$BACKEND" == "none" ]] && exit 0
 
+# Skip sync when DestinCode app is handling it (app writes this marker on start)
+[[ -f "$CLAUDE_DIR/toolkit-state/.app-sync-active" ]] && exit 0
+
 # --- Mutex: prevent concurrent sync instances ---
 # Portable PID liveness check (kill -0 doesn't work for Windows PIDs in Git Bash)
 _sync_pid_alive() {

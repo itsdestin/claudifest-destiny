@@ -16,6 +16,9 @@ SESSION_ID=$(node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on
 BACKEND=$(config_get "PERSONAL_SYNC_BACKEND" "none")
 [[ "$BACKEND" == "none" ]] && exit 0
 
+# Skip when DestinCode app handles sync (app writes this marker on start)
+[[ -f "$CLAUDE_DIR/toolkit-state/.app-sync-active" ]] && exit 0
+
 DRIVE_ROOT=$(config_get "DRIVE_ROOT" "Claude")
 SYNC_REPO=$(config_get "PERSONAL_SYNC_REPO" "")
 

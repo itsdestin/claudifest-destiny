@@ -716,7 +716,10 @@ VEREOF
 # Phase 2 dispatch: background network sync with debounce
 # Design ref: session-start-optimization-design D1, D2
 # ===========================================================================
-if debounce_check "$SYNC_DEBOUNCE_MARKER" "$SYNC_DEBOUNCE_MINUTES"; then
+# Skip sync when DestinCode app handles it (config rebuild + MCP extraction above still run)
+if [[ -f "$CLAUDE_DIR/toolkit-state/.app-sync-active" ]]; then
+    log_backup "INFO" "App sync active — skipping hook sync" "session-start.skip"
+elif debounce_check "$SYNC_DEBOUNCE_MARKER" "$SYNC_DEBOUNCE_MINUTES"; then
     _session_sync_background >> "$BACKUP_LOG" 2>&1 &
     disown
 else
