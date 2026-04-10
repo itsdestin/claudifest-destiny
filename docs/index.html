@@ -38,25 +38,28 @@
     --text-dim: #8B949E;
     --text-muted: #6E7681;
     --text-faint: #484F58;
-    --accent: #B1BAC4;
-    --accent-glow: rgba(177, 186, 196, 0.10);
-    --accent-subtle: rgba(177, 186, 196, 0.05);
-    --accent-warm: #cdd5de;
+    /* Soft steel-blue accent — gives the otherwise-monotone midnight theme
+       a real hue for links, section labels, CTAs, and focus states. */
+    --accent: #88B4D8;
+    --accent-glow: rgba(136, 180, 216, 0.12);
+    --accent-glow-strong: rgba(136, 180, 216, 0.32);
+    --accent-subtle: rgba(136, 180, 216, 0.06);
+    --accent-warm: #a8c8e5;
     --cyan: #8b949e;
     --cyan-glow: rgba(139, 148, 158, 0.08);
     --yellow: #8b949e;
     --border: #30363D;
-    --border-accent: rgba(177, 186, 196, 0.25);
+    --border-accent: rgba(136, 180, 216, 0.28);
     --border-dim: rgba(48, 54, 61, 0.5);
     --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
     --radius: 12px;
     --radius-sm: 8px;
     --nav-height: 56px;
-    --selection-bg: rgba(177, 186, 196, 0.2);
+    --selection-bg: rgba(136, 180, 216, 0.22);
     --selection-fg: #ffffff;
     --heading-shadow: none;
-    --title-highlight: #8b949e;
+    --title-highlight: #88B4D8;
   }
 
   /* ===== CRÈME — warm parchment, neutral tones, linen texture ===== */
@@ -72,6 +75,7 @@
     --text-faint: #BEB3A4;
     --accent: #3D3229;
     --accent-glow: rgba(61, 50, 41, 0.08);
+    --accent-glow-strong: rgba(61, 50, 41, 0.22);
     --accent-subtle: rgba(61, 50, 41, 0.04);
     --accent-warm: #564537;
     --cyan: #564537;
@@ -99,6 +103,7 @@
     --text-faint: #443870;
     --accent: #e8234a;
     --accent-glow: rgba(232, 35, 74, 0.15);
+    --accent-glow-strong: rgba(232, 35, 74, 0.40);
     --accent-subtle: rgba(232, 35, 74, 0.08);
     --accent-warm: #ff3860;
     --cyan: #00b8ff;
@@ -415,11 +420,13 @@
   .hero-btn-primary {
     background: var(--accent);
     color: #fff;
-    box-shadow: 0 0 20px rgba(232, 35, 74, 0.3), 0 0 40px rgba(232, 35, 74, 0.1);
+    /* Theme-aware glow — uses each theme's accent-glow-strong instead of
+       hardcoded halftone red, so the button reads correctly in all themes. */
+    box-shadow: 0 0 20px var(--accent-glow-strong), 0 0 40px var(--accent-glow);
   }
   .hero-btn-primary:hover {
     color: #fff;
-    box-shadow: 0 0 28px rgba(232, 35, 74, 0.5), 0 0 56px rgba(232, 35, 74, 0.15);
+    box-shadow: 0 0 28px var(--accent-glow-strong), 0 0 56px var(--accent-glow);
     transform: translateY(-1px);
   }
 
@@ -521,7 +528,7 @@
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(232, 35, 74, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-glow);
     max-width: 680px;
     margin: 0 auto;
     position: relative;
@@ -869,7 +876,7 @@
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(232, 35, 74, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-glow);
     position: relative;
   }
 
@@ -1216,8 +1223,8 @@
   .prereq-badge.paid { background: rgba(255, 234, 0, 0.08); color: var(--yellow); border: 1px solid rgba(255, 234, 0, 0.2); }
   .prereq-badge.free { background: rgba(76, 175, 80, 0.1); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.2); }
 
-  .prereq-header h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
-  .prereq-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+  .prereq-header h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .prereq-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55; }
   .prereq-link {
     display: inline-block;
     margin-top: 12px;
@@ -1297,16 +1304,18 @@
   .download-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    max-width: 520px;
-    margin: 0 auto;
+    gap: 16px;
+    /* Widened from 520px to match the visual weight of the features grid above.
+       The download CTA is the page's most important conversion moment — it
+       shouldn't read as a small afterthought. */
   }
 
   .download-card {
+    position: relative; /* anchors the .primary "Recommended" badge */
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
+    gap: 16px;
+    padding: 20px 24px;
     background: color-mix(in srgb, var(--bg-card) 70%, transparent);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
@@ -1314,25 +1323,73 @@
     border-radius: var(--radius);
     text-decoration: none;
     color: var(--text-primary);
-    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s, background 0.2s;
   }
   .download-card:hover {
     border-color: var(--accent);
     color: var(--text-primary);
     transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(232, 35, 74, 0.15);
+    box-shadow: 0 0 20px var(--accent-glow);
   }
 
-  .download-card svg { width: 24px; height: 24px; fill: var(--text-dim); flex-shrink: 0; }
+  /* Icon tile — gives each download card a strong visual anchor and matches
+     the .feature-icon pattern used in the features section above. */
+  .download-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: var(--accent-subtle);
+    border: 1px solid var(--border-accent);
+    border-radius: 10px;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .download-card-icon svg { width: 22px; height: 22px; fill: var(--text-primary); }
+  .download-card:hover .download-card-icon {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+  }
+
   .download-card-text { display: flex; flex-direction: column; }
-  .download-card-label { font-size: 0.7rem; color: var(--text-muted); }
-  .download-card-platform { font-size: 0.9rem; font-weight: 600; }
+  .download-card-label { font-size: 0.72rem; color: var(--text-muted); }
+  .download-card-platform { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; }
+
+  /* Primary download card — set by JS via OS detection. The visitor's own
+     platform gets accent border, filled icon tile, and a "Recommended" badge. */
+  .download-card.primary {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent-subtle) 50%, var(--bg-card) 70%);
+    box-shadow: 0 0 24px var(--accent-glow);
+  }
+  .download-card.primary .download-card-icon {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .download-card.primary .download-card-icon svg { fill: var(--bg-deep); }
+  .download-card.primary::after {
+    content: 'Recommended';
+    position: absolute;
+    top: -9px;
+    right: 16px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--bg-deep);
+    border: 1px solid var(--accent);
+    padding: 2px 10px;
+    border-radius: 100px;
+  }
 
   .download-note {
     text-align: center;
     font-size: 0.78rem;
     color: var(--text-dim);
-    margin-top: 20px;
+    margin-top: 24px;
   }
 
   /* --- FEATURES --- */
@@ -1367,15 +1424,16 @@
   }
 
   .feature-card h3 {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
   }
 
   .feature-card p {
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
-    line-height: 1.5;
+    line-height: 1.55;
   }
 
   .features-note {
@@ -1495,7 +1553,7 @@
     font-size: 0.85rem;
     border-radius: 100px;
     text-decoration: none;
-    box-shadow: 0 0 24px rgba(232, 35, 74, 0.4);
+    box-shadow: 0 0 24px var(--accent-glow-strong);
     z-index: 90;
     opacity: 0;
     transition: transform 0.4s, opacity 0.4s;
@@ -1957,30 +2015,31 @@
       <p class="section-label reveal">Get started</p>
       <h2 class="section-title reveal">Download DestinCode</h2>
       <div class="download-grid reveal">
-        <!-- href is set dynamically by latest-release fetch below; releases page is the safe fallback -->
+        <!-- href is set dynamically by latest-release fetch below; releases page is the safe fallback.
+             The .download-card-icon wrapper anchors each card visually and matches .feature-icon. -->
         <a id="dl-windows" href="https://github.com/itsdestin/destincode/releases/latest" class="download-card">
-          <svg viewBox="0 0 24 24"><path d="M3,12V6.75L9,5.43V11.91L3,12M20,3V11.75L10,11.9V5.21L20,3M3,13L9,13.09V19.9L3,18.75V13M20,13.25V22L10,20.09V13.1L20,13.25Z"/></svg>
+          <span class="download-card-icon"><svg viewBox="0 0 24 24"><path d="M3,12V6.75L9,5.43V11.91L3,12M20,3V11.75L10,11.9V5.21L20,3M3,13L9,13.09V19.9L3,18.75V13M20,13.25V22L10,20.09V13.1L20,13.25Z"/></svg></span>
           <div class="download-card-text">
             <span class="download-card-label">Download for</span>
             <span class="download-card-platform">Windows</span>
           </div>
         </a>
         <a id="dl-macos" href="https://github.com/itsdestin/destincode/releases/latest" class="download-card">
-          <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <span class="download-card-icon"><svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg></span>
           <div class="download-card-text">
             <span class="download-card-label">Download for</span>
             <span class="download-card-platform">macOS</span>
           </div>
         </a>
         <a id="dl-linux" href="https://github.com/itsdestin/destincode/releases/latest" class="download-card">
-          <svg viewBox="0 0 24 24"><path d="M19,16C19,17.72 18.37,19.3 17.34,20.5C17.75,20.89 18,21.41 18,22H6C6,21.41 6.25,20.89 6.66,20.5C5.63,19.3 5,17.72 5,16H3C3,14.75 3.57,13.64 4.46,12.91L4.47,12.89C6,11.81 7,10 7,8V7A5,5 0 0,1 12,2A5,5 0 0,1 17,7V8C17,10 18,11.81 19.53,12.89L19.54,12.91C20.43,13.64 21,14.75 21,16H19M16,16A4,4 0 0,0 12,12A4,4 0 0,0 8,16A4,4 0 0,0 12,20A4,4 0 0,0 16,16M10,9L12,10.5L14,9L12,7.5L10,9M10,5A1,1 0 0,0 9,6A1,1 0 0,0 10,7A1,1 0 0,0 11,6A1,1 0 0,0 10,5M14,5A1,1 0 0,0 13,6A1,1 0 0,0 14,7A1,1 0 0,0 15,6A1,1 0 0,0 14,5Z"/></svg>
+          <span class="download-card-icon"><svg viewBox="0 0 24 24"><path d="M19,16C19,17.72 18.37,19.3 17.34,20.5C17.75,20.89 18,21.41 18,22H6C6,21.41 6.25,20.89 6.66,20.5C5.63,19.3 5,17.72 5,16H3C3,14.75 3.57,13.64 4.46,12.91L4.47,12.89C6,11.81 7,10 7,8V7A5,5 0 0,1 12,2A5,5 0 0,1 17,7V8C17,10 18,11.81 19.53,12.89L19.54,12.91C20.43,13.64 21,14.75 21,16H19M16,16A4,4 0 0,0 12,12A4,4 0 0,0 8,16A4,4 0 0,0 12,20A4,4 0 0,0 16,16M10,9L12,10.5L14,9L12,7.5L10,9M10,5A1,1 0 0,0 9,6A1,1 0 0,0 10,7A1,1 0 0,0 11,6A1,1 0 0,0 10,5M14,5A1,1 0 0,0 13,6A1,1 0 0,0 14,7A1,1 0 0,0 15,6A1,1 0 0,0 14,5Z"/></svg></span>
           <div class="download-card-text">
             <span class="download-card-label">Download for</span>
             <span class="download-card-platform">Linux</span>
           </div>
         </a>
         <a id="dl-android" href="https://github.com/itsdestin/destincode/releases/latest" class="download-card">
-          <svg viewBox="0 0 24 24"><path d="M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"/></svg>
+          <span class="download-card-icon"><svg viewBox="0 0 24 24"><path d="M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"/></svg></span>
           <div class="download-card-text">
             <span class="download-card-label">Download for</span>
             <span class="download-card-platform">Android</span>
@@ -2362,6 +2421,25 @@
         });
       });
     }
+
+    // --- OS detection: highlight the visitor's own platform ---
+    // The matched download card gets a .primary class which the CSS turns into
+    // accent border, filled icon tile, and a "Recommended" badge. Pure progressive
+    // enhancement — if detection fails, all 4 cards just stay equal-weight.
+    (function() {
+      var ua = (navigator.userAgent || '').toLowerCase();
+      var platform = ((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '').toLowerCase();
+      var os = null;
+      if (/android/.test(ua)) os = 'android';
+      else if (/iphone|ipad|ipod/.test(ua)) os = 'macos'; // iOS visitors → suggest macOS build
+      else if (/mac/.test(platform) || /mac os/.test(ua)) os = 'macos';
+      else if (/win/.test(platform) || /windows/.test(ua)) os = 'windows';
+      else if (/linux/.test(platform) || /linux/.test(ua)) os = 'linux';
+      if (os) {
+        var primary = document.getElementById('dl-' + os);
+        if (primary) primary.classList.add('primary');
+      }
+    })();
 
     // --- Latest release download links ---
     // Rewrites each download card's href to the matching asset from the newest
