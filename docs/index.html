@@ -1957,28 +1957,29 @@
       <p class="section-label reveal">Get started</p>
       <h2 class="section-title reveal">Download DestinCode</h2>
       <div class="download-grid reveal">
-        <a href="#" class="download-card">
+        <!-- href is set dynamically by latest-release fetch below; releases page is the safe fallback -->
+        <a id="dl-windows" href="https://github.com/itsdestin/destincode/releases/latest" class="download-card">
           <svg viewBox="0 0 24 24"><path d="M3 5.548l7.396-1.01v7.138H3V5.548zm0 12.904l7.396 1.01v-7.138H3v6.128zm8.267 1.122L21 21V12.324H11.267v7.25zm0-14.148v7.25H21V3L11.267 5.426z"/></svg>
           <div class="download-card-text">
             <span class="download-card-label">Download for</span>
             <span class="download-card-platform">Windows</span>
           </div>
         </a>
-        <a href="#" class="download-card">
+        <a id="dl-macos" href="https://github.com/itsdestin/destincode/releases/latest" class="download-card">
           <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
           <div class="download-card-text">
             <span class="download-card-label">Download for</span>
             <span class="download-card-platform">macOS</span>
           </div>
         </a>
-        <a href="#" class="download-card">
+        <a id="dl-linux" href="https://github.com/itsdestin/destincode/releases/latest" class="download-card">
           <svg viewBox="0 0 24 24"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a7.112 7.112 0 0 0 .352 1.413c.225.585.535 1.15.925 1.625.39.473.86.846 1.39 1.084.265.119.543.2.83.24.286.04.58.04.867-.003.287-.043.567-.127.835-.249.268-.121.524-.281.764-.476a5.25 5.25 0 0 0 .982-1.064c.27-.389.457-.727.545-.966a4.87 4.87 0 0 0 .195-.552c.108-.364.168-.735.168-1.097 0-.255-.026-.5-.076-.735-.05-.234-.13-.46-.23-.668A10.57 10.57 0 0 0 12 14.17c.025-.102.069-.21.133-.315l.004-.007c.166-.287.447-.491.782-.58.336-.088.692-.048 1.003.113.156.081.298.185.424.304.126.119.238.253.335.397.192.29.34.608.45.937.055.165.095.318.12.45a4.305 4.305 0 0 1 .077.762c0 .652-.13 1.327-.394 1.999a6.332 6.332 0 0 1-.652 1.25 6.98 6.98 0 0 1-.872 1.043c.351-.048.686-.16.99-.33.304-.17.58-.398.82-.676.24-.277.441-.6.603-.96.162-.36.28-.755.353-1.172a5.88 5.88 0 0 0 .075-1.088c0-.32-.03-.649-.09-.977a6.68 6.68 0 0 0-.273-1.012 5.236 5.236 0 0 0-.485-1.004c.26.103.477.297.622.553.145.255.22.557.22.87 0 .218-.03.439-.087.656a3.312 3.312 0 0 1-.261.65c.196-.175.363-.384.494-.618.13-.234.225-.494.28-.77a3.28 3.28 0 0 0 .062-.717c-.003-.38-.087-.742-.244-1.07a2.604 2.604 0 0 0-.7-.878 2.583 2.583 0 0 0-1.022-.498 3.482 3.482 0 0 0-1.188-.091c-.406.047-.8.175-1.16.374-.36.199-.685.47-.954.8a5.832 5.832 0 0 0-.693 1.116c-.196.42-.34.858-.428 1.3a6.189 6.189 0 0 0-.096 1.143c.003.454.057.89.163 1.298.106.408.265.786.47 1.13.206.345.457.654.748.92.291.267.622.49.984.66a4.687 4.687 0 0 0 2.358.402 4.469 4.469 0 0 0 2.136-.885c.644-.497 1.152-1.15 1.497-1.9.345-.75.522-1.593.522-2.46 0-.576-.069-1.143-.206-1.682a6.005 6.005 0 0 0-.594-1.524 5.307 5.307 0 0 0-.96-1.292 4.944 4.944 0 0 0-1.304-.954 6.152 6.152 0 0 0-1.617-.56 7.67 7.67 0 0 0-1.792-.182z"/></svg>
           <div class="download-card-text">
             <span class="download-card-label">Download for</span>
             <span class="download-card-platform">Linux</span>
           </div>
         </a>
-        <a href="#" class="download-card">
+        <a id="dl-android" href="https://github.com/itsdestin/destincode/releases/latest" class="download-card">
           <svg viewBox="0 0 24 24"><path d="M17.523 15.341c-.5 0-.889.137-1.334.399l-1.258-.756c.324-.537.504-1.17.504-1.843 0-.672-.18-1.303-.502-1.842l1.256-.759c.445.264.836.4 1.334.4 1.457 0 2.477-1.1 2.477-2.485S18.98 6 17.523 6c-1.455 0-2.477 1.07-2.477 2.455 0 .505.137.945.387 1.352L14.17 10.57c-.632-.484-1.418-.765-2.17-.765-.75 0-1.535.281-2.17.765L8.567 9.807c.25-.407.387-.847.387-1.352C8.954 7.07 7.932 6 6.477 6S4 7.07 4 8.455s1.02 2.485 2.477 2.485c.498 0 .889-.136 1.334-.4l1.258.759c-.324.539-.504 1.17-.504 1.842s.18 1.306.504 1.843l-1.258.756c-.445-.262-.836-.399-1.334-.399C5.02 15.341 4 16.41 4 17.796S5.02 20.28 6.477 20.28c1.455 0 2.477-1.07 2.477-2.455 0-.504-.137-.943-.387-1.351L9.83 15.71c.635.484 1.42.766 2.17.766.752 0 1.538-.282 2.17-.766l1.263.764c-.25.408-.387.847-.387 1.351 0 1.385 1.022 2.455 2.477 2.455 1.457 0 2.477-1.1 2.477-2.484s-1.02-2.455-2.477-2.455z"/></svg>
           <div class="download-card-text">
             <span class="download-card-label">Download for</span>
@@ -2361,6 +2362,69 @@
         });
       });
     }
+
+    // --- Latest release download links ---
+    // Rewrites each download card's href to the matching asset from the newest
+    // GitHub release (.exe / .dmg / .AppImage / .apk). The unauthenticated GitHub
+    // API allows 60 requests/hour per IP, so we cache the response in localStorage
+    // for 1 hour — each visitor hits the API at most once per hour, and stale
+    // cache is reused as a fallback if the API ever fails or rate-limits.
+    (function() {
+      var CACHE_KEY = 'destincode-latest-release';
+      var CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+      var API_URL = 'https://api.github.com/repos/itsdestin/destincode/releases/latest';
+      var matchers = {
+        'dl-windows': function(n) { return /\.exe$/i.test(n); },
+        'dl-macos':   function(n) { return /\.dmg$/i.test(n); },
+        'dl-linux':   function(n) { return /\.AppImage$/i.test(n); },
+        'dl-android': function(n) { return /\.apk$/i.test(n); }
+      };
+
+      function applyAssets(assets) {
+        if (!assets || !assets.length) return;
+        Object.keys(matchers).forEach(function(id) {
+          var match = assets.find(function(a) { return matchers[id](a.name); });
+          if (!match) return;
+          var el = document.getElementById(id);
+          if (el) el.href = match.browser_download_url;
+        });
+      }
+
+      function readCache() {
+        try {
+          var raw = localStorage.getItem(CACHE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+      }
+
+      function writeCache(assets) {
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), assets: assets }));
+        } catch (e) { /* localStorage may be disabled / full */ }
+      }
+
+      var cached = readCache();
+      // Fresh cache → apply and skip the network entirely
+      if (cached && cached.assets && (Date.now() - cached.ts) < CACHE_TTL_MS) {
+        applyAssets(cached.assets);
+        return;
+      }
+      // Stale cache → apply immediately so links work even if the refresh fails
+      if (cached && cached.assets) applyAssets(cached.assets);
+
+      fetch(API_URL, { headers: { 'Accept': 'application/vnd.github+json' } })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(release) {
+          if (!release || !release.assets) return;
+          // Slim down before caching — only the fields we actually use
+          var slim = release.assets.map(function(a) {
+            return { name: a.name, browser_download_url: a.browser_download_url };
+          });
+          writeCache(slim);
+          applyAssets(slim);
+        })
+        .catch(function() { /* stale cache (if any) or fallback hrefs still work */ });
+    })();
 
     // --- Floating CTA visibility ---
     var floatingCta = document.getElementById('floating-cta');
