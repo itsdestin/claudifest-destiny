@@ -356,53 +356,99 @@
   }
 
   /* --- HERO --- */
-  .hero { padding: 64px 0 0; text-align: center; }
+  /* Vertical rhythm: nav (56px) + 56px top breathing room → kicker → 16 → H1 →
+     24 → tagline → 32 → CTAs → 48 → highlights row → 64 bottom. Each gap is
+     deliberate so the section reads with a clear musical beat instead of the
+     old choppy "tight box / gap / close / gap" cadence. */
+  .hero { padding: 56px 0 64px; text-align: center; }
 
-  .title-box {
-    display: inline-block;
-    padding: 16px 28px 14px;
-    background: var(--accent-subtle);
-    border: 1px solid var(--border-accent);
-    border-radius: 16px;
-    margin-bottom: 0;
+  /* Small mono kicker — "DESTINCODE" wordmark sitting above the H1. Replaces
+     the old framed title-box, which made the brand name feel quarantined. */
+  .hero-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
   }
 
   .hero h1 {
     font-size: clamp(2.5rem, 6vw, 4rem);
     font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
     color: var(--text-primary);
     text-shadow: var(--heading-shadow);
   }
 
   .title-accent { color: var(--title-highlight); }
 
-  .title-sub {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    letter-spacing: 0.05em;
-    margin-top: 6px;
-  }
-  .title-sub a { color: var(--accent); text-decoration: none; }
-
   .hero-tagline {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: var(--text-secondary);
-    margin: 16px 0 0;
-    line-height: 1.5;
-    max-width: 560px;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 24px auto 0;
+    line-height: 1.55;
+    max-width: 640px;
   }
 
   .hero-platforms {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
-    margin-top: 28px;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  /* Highlights row — 4 compact cards directly under the CTAs that surface
+     the page's actual selling points (themes, skills, games, no API key)
+     before the visitor scrolls. Replaces the bullet-separated platform note. */
+  .hero-highlights {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 48px auto 0;
+    max-width: 880px;
+  }
+
+  .hero-highlight {
+    background: color-mix(in srgb, var(--bg-card) 55%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 14px;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .hero-highlight:hover { border-color: var(--border-accent); transform: translateY(-2px); }
+
+  .hero-highlight-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: var(--accent-subtle);
+    border: 1px solid var(--border-accent);
+    border-radius: 9px;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+  }
+
+  .hero-highlight-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+    letter-spacing: -0.005em;
+  }
+
+  .hero-highlight-text {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.4;
   }
 
   .hero-btn {
@@ -442,12 +488,6 @@
   }
 
   .hero-btn svg { width: 16px; height: 16px; fill: currentColor; }
-
-  .hero-note {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: 16px;
-  }
 
   /* --- 3-STEP FLOW --- */
   .steps-flow {
@@ -1298,6 +1338,47 @@
   .integration-desc.visible { display: block; }
   .integration-desc-name { color: var(--accent); font-weight: 600; }
 
+  /* --- ANDROID SECTION --- */
+  /* The "Real Claude Code on Android" section gets a more confident, vaguely
+     technical voice than the rest of the page — this is the developer audience's
+     moment, the one section where it's OK to lean in to the brag. */
+  .android-section { padding: 16px 0; }
+
+  .android-pitch {
+    background: color-mix(in srgb, var(--bg-card) 70%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+  }
+  .android-pitch p + p { margin-top: 14px; }
+  .android-pitch strong { color: var(--text-primary); font-weight: 600; }
+
+  .android-lead {
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .android-stack {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-dim);
+  }
+  .android-stack-item {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .android-stack-item strong { color: var(--accent); display: block; font-size: 0.7rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; font-weight: 600; }
+
   /* --- DOWNLOAD SECTION --- */
   .download-section { padding: 16px 0; }
 
@@ -1617,10 +1698,14 @@
     .prereq-grid { grid-template-columns: 1fr; }
     .features-grid { grid-template-columns: 1fr; }
     .download-grid { grid-template-columns: 1fr; }
+    .android-stack { grid-template-columns: 1fr; }
+    .android-pitch { padding: 24px; }
 
     .hero h1 { font-size: clamp(2rem, 8vw, 2.8rem); }
+    .hero-tagline { font-size: 1.05rem; }
     .hero-platforms { flex-direction: column; align-items: center; }
     .hero-btn { width: 100%; max-width: 260px; justify-content: center; }
+    .hero-highlights { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 36px; }
 
     .footer-inner { flex-direction: column; text-align: center; }
   }
@@ -1673,6 +1758,7 @@
         <li><a href="#about">About</a></li>
         <li><a href="#demo">Demo</a></li>
         <li><a href="#features">Features</a></li>
+        <li><a href="#android">Android</a></li>
         <li><a href="#download">Download</a></li>
         <li><a href="#faq">FAQ</a></li>
         <li class="nav-theme-desktop">
@@ -1695,22 +1781,45 @@
   <!-- HERO -->
   <header class="hero" id="top">
     <div class="container">
-      <div class="title-box animate animate-d1">
-        <h1>Destin<span class="title-accent">Code</span></h1>
-        <p class="title-sub">For <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a> by Anthropic</p>
-      </div>
-      <p class="hero-tagline animate animate-d2">Claude Code as a real app. Themes, games, and a skill marketplace — all open source.</p>
+      <p class="hero-kicker animate animate-d1">DestinCode</p>
+      <h1 class="animate animate-d1">Claude, but <span class="title-accent">yours</span>.</h1>
+      <p class="hero-tagline animate animate-d2">A cooler, more customizable Claude. Custom themes, a skill marketplace, multiplayer mini-games while Claude works, and remote web access from any browser. Powered by <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a>. Open source.</p>
       <div class="hero-platforms animate animate-d3">
         <a href="#download" class="hero-btn hero-btn-primary">
           <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          Download
+          Get DestinCode
         </a>
         <a href="https://github.com/itsdestin/destincode" target="_blank" class="hero-btn hero-btn-secondary">
           <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          View Source
+          View on GitHub
         </a>
       </div>
-      <p class="hero-note animate animate-d3">Windows &middot; macOS &middot; Linux &middot; Android &middot; Remote Web Access</p>
+      <!-- Highlights row — surfaces the 4 most compelling differentiators above
+           the fold so visitors don't have to scroll to see what makes the app
+           interesting. The 4th card (No API key) sells the "no setup hassle"
+           angle that matters most to non-developer visitors. -->
+      <div class="hero-highlights animate animate-d3">
+        <div class="hero-highlight">
+          <div class="hero-highlight-icon">&#127912;</div>
+          <p class="hero-highlight-title">Themeable</p>
+          <p class="hero-highlight-text">Custom UI you can share</p>
+        </div>
+        <div class="hero-highlight">
+          <div class="hero-highlight-icon">&#129513;</div>
+          <p class="hero-highlight-title">Extensible</p>
+          <p class="hero-highlight-text">A skill marketplace you can browse and contribute to</p>
+        </div>
+        <div class="hero-highlight">
+          <div class="hero-highlight-icon">&#127918;</div>
+          <p class="hero-highlight-title">Multiplayer</p>
+          <p class="hero-highlight-text">Mini-games to play while Claude works</p>
+        </div>
+        <div class="hero-highlight">
+          <div class="hero-highlight-icon">&#10024;</div>
+          <p class="hero-highlight-title">No API key</p>
+          <p class="hero-highlight-text">Use your existing Claude Pro plan</p>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -1754,9 +1863,9 @@
   <section id="about">
     <div class="container">
       <p class="section-label reveal">What is this?</p>
-      <h2 class="section-title reveal">Claude Code, but it's actually an app.</h2>
+      <h2 class="section-title reveal">More than a chat window.</h2>
       <div class="intro-box reveal">
-        <p>Claude Code is an AI tool developed by Anthropic. However, this AI tool is nothing like the ChatGPT or Gemini you might be familiar with. Claude can <strong>create every type of file</strong>, <strong>search the web</strong>, <strong>open any app</strong>, and <strong>navigate your screen</strong> if you desire. DestinCode puts all of that into a real app with a chat interface, custom themes, a skill marketplace, and even multiplayer games you can play while Claude works.</p>
+        <p>Claude is the AI from Anthropic — but probably not the version you're used to. Unlike ChatGPT or Gemini, Claude can <strong>create every type of file</strong>, <strong>search the web</strong>, <strong>open any app</strong>, and <strong>navigate your screen</strong> if you let it. DestinCode is a friendlier home for that kind of Claude — with a chat UI you can theme, a skill marketplace, multiplayer games to play while you wait, and remote web access from anywhere.</p>
         <p>With the optional DestinClaude toolkit <span class="toolkit-badge">add-on</span>, it goes even further. Snap a screenshot of a flyer for an event next month, and it lands on your calendar. Forward yourself a rambling voice memo and the action items get pulled out. Journal about your day to decompress, and DestinClaude quietly picks up on the rest — a goal you mentioned making progress on, a dentist appointment you need to schedule, an overdue assignment worth surfacing before you close the laptop. <strong>You just talk. The structure happens on its own.</strong></p>
         <p>Over time, it builds a living record of your life — the kind of thing you'd never sit down and write yourself, but wish you had. Who you met at that conference two years ago. What your friend's kid's name is. The argument that changed your mind about something. The details that make you <em>you</em>, preserved so you can actually find them when they matter most.</p>
         <p class="permission-note">Nothing happens without your permission. DestinCode will always ask before taking any action.</p>
@@ -1970,7 +2079,7 @@
   <section id="features">
     <div class="container">
       <p class="section-label reveal">What you get</p>
-      <h2 class="section-title reveal">Everything Claude Code can do, plus all of this.</h2>
+      <h2 class="section-title reveal">More than what Claude.ai gives you.</h2>
       <div class="features-grid">
         <div class="feature-card reveal reveal-d1">
           <div class="feature-icon">&#127912;</div>
@@ -2004,6 +2113,40 @@
         </div>
       </div>
       <p class="features-note reveal">Features marked <span class="toolkit-badge" style="margin-left: 2px;">add-on</span> require the free <a href="https://github.com/itsdestin/destinclaude">DestinClaude toolkit</a>, installable from within the app.</p>
+    </div>
+  </section>
+
+  <div class="container"><div class="divider"></div></div>
+
+  <!-- ANDROID — the developer brag section. The one place on the page where
+       it's fine to lean in to the technical details, because the audience that
+       cares (developers) will recognize what's actually being claimed. -->
+  <section class="android-section" id="android">
+    <div class="container">
+      <p class="section-label reveal">For developers</p>
+      <h2 class="section-title reveal">Real Claude Code. On Android.</h2>
+      <div class="android-pitch reveal">
+        <p class="android-lead">Not a remote shell. Not a chat website wrapper. The actual <strong>Claude Code binary</strong> running natively on your phone — same hooks, same skills, same MCP servers, same plugins as desktop.</p>
+        <p>A real Linux environment underneath, native Kotlin UI on top, and the same React frontend that powers the desktop app — bridged to a live shell session running on the device. Anything you build on desktop runs on your phone.</p>
+        <div class="android-stack">
+          <div class="android-stack-item">
+            <strong>Underneath</strong>
+            Termux-grade Linux. Real bash, Node.js, Python, git, ripgrep — installed and managed for you on first launch.
+          </div>
+          <div class="android-stack-item">
+            <strong>On top</strong>
+            Native Kotlin for the file picker, folder picker, QR scanner, and tier selection. The chat UI is the same React app the desktop ships.
+          </div>
+          <div class="android-stack-item">
+            <strong>Same plugins</strong>
+            Hooks, slash commands, MCP servers, marketplace skills — all of it. If it works on desktop, it works on your phone.
+          </div>
+          <div class="android-stack-item">
+            <strong>Same sessions</strong>
+            Multi-session, approval flow, session resume, reactive status — all wired through the same WebSocket protocol Desktop uses.
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
