@@ -264,7 +264,7 @@ If somehow the wallpaper isn't in `_preview/assets/` yet (user started with grad
 
 ### Step 2b: Bake the Terminal-View Wallpaper
 
-Only for `type: "image"` themes. TerminalView renders a pre-blurred + darkened version of the wallpaper behind xterm so text stays readable over high-frequency image detail. Skip this step for gradient/solid themes.
+Only for `type: "image"` themes. TerminalView renders a subtly blurred + darkened version of the wallpaper behind xterm so fine wallpaper detail doesn't fight with the terminal text. Subtle means subtle — default blur is 8px sigma, enough to soften but not obliterate the wallpaper. Skip this step for gradient/solid themes.
 
 ```bash
 node scripts/prep-terminal-bg.cjs \
@@ -272,7 +272,7 @@ node scripts/prep-terminal-bg.cjs \
   ~/.claude/destinclaude-themes/<slug>/assets/wallpaper-terminal.webp
 ```
 
-Output is ~5–20 KB (blurred low-frequency content compresses ruthlessly well). Then add to `manifest.json`:
+Output is ~15–30 KB. Then add to `manifest.json`:
 
 ```json
 "background": {

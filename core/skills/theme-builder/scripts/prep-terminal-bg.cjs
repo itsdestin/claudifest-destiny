@@ -11,16 +11,18 @@
  *   node prep-terminal-bg.cjs <input-wallpaper> <output-path> [--blur N] [--brightness N]
  *
  * Defaults:
- *   --blur 32          Gaussian blur sigma (pixels). 32 kills text-fighting
- *                      detail while keeping the color field recognizable.
- *   --brightness 0.82  Multiplier applied to every pixel. 0.82 darkens enough
- *                      to preserve contrast against light-fg themes without
+ *   --blur 8           Gaussian blur sigma (pixels). Subtle — softens
+ *                      high-frequency detail (fine text, sharp edges) without
+ *                      turning the wallpaper into a featureless color field.
+ *   --brightness 0.86  Multiplier applied to every pixel. Slight darkening
+ *                      preserves contrast against light-fg themes without
  *                      turning every theme into a muddy bruise.
  *
  * Output:
- *   WebP at quality 70, downscaled to max 960px on the longer side. A heavily
- *   blurred image carries no high-frequency detail, so it compresses ~4x
- *   better at half-res and still looks identical when rendered full-screen.
+ *   WebP at quality 75, downscaled to max 1440px on the longer side. Subtle
+ *   blur still preserves mid-frequency detail, so we keep more resolution
+ *   than a heavy blur would need — but we're softer than the original, so
+ *   we can still compress harder than the source wallpaper.
  *   Prints JSON: {"ok":true,"path":"...","bytes":N,"input":"..."} or
  *                {"ok":false,"error":"..."}.
  *   Exits 0 on success, 1 on failure.
@@ -31,7 +33,7 @@ const path = require('path');
 
 function parseArgs(argv) {
   const positional = [];
-  const flags = { blur: 32, brightness: 0.82 };
+  const flags = { blur: 8, brightness: 0.86 };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--blur') flags.blur = parseFloat(argv[++i]);
@@ -72,12 +74,12 @@ async function main() {
 
   try {
     await sharp(input)
-      // Downscale first — processing a 960px image is faster than 1920px, and
-      // the final output is identical since we're about to blur it to mush anyway.
-      .resize({ width: 960, height: 960, fit: 'inside', withoutEnlargement: true })
+      // Downscale first — a 1440px image costs less to process than a 4K
+      // source and still looks crisp when stretched across the terminal pane.
+      .resize({ width: 1440, height: 1440, fit: 'inside', withoutEnlargement: true })
       .blur(flags.blur)
       .modulate({ brightness: flags.brightness })
-      .webp({ quality: 70 })
+      .webp({ quality: 75 })
       .toFile(output);
   } catch (e) {
     console.log(JSON.stringify({ ok: false, error: `sharp failed: ${e.message}` }));
