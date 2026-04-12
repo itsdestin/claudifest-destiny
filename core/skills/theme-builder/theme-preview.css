@@ -58,63 +58,58 @@ body {
   opacity: 1;
 }
 
-/* Glassmorphism — base rule for all panel surfaces */
-[data-panels-blur] .bg-panel {
-  backdrop-filter: blur(var(--panels-blur, 0px));
-  -webkit-backdrop-filter: blur(var(--panels-blur, 0px));
-  background-color: var(--panel-glass, var(--panel));
-}
+/* Glassmorphism — unified model. --panels-blur / --panels-opacity and
+   --bubble-blur / --bubble-opacity are ALWAYS set by the theme engine
+   (defaults: 0px / 1). Rules apply unconditionally; at default values
+   they're a visual no-op. See GLASSMORPHISM-REFACTOR-PLAN.md. */
 
-/* Header bar — heavy frosted glass, floats over chat so content scrolls behind */
-[data-panels-blur] .header-bar {
+/* Header bar — slider-controlled blur + opacity */
+.header-bar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   z-index: 20;
-  backdrop-filter: blur(var(--panels-blur, 24px)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--panels-blur, 24px)) saturate(1.2);
-  background-color: var(--panel-glass, color-mix(in srgb, var(--panel) 88%, transparent));
+  backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) calc(var(--panels-opacity, 1) * 100%), transparent);
 }
 
-/* Status bar — heavy frosted glass */
-[data-panels-blur] .status-bar {
-  backdrop-filter: blur(var(--panels-blur, 24px)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--panels-blur, 24px)) saturate(1.2);
-  background-color: var(--panel-glass, color-mix(in srgb, var(--panel) 88%, transparent));
+/* Status bar — slider-controlled blur + opacity */
+.status-bar {
+  backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) calc(var(--panels-opacity, 1) * 100%), transparent);
 }
 
-/* Input bar — heavy frosted glass */
-[data-panels-blur] .input-bar-container {
-  backdrop-filter: blur(var(--panels-blur, 24px)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--panels-blur, 24px)) saturate(1.2);
-  background-color: var(--panel-glass, color-mix(in srgb, var(--panel) 88%, transparent));
+/* Input bar — slider-controlled blur + opacity */
+.input-bar-container {
+  backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--panels-blur, 0px)) saturate(1.2);
+  background-color: color-mix(in srgb, var(--panel) calc(var(--panels-opacity, 1) * 100%), transparent);
 }
 
-/* Assistant bubbles — frosted glass using theme CSS variables.
-   --bubble-blur and --bubble-opacity are set by the theme engine from
-   background.bubble-blur and background.bubble-opacity manifest fields. */
-[data-panels-blur] .chat-bubble.assistant,
-[data-panels-blur] .assistant-bubble,
-[data-panels-blur] .bg-inset {
-  backdrop-filter: blur(var(--bubble-blur, 16px)) saturate(1.1);
-  -webkit-backdrop-filter: blur(var(--bubble-blur, 16px)) saturate(1.1);
-  background-color: color-mix(in srgb, var(--inset) calc(var(--bubble-opacity, 0.88) * 100%), transparent);
+/* Assistant bubbles — opacity always, blur wallpaper-gated (preview mocks
+   the opacity layer only; perf gate for blur is in the live app). */
+.chat-bubble.assistant,
+.assistant-bubble,
+.bg-inset {
+  backdrop-filter: blur(var(--bubble-blur, 0px)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--bubble-blur, 0px)) saturate(1.1);
+  background-color: color-mix(in srgb, var(--inset) calc(var(--bubble-opacity, 1) * 100%), transparent);
 }
 
 /* User bubbles — frosted accent */
-[data-panels-blur] .chat-bubble.user,
-[data-panels-blur] .user-bubble,
-[data-panels-blur] .bg-accent {
-  backdrop-filter: blur(var(--bubble-blur, 16px)) saturate(1.1);
-  -webkit-backdrop-filter: blur(var(--bubble-blur, 16px)) saturate(1.1);
-  background-color: color-mix(in srgb, var(--accent) calc(var(--bubble-opacity, 0.88) * 100%), transparent);
+.chat-bubble.user,
+.user-bubble,
+.bg-accent {
+  backdrop-filter: blur(var(--bubble-blur, 0px)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--bubble-blur, 0px)) saturate(1.1);
+  background-color: color-mix(in srgb, var(--accent) calc(var(--bubble-opacity, 1) * 100%), transparent);
 }
 
-/* Chat area padding for glassmorphism — the app handles both top and
-   bottom padding automatically, so themes should NOT set this. In the
-   preview mockup, only top padding is needed (no real scroll-behind). */
-[data-panels-blur] .chat-area {
+/* Chat area — top padding to clear header in preview mockup */
+.chat-area {
   padding-top: 3rem;
 }
 
