@@ -1,0 +1,27 @@
+{
+  "name": "earth-forest",
+  "dark": true,
+  "vibes": ["cottagecore", "forest", "herbalist", "old-library", "moss", "woodland"],
+  "tokens": {
+    "canvas": "#0E140C",
+    "panel": "#151C11",
+    "inset": "#1D2617",
+    "well": "#10170D",
+    "accent": "#7FA35C",
+    "on-accent": "#0A0F07",
+    "fg": "#EDE4CC",
+    "fg-2": "#B8AE95",
+    "fg-dim": "#898270",
+    "fg-muted": "#625D50",
+    "fg-faint": "#3A352C",
+    "edge": "#2A3422",
+    "edge-dim": "#2A342280",
+    "scrollbar-thumb": "#7FA35C",
+    "scrollbar-hover": "#9BC07A"
+  },
+  "shape": { "radius-base": 6, "radius-round": 16 },
+  "fonts": {
+    "suggested-sans": ["Lora", "Cormorant Garamond", "EB Garamond"],
+    "suggested-mono": ["JetBrains Mono", "Fira Code"]
+  }
+}

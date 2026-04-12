@@ -1,0 +1,27 @@
+{
+  "name": "neon-cyber",
+  "dark": true,
+  "vibes": ["cyberpunk", "y2k", "vaporwave", "synthwave", "neon-night"],
+  "tokens": {
+    "canvas": "#06070F",
+    "panel": "#0B0E1C",
+    "inset": "#101428",
+    "well": "#080A14",
+    "accent": "#FF2B8E",
+    "on-accent": "#000000",
+    "fg": "#E8F0FF",
+    "fg-2": "#A8B8D4",
+    "fg-dim": "#7888A8",
+    "fg-muted": "#5A6888",
+    "fg-faint": "#2A3450",
+    "edge": "#1A2540",
+    "edge-dim": "#1A254080",
+    "scrollbar-thumb": "#FF2B8E",
+    "scrollbar-hover": "#FF5AA8"
+  },
+  "shape": { "radius-base": 8, "radius-round": 20 },
+  "fonts": {
+    "suggested-sans": ["Orbitron", "Rajdhani", "Chakra Petch"],
+    "suggested-mono": ["JetBrains Mono", "Space Mono"]
+  }
+}

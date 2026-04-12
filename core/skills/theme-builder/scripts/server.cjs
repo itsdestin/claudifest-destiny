@@ -273,8 +273,16 @@ function startServer() {
   const server = http.createServer(handleRequest);
   server.on('upgrade', handleUpgrade);
 
+  // Watch for HTML screens, CSS, and JS. HTML changes trigger the
+  // screen-added/screen-updated log events (used by /theme-builder to
+  // track when Claude has written a new concept page); CSS and JS
+  // changes only trigger a client reload — they're staged assets
+  // (theme-preview.css, mockup-render.js, helper.js), and when we iterate
+  // on them during a session a live reload is much nicer than "save,
+  // wait, manually refresh, repeat."
+  const RELOAD_EXTS = /\.(html|css|js)$/i;
   const watcher = fs.watch(CONTENT_DIR, (eventType, filename) => {
-    if (!filename || !filename.endsWith('.html')) return;
+    if (!filename || !RELOAD_EXTS.test(filename)) return;
 
     if (debounceTimers.has(filename)) clearTimeout(debounceTimers.get(filename));
     debounceTimers.set(filename, setTimeout(() => {
@@ -284,13 +292,17 @@ function startServer() {
       if (!fs.existsSync(filePath)) return; // file was deleted
       touchActivity();
 
-      if (!knownFiles.has(filename)) {
-        knownFiles.add(filename);
-        const eventsFile = path.join(STATE_DIR, 'events');
-        if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
-        console.log(JSON.stringify({ type: 'screen-added', file: filePath }));
+      if (filename.endsWith('.html')) {
+        if (!knownFiles.has(filename)) {
+          knownFiles.add(filename);
+          const eventsFile = path.join(STATE_DIR, 'events');
+          if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
+          console.log(JSON.stringify({ type: 'screen-added', file: filePath }));
+        } else {
+          console.log(JSON.stringify({ type: 'screen-updated', file: filePath }));
+        }
       } else {
-        console.log(JSON.stringify({ type: 'screen-updated', file: filePath }));
+        console.log(JSON.stringify({ type: 'asset-updated', file: filePath }));
       }
 
       broadcast({ type: 'reload' });

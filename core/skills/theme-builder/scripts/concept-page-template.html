@@ -63,6 +63,12 @@
          See SKILL.md Concept Card Rendering Spec for structure. -->
   </div>
 
+  <!-- mockup-render.js expands every <div class="app-mockup" data-mockup …>
+       into the full canonical chrome (gear, session pill, view toggle,
+       attach/compass/send, model/permission/usage chips). Concepts only
+       need to author the outer .app-mockup with data-* attributes —
+       never duplicate the chrome HTML across concepts. -->
+  <script src="/files/mockup-render.js"></script>
   <script src="/files/helper.js"></script>
   <script>
     // Wire concept cards to selection + brainstorm events.

@@ -8,7 +8,7 @@
  *
  * SYNC CHECK: Run `node core/skills/theme-builder/scripts/sync-check.cjs`
  * to verify this file stays in sync with globals.css.
- * Last synced: 2026-04-06
+ * Last synced: 2026-04-12
  */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -48,7 +48,9 @@ body {
 .rounded-2xl  { border-radius: var(--radius-2xl, 24px); }
 .rounded-full { border-radius: var(--radius-full, 9999px); }
 
-/* Background layer */
+/* Background layer — page-level rule mirrors globals.css contract.
+   Inside a concept-card .app-mockup the #theme-bg is scoped below to
+   position:absolute so the wallpaper fills the mockup, not the viewport. */
 #theme-bg {
   position: fixed;
   inset: 0;
@@ -56,6 +58,18 @@ body {
   pointer-events: none;
   background: var(--canvas);
   opacity: 1;
+}
+
+/* Mockup-scoped override: turn #theme-bg into an absolutely positioned
+   layer inside the bounded mockup box. Cover/center defaults so concepts
+   only need to set `background-image: url('/files/wallpaper-X.jpg')` inline. */
+.app-mockup #theme-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* Glassmorphism — blur and opacity are INDEPENDENT knobs.
@@ -121,9 +135,15 @@ body {
   -webkit-backdrop-filter: blur(var(--bubble-blur)) saturate(1.1);
 }
 
-/* Chat area — top padding to clear header in preview mockup */
+/* Chat area — top padding to clear header in preview mockup.
+   Transparent background so the wallpaper / canvas from #theme-bg shows
+   through (mirrors the real app's .chat-scroll which has no background).
+   Fix: previously set a solid `background: var(--canvas)` that fully
+   occluded any wallpaper, limiting the preview to a thin strip behind
+   the glass chrome bars. */
 .chat-area {
   padding-top: 3rem;
+  background: transparent;
 }
 
 /* Layout presets — input */
@@ -234,17 +254,23 @@ body {
   pointer-events: none;
 }
 
-/* App mockup structure */
+/* App mockup structure.
+   `background: var(--canvas)` is the fallback behind #theme-bg so concepts
+   without a wallpaper (solid/gradient themes) still have a canvas base. */
+/* 16:10-ish aspect (closer to a real desktop window). Desktop DestinCode
+   windows sit around 1.5–1.6 ratio, which better reflects what the user
+   will see in the app than the old phone-ish 420×520 (0.81). */
 .app-mockup {
   width: 100%;
-  max-width: 420px;
-  height: 520px;
+  max-width: 560px;
+  aspect-ratio: 16 / 10;
   border-radius: var(--radius-lg, 12px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--edge-dim);
   position: relative;
+  background: var(--canvas);
 }
 .header-bar {
   display: flex;
@@ -265,7 +291,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: var(--canvas);
+  /* No background — wallpaper / canvas comes from #theme-bg behind.
+     See the earlier .chat-area rule for the rationale. */
 }
 .chat-bubble {
   padding: 8px 12px;
@@ -447,6 +474,213 @@ body {
   position: relative;
   z-index: 1;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   App-faithful chrome — shared classes used by the canonical
+   scripts/app-mockup-chrome.html snippet. Every concept card uses the
+   same structure, so these rules give icons/toggles/chips the real-app
+   shape while still reading theme tokens for color.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Inline SVG sizing inside chrome buttons — scoped to the mockup */
+.app-mockup svg { display: block; }
+
+/* Header bar layout (extends base .header-bar rule above with real-app spacing) */
+.app-mockup .header-bar {
+  gap: 6px;
+  padding: 4px 6px;
+  height: 36px;
+}
+
+/* Header settings gear (and any icon-only header button) */
+.header-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm, 4px);
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 3px;
+}
+.header-btn svg { width: 14px; height: 14px; }
+.header-btn:hover { background: var(--inset); color: var(--fg); }
+
+/* Session strip — rounded pill bar containing one or more session pills.
+   Absolutely centered in the header so it stays visually middle regardless
+   of gear (left) / view-toggle (right) widths, matching the real app. */
+.session-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--inset);
+  border-radius: var(--radius-full, 9999px);
+  padding: 2px 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+.app-mockup .header-bar .session-strip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 55%;
+}
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius-full, 9999px);
+  padding: 1px 8px 1px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-2);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-pill.active {
+  border-color: var(--edge);
+  background: var(--panel);
+}
+.session-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.session-dot.green { background: #4ade80; }
+.session-dot.red   { background: #f87171; }
+.session-dot.blue  { background: #60a5fa; }
+.session-dot.gray  { background: #9ca3af; }
+.session-strip-menu {
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: var(--radius-sm, 4px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.session-strip-menu svg { width: 10px; height: 10px; }
+
+/* Chat / Terminal view toggle — segmented control with sliding look */
+.view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--inset);
+  border-radius: var(--radius-md, 8px);
+  padding: 2px;
+  flex-shrink: 0;
+}
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: calc(var(--radius-md, 8px) - 2px);
+  border: none;
+  background: transparent;
+  color: var(--fg-dim);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.view-toggle-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+.view-toggle-btn.active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Input bar icon buttons (attach, compass) */
+.input-icon-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--fg-dim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+}
+.input-icon-btn svg { width: 16px; height: 16px; }
+.input-icon-btn:hover { color: var(--fg); }
+
+/* Send button — rounded square with theme accent bg, canonical arrow svg */
+.input-bar-container .send-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-md, 8px);
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 5px;
+}
+.input-bar-container .send-btn svg { width: 14px; height: 14px; }
+
+/* Status bar chips — generic + variants */
+.app-mockup .status-bar {
+  gap: 6px;
+  padding: 4px 8px;
+}
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--edge-dim);
+  background: var(--inset);
+  color: var(--fg-2);
+  cursor: pointer;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+/* Model chip — indigo tint matches real app Opus 1M color */
+.chip-model {
+  background: rgba(129, 140, 248, 0.15);
+  color: #818CF8;
+  border-color: rgba(129, 140, 248, 0.25);
+}
+/* Permission chip — uses theme tokens for NORMAL mode */
+.chip-perm {
+  background: var(--inset);
+  color: var(--fg-muted);
+  border-color: var(--edge-dim);
+}
+/* Usage chip — panel bg with green utilisation number by default */
+.chip-usage {
+  background: var(--panel);
+  color: var(--fg-muted);
+  border-color: var(--edge-dim);
+}
+.chip-usage-pct { color: #4CAF50; }
+.chip-usage-pct.warn { color: #FF9800; }
+.chip-usage-pct.crit { color: #DD4444; }
 
 /* Concept card layout */
 .concept-card {

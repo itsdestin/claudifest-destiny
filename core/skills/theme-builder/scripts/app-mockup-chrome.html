@@ -1,0 +1,133 @@
+<!--
+  Canonical App Mockup Chrome — copy this block verbatim into each
+  .app-mockup in concept cards. Placeholders marked <!-- ... --> are the
+  ONLY parts that should vary between concepts.
+
+  Why canonical:
+  - Send arrow, chat/term toggle icons, settings gear, session chevron,
+    attach/compass glyphs, and status chips are all IDENTICAL in the real
+    app — they have no per-theme variance. Concepts differ via palette,
+    shape, typography, effects, and layout-preset data-* attributes on
+    .app-mockup — NOT by redrawing icons.
+  - Keeping this snippet identical across all 3 concepts means the user
+    is evaluating the VIBE, not accidental icon drift.
+
+  Substitutions per concept (only these):
+    WALLPAPER_URL       — e.g. /files/wallpaper-a.jpg (omit div if no wallpaper)
+    SESSION_NAME        — the placeholder session label (e.g. "main")
+    SESSION_DOT_COLOR   — green | red | blue | gray (class on .session-dot)
+    MODEL_LABEL         — e.g. "Opus 1M" (lives in the status bar)
+    ASSISTANT_TEXT_1    — first assistant bubble copy
+    USER_TEXT           — first user bubble copy
+    ASSISTANT_TEXT_2    — second assistant bubble copy (optional)
+
+  The .app-mockup wrapper itself should carry:
+    data-input-style, data-bubble-style, data-header-style,
+    data-statusbar-style, data-chrome-style (layout presets)
+    style="--panels-blur: Npx; --panels-opacity: N; --bubble-blur: Npx;
+           --bubble-opacity: N; --vignette-opacity: N; ..."
+  AND the scoping CSS vars (--canvas, --panel, --accent, …) on the
+  .concept-card, inherited down into .app-mockup.
+-->
+
+<!-- Wallpaper layer (absolute inside mockup; CSS handles cover/center) -->
+<div id="theme-bg" style="background-image: url('WALLPAPER_URL');"></div>
+
+<!-- HEADER BAR ─────────────────────────────────────────────────────── -->
+<div class="header-bar">
+  <!-- Settings gear -->
+  <button class="header-btn" aria-label="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  </button>
+
+  <!-- Session strip — single pill shown (collapsed state) -->
+  <div class="session-strip">
+    <button class="session-pill active">
+      <span class="session-dot green"></span>
+      <span class="session-name">SESSION_NAME</span>
+    </button>
+    <button class="session-strip-menu" aria-label="All sessions">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Chat / Terminal view toggle — right-aligned via flex -->
+  <div class="view-toggle" style="margin-left:auto;">
+    <button class="view-toggle-btn active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M4 5 L20 5 A2 2 0 0 1 22 7 L22 15 A2 2 0 0 1 20 17 L10 17 L6 20 L7 17 L4 17 A2 2 0 0 1 2 15 L2 7 A2 2 0 0 1 4 5 Z"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M8.5 11 L8.5 11.01" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M12 11 L12 11.01" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M15.5 11 L15.5 11.01" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
+      <span>Chat</span>
+    </button>
+    <button class="view-toggle-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M4 4 L20 4 A2 2 0 0 1 22 6 L22 18 A2 2 0 0 1 20 20 L4 20 A2 2 0 0 1 2 18 L2 6 A2 2 0 0 1 4 4 Z"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M6 9 L10 12 L6 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M12 15 L17 15" stroke-width="2" stroke-linecap="round" />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- CHAT AREA ──────────────────────────────────────────────────────── -->
+<div class="chat-area">
+  <div class="assistant-bubble">ASSISTANT_TEXT_1</div>
+  <div class="user-bubble">USER_TEXT</div>
+  <div class="assistant-bubble">
+    ASSISTANT_TEXT_2
+    <div class="tool-card">● read · manifest.json</div>
+  </div>
+</div>
+
+<!-- INPUT BAR ──────────────────────────────────────────────────────── -->
+<div class="input-bar-container">
+  <div class="input-form">
+    <!-- Attach (paperclip) -->
+    <button class="input-icon-btn" aria-label="Attach">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M15.5 6 L15.5 15.5 A3.5 3.5 0 0 1 8.5 15.5 L8.5 7 A2 2 0 0 1 12.5 7 L12.5 15.5 A0.5 0.5 0 0 1 11.5 15.5 L11.5 8.5"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <!-- Compass (skills) -->
+    <button class="input-icon-btn" aria-label="Skills">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="10" stroke-width="1.8" />
+        <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"
+                 stroke-width="1.5" stroke-linejoin="round"
+                 fill="currentColor" opacity="0.3" />
+        <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      </svg>
+    </button>
+    <input class="input-field" placeholder="Message Claude…" readonly>
+    <!-- Send arrow — MUST be this exact SVG on every concept -->
+    <button class="send-btn" aria-label="Send">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- STATUS BAR ─────────────────────────────────────────────────────── -->
+<div class="status-bar">
+  <!-- Model selector pill -->
+  <button class="status-chip chip-model">MODEL_LABEL</button>
+  <!-- Permission mode -->
+  <button class="status-chip chip-perm">NORMAL</button>
+  <!-- 5h usage (right-aligned via ml-auto) -->
+  <button class="status-chip chip-usage" style="margin-left:auto;">
+    <span>5h:</span>
+    <span class="chip-usage-pct">23%</span>
+  </button>
+</div>

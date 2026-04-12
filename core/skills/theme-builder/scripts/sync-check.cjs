@@ -14,7 +14,15 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
-const GLOBALS = path.join(ROOT, 'desktop', 'src', 'renderer', 'styles', 'globals.css');
+// Resolve globals.css across two layouts:
+//   1. Legacy mono-repo: <root>/desktop/src/renderer/styles/globals.css
+//   2. Workspace: <root>/../destincode/desktop/src/renderer/styles/globals.css
+//      (destinclaude and destincode are sibling repos under destinclaude-dev)
+const GLOBALS_CANDIDATES = [
+  path.join(ROOT, 'desktop', 'src', 'renderer', 'styles', 'globals.css'),
+  path.join(ROOT, '..', 'destincode', 'desktop', 'src', 'renderer', 'styles', 'globals.css'),
+];
+const GLOBALS = GLOBALS_CANDIDATES.find(p => fs.existsSync(p)) || GLOBALS_CANDIDATES[0];
 const PREVIEW = path.join(ROOT, 'core', 'skills', 'theme-builder', 'theme-preview.css');
 
 function readFile(p) {

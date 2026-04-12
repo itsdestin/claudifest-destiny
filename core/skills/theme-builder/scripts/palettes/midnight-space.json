@@ -1,0 +1,27 @@
+{
+  "name": "midnight-space",
+  "dark": true,
+  "vibes": ["space", "midnight", "ocean-depths", "cool-tech", "starfield", "aurora"],
+  "tokens": {
+    "canvas": "#070A16",
+    "panel": "#0D1222",
+    "inset": "#151B32",
+    "well": "#080C1B",
+    "accent": "#5EE3FF",
+    "on-accent": "#03080F",
+    "fg": "#E4ECFF",
+    "fg-2": "#A8B4D8",
+    "fg-dim": "#7B87A8",
+    "fg-muted": "#555F7E",
+    "fg-faint": "#2F3550",
+    "edge": "#1F2642",
+    "edge-dim": "#1F264280",
+    "scrollbar-thumb": "#5EE3FF",
+    "scrollbar-hover": "#8CEEFF"
+  },
+  "shape": { "radius-base": 8, "radius-round": 20 },
+  "fonts": {
+    "suggested-sans": ["Inter", "Space Grotesk", "Manrope"],
+    "suggested-mono": ["JetBrains Mono", "Space Mono"]
+  }
+}

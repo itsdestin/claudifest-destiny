@@ -120,24 +120,53 @@ const RULES = [
 // ── Main ────────────────────────────────────────────────────────────────────
 
 function main() {
-  const manifestPath = process.argv[2];
-  if (!manifestPath) {
-    console.error('Usage: node check-contrast.cjs <path-to-manifest.json>');
+  // Accept two input modes:
+  //   1. node check-contrast.cjs <path-to-manifest.json>
+  //      (legacy — full manifest with a `.tokens` wrapper)
+  //   2. node check-contrast.cjs --tokens-json <path-or-dash>
+  //      (Phase-1 pre-validation — flat tokens object or full manifest;
+  //      `-` reads from stdin so Claude can pipe a concept palette without
+  //      writing a tempfile first)
+  const args = process.argv.slice(2);
+  let manifestPath = null;
+  let tokensJsonSrc = null;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--tokens-json') { tokensJsonSrc = args[++i]; }
+    else if (!manifestPath) { manifestPath = args[i]; }
+  }
+
+  if (!manifestPath && !tokensJsonSrc) {
+    console.error('Usage: node check-contrast.cjs <manifest.json>');
+    console.error('       node check-contrast.cjs --tokens-json <path|->');
+    process.exit(2);
+  }
+
+  let raw;
+  try {
+    if (tokensJsonSrc === '-') {
+      raw = fs.readFileSync(0, 'utf-8'); // fd 0 = stdin
+    } else {
+      raw = fs.readFileSync(path.resolve(tokensJsonSrc || manifestPath), 'utf-8');
+    }
+  } catch (err) {
+    console.error(`Failed to read input: ${err.message}`);
     process.exit(2);
   }
 
   let manifest;
   try {
-    const raw = fs.readFileSync(path.resolve(manifestPath), 'utf-8');
     manifest = JSON.parse(raw);
   } catch (err) {
-    console.error(`Failed to read manifest: ${err.message}`);
+    console.error(`Failed to parse JSON: ${err.message}`);
     process.exit(2);
   }
 
-  const tokens = manifest.tokens;
+  // --tokens-json accepts either a flat token map or a full manifest.
+  // If the top-level object has token keys directly (no .tokens wrapper),
+  // treat it as the tokens map.
+  const tokens = manifest.tokens || (manifest.canvas && manifest.accent ? manifest : null);
   if (!tokens) {
-    console.error('Manifest has no "tokens" object');
+    console.error('Input has no "tokens" object and is not a flat tokens map');
     process.exit(2);
   }
 
