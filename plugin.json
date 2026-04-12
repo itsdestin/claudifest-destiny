@@ -1,6 +1,6 @@
 {
   "name": "destinclaude",
-  "description": "A modular toolkit that transforms Claude Code into a personal knowledge system, journal, task manager, and more",
+  "description": "DestinClaude core — safety hooks, commands, setup wizard, sync infrastructure. Extended by optional marketplace packages (encyclopedia, inbox, themes, drive, messaging, output styles).",
   "version": "2.3.2",
   "author": {
     "name": "itsdestin"
@@ -11,8 +11,17 @@
   "keywords": [
     "claude-code",
     "toolkit",
-    "journal",
-    "encyclopedia",
+    "core",
     "productivity"
-  ]
+  ],
+  "provides": {
+    "setup": {
+      "description": "First-run setup — name, comfort level, sync backend",
+      "skill": "setup-wizard"
+    },
+    "remote-setup": {
+      "description": "Configure the DestinCode remote access bridge",
+      "skill": "remote-setup"
+    }
+  }
 }

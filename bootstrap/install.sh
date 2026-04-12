@@ -205,8 +205,8 @@ elif [ -d "$HOME/.claude/skills/setup-wizard" ]; then
 fi
 
 # Use the core skill directly (not the root-level copy) to avoid symlink chains
-ln -sf "$TOOLKIT_DIR/core/commands/setup-wizard.md" "$HOME/.claude/commands/setup-wizard.md"
-ln -sf "$TOOLKIT_DIR/core/skills/setup-wizard" "$HOME/.claude/skills/setup-wizard"
+ln -sf "$TOOLKIT_DIR/commands/setup-wizard.md" "$HOME/.claude/commands/setup-wizard.md"
+ln -sf "$TOOLKIT_DIR/skills/setup-wizard" "$HOME/.claude/skills/setup-wizard"
 
 # Verify symlinks resolve correctly
 SETUP_OK=true

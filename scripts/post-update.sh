@@ -400,11 +400,11 @@ phase_refresh() {
   done
 
   # ===========================================================================
-  # Section 2: Utilities (.js files from core/hooks)
+  # Section 2: Utilities (.js files from hooks)
   # ===========================================================================
   emit_section "Symlink Refresh: Utilities"
 
-  local js_dir="$TOOLKIT_ROOT/core/hooks"
+  local js_dir="$TOOLKIT_ROOT/hooks"
   if [ -d "$js_dir" ]; then
     for file in "$js_dir"/*.js; do
       [ -f "$file" ] || continue
@@ -419,7 +419,7 @@ phase_refresh() {
   # ===========================================================================
   emit_section "Symlink Refresh: Shared Libraries"
 
-  local lib_src="$TOOLKIT_ROOT/core/hooks/lib"
+  local lib_src="$TOOLKIT_ROOT/hooks/lib"
   if [ -d "$lib_src" ]; then
     mkdir -p "$CLAUDE_HOME/hooks/lib"
     for file in "$lib_src"/*.sh; do
@@ -434,7 +434,7 @@ phase_refresh() {
   # ===========================================================================
   emit_section "Symlink Refresh: Migrations"
 
-  local migrations_src="$TOOLKIT_ROOT/core/hooks/migrations"
+  local migrations_src="$TOOLKIT_ROOT/hooks/migrations"
   if [ -d "$migrations_src" ]; then
     mkdir -p "$CLAUDE_HOME/hooks/migrations"
     for file in "$migrations_src"/*; do
@@ -449,7 +449,7 @@ phase_refresh() {
   # ===========================================================================
   emit_section "Symlink Refresh: Statusline"
 
-  local statusline_src="$TOOLKIT_ROOT/core/hooks/statusline.sh"
+  local statusline_src="$TOOLKIT_ROOT/hooks/statusline.sh"
   if [ -f "$statusline_src" ]; then
     link_file "$statusline_src" "$CLAUDE_HOME/statusline.sh"
   else
@@ -457,11 +457,11 @@ phase_refresh() {
   fi
 
   # ===========================================================================
-  # Section 4: Commands (.md files from core/commands)
+  # Section 4: Commands (.md files from commands)
   # ===========================================================================
   emit_section "Symlink Refresh: Commands"
 
-  local commands_dir="$TOOLKIT_ROOT/core/commands"
+  local commands_dir="$TOOLKIT_ROOT/commands"
   if [ -d "$commands_dir" ]; then
     for file in "$commands_dir"/*.md; do
       [ -f "$file" ] || continue
@@ -501,7 +501,7 @@ phase_refresh() {
 _build_known_files() {
   # Returns a newline-separated list of basenames managed by the toolkit.
   # Includes: *.sh from each installed layer's hooks/ (excluding statusline.sh)
-  #           *.js from core/hooks/
+  #           *.js from hooks/
   # Does NOT include statusline.sh (lives at $CLAUDE_HOME/statusline.sh, not hooks/).
   local known=""
   local layer file filename
@@ -522,7 +522,7 @@ ${filename}"
     done
   done
 
-  local js_dir="$TOOLKIT_ROOT/core/hooks"
+  local js_dir="$TOOLKIT_ROOT/hooks"
   if [ -d "$js_dir" ]; then
     for file in "$js_dir"/*.js; do
       [ -f "$file" ] || continue
@@ -572,9 +572,9 @@ phase_orphans() {
       fi
     done
     # Also include core skills
-    if [ -d "$TOOLKIT_ROOT/core/skills" ]; then
+    if [ -d "$TOOLKIT_ROOT/skills" ]; then
       local s
-      for s in "$TOOLKIT_ROOT/core/skills"/*/; do
+      for s in "$TOOLKIT_ROOT/skills"/*/; do
         [ -d "$s" ] && known_skills="$known_skills$(basename "$s")\n"
       done
     fi
@@ -677,8 +677,8 @@ phase_verify() {
     done
   done
 
-  # --- JS utilities from core/hooks ---
-  local js_dir="$TOOLKIT_ROOT/core/hooks"
+  # --- JS utilities from hooks ---
+  local js_dir="$TOOLKIT_ROOT/hooks"
   if [ -d "$js_dir" ]; then
     for file in "$js_dir"/*.js; do
       [ -f "$file" ] || continue
@@ -688,7 +688,7 @@ phase_verify() {
   fi
 
   # --- Shared libraries (lib/ subdirectory) ---
-  local lib_src="$TOOLKIT_ROOT/core/hooks/lib"
+  local lib_src="$TOOLKIT_ROOT/hooks/lib"
   if [ -d "$lib_src" ]; then
     for file in "$lib_src"/*.sh; do
       [ -f "$file" ] || continue
@@ -698,7 +698,7 @@ phase_verify() {
   fi
 
   # --- Migrations (migrations/ subdirectory) ---
-  local migrations_src="$TOOLKIT_ROOT/core/hooks/migrations"
+  local migrations_src="$TOOLKIT_ROOT/hooks/migrations"
   if [ -d "$migrations_src" ]; then
     for file in "$migrations_src"/*; do
       [ -f "$file" ] || continue
@@ -708,13 +708,13 @@ phase_verify() {
   fi
 
   # --- Statusline ---
-  local statusline_src="$TOOLKIT_ROOT/core/hooks/statusline.sh"
+  local statusline_src="$TOOLKIT_ROOT/hooks/statusline.sh"
   if [ -f "$statusline_src" ]; then
     _check_freshness "statusline.sh" "$CLAUDE_HOME/statusline.sh"
   fi
 
-  # --- Commands (.md from core/commands) ---
-  local commands_dir="$TOOLKIT_ROOT/core/commands"
+  # --- Commands (.md from commands) ---
+  local commands_dir="$TOOLKIT_ROOT/commands"
   if [ -d "$commands_dir" ]; then
     for file in "$commands_dir"/*.md; do
       [ -f "$file" ] || continue
@@ -747,7 +747,7 @@ phase_verify() {
   else
     local node_settings node_manifest_path
     node_settings="$(to_node_path "$settings_file")"
-    node_manifest_path="$(to_node_path "$TOOLKIT_ROOT/core/hooks/hooks-manifest.json")"
+    node_manifest_path="$(to_node_path "$TOOLKIT_ROOT/hooks/hooks-manifest.json")"
 
     # Use node to check all expected hook registrations in one call.
     # Output: one line per check, format: OK|FAIL <tab> trigger <tab> hookname <tab> detail
@@ -945,7 +945,7 @@ EOF
 phase_mcps() {
   emit_section "MCP Servers"
 
-  local manifest_file="$TOOLKIT_ROOT/core/mcp-manifest.json"
+  local manifest_file="$TOOLKIT_ROOT/mcp-manifest.json"
   local claude_json="$HOME/.claude.json"
 
   if [ ! -f "$manifest_file" ]; then
@@ -1032,12 +1032,15 @@ phase_mcps() {
 phase_plugins() {
   emit_section "Marketplace Plugins"
 
-  local manifest_file="$TOOLKIT_ROOT/core/plugins-manifest.json"
+  local manifest_file="$TOOLKIT_ROOT/plugins-manifest.json"
   local settings_file="$CLAUDE_HOME/settings.json"
 
+  # Post-decomposition: plugins-manifest.json is retired. The app's marketplace
+  # owns plugin installation now, so this phase becomes a no-op when the manifest
+  # is absent. Kept as a graceful skip so legacy installs still pass /update.
   if [ ! -f "$manifest_file" ]; then
-    emit "FAIL" "plugins-manifest" "not found: $manifest_file"
-    return 1
+    emit "OK" "plugins-manifest" "retired — marketplace owns plugin installation"
+    return 0
   fi
 
   if [ ! -f "$settings_file" ]; then
@@ -1498,7 +1501,7 @@ EOF
 phase_settings_migrate() {
   emit_section "SETTINGS RECONCILIATION"
 
-  local MANIFEST="$TOOLKIT_ROOT/core/hooks/hooks-manifest.json"
+  local MANIFEST="$TOOLKIT_ROOT/hooks/hooks-manifest.json"
   local SETTINGS="$HOME/.claude/settings.json"
 
   if [[ ! -f "$MANIFEST" ]]; then

@@ -1,0 +1,62 @@
+[
+  {
+    "name": "macos-automator",
+    "description": "AppleScript + JXA automation for any Mac app",
+    "platform": "macos",
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@steipete/macos-automator-mcp@latest"
+    ],
+    "auto": true
+  },
+  {
+    "name": "home-mcp",
+    "description": "HomeKit device, scene, and automation control",
+    "platform": "macos",
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "home-mcp@latest"
+    ],
+    "auto": true
+  },
+  {
+    "name": "apple-events",
+    "description": "Native Reminders and Calendar via EventKit",
+    "platform": "macos",
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-apple-events@latest"
+    ],
+    "auto": true
+  },
+  {
+    "name": "windows-control",
+    "description": "Windows desktop interaction — click, type, screenshot, manage windows",
+    "platform": "windows",
+    "type": "stdio",
+    "command": "uvx",
+    "args": [
+      "windows-mcp"
+    ],
+    "env": {},
+    "auto": true,
+    "requires_deps": [
+      "uv"
+    ]
+  },
+  {
+    "name": "todoist",
+    "description": "Todoist task management",
+    "platform": "all",
+    "type": "http",
+    "url": "https://ai.todoist.net/mcp",
+    "auto": false,
+    "setup_note": "Authenticates via OAuth when Claude first connects — no manual API token needed"
+  }
+]
