@@ -151,6 +151,8 @@ mkdir -p ~/.claude/destinclaude-themes/_preview
 
 Write `manifest.json` with tokens, shape, layout, effects, and font from the selected concept — no asset paths yet. The app auto-switches to `_preview` and auto-reverts when the folder is deleted, so the user sees the theme live while Kit-refining.
 
+> **Slug invariant (critical — silent failure):** The manifest's internal `"slug"` field MUST be `"_preview"` during the Kit phase, matching the directory name. The renderer keys hot-reload auto-switch off the directory name, then looks up the loaded theme by its internal `.slug`. If they don't match (e.g. you used the final theme slug like `"strawberry-kitty"` while the folder is still `_preview`), the auto-switch fires but resolves to the default built-in theme instead — the app appears to silently ignore the preview. Only rename the slug field to its final value in Phase 2 when you move the folder to `~/.claude/destinclaude-themes/<final-slug>/`.
+
 Then move to Phase 1.5 (the Kit) instead of open-ended chat iteration. Keep the concept browser URL in case the user asks to revisit alternates, but Kit is the default next surface.
 
 ---
@@ -176,12 +178,23 @@ The eight columns:
 
 Before rendering Kit, generate the assets Kit needs to show in review columns. Write them into `_preview/assets/` so the live app hot-loads them alongside the manifest, AND copy them to `screen_dir` so Kit can reference them via `/files/`.
 
+> **Write order matters — manifest LAST.** Assets first, manifest second. The chokidar watcher fires a reload per file; if the manifest exists before all assets, the reload reads it and the app briefly renders with broken asset URLs. Writing manifest last lets the debounce collapse everything to one clean event after all files are present.
+
 1. **Hero wallpaper** — copy the chosen concept's wallpaper to `_preview/assets/wallpaper.<ext>` and `${screen_dir}/wallpaper.<ext>`.
 2. **Mascots** (4 variants, if the theme has them) — read all 4 `scripts/base-mascot-*.svg` templates, follow the **Mascot rendering rules** (white body + `currentColor` stroke, features drawn on top, not cutouts — see Phase 2 Step 4 below for the full ruleset). Write `_preview/assets/mascot-{idle,welcome,shocked,dizzy}.svg` and mirror into `screen_dir`.
 3. **Icon overrides** — only the slots the concept calls for. `_preview/assets/icon-<slot>.svg` + mirror.
 4. **Pattern SVG** — only if the concept has a pattern. `_preview/assets/pattern.svg` + mirror.
+5. **Manifest LAST** — `_preview/manifest.json` with relative asset paths. If a concept has no mascot / icon / pattern, just don't generate those — the matching Kit columns hide themselves automatically.
 
-Update `_preview/manifest.json` with relative asset paths so the live app reflects the full design. If a concept has no mascot / icon / pattern, just don't generate those — the matching Kit columns hide themselves automatically.
+### Verify the preview activated
+
+After writing the manifest, tell the user: "The app should auto-switch to the preview. If you don't see it apply within a few seconds, say so." Don't assume success — silent activation failure is the most common way this skill has broken historically.
+
+If the user reports no visible change, the fallback is **rename `_preview` → final-slug immediately** (skip the Kit refine step). That promotes the theme into the user's theme picker so they can select it manually. You lose the auto-hot-reload magic but the user gets a working theme. Symptoms of silent failure include:
+
+- User on an older packaged build (pre-chokidar fix) — `fs.watch` misses new subdirs on Windows
+- Manifest.json slug field doesn't match directory name (`_preview`) — renderer falls back to default theme. This is now warned in the DevTools console — ask the user to check.
+- Watcher event fired before renderer mounted its listener — race condition
 
 ### Step 5b: Stage the Kit Page
 
