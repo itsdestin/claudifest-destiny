@@ -12,7 +12,7 @@
 set -u
 
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
-TOOLKIT_ROOT="$HOME/.claude/plugins/destinclaude-core"
+TOOLKIT_ROOT="$HOME/.claude/plugins/destinclaude"
 STATE_DIR="$CLAUDE_DIR/toolkit-state"
 VERSION_FILE="$TOOLKIT_ROOT/VERSION"
 LAST_RUN_FILE="$STATE_DIR/.last-run-version"
@@ -44,7 +44,7 @@ if [[ -f "$VERSION_FILE" ]]; then
         if [[ -x "$TOOLKIT_ROOT/scripts/post-update.sh" ]]; then
             # Run migration in background; don't block session start. Errors are
             # non-fatal — the app's reconciler will catch anything critical.
-            bash "$TOOLKIT_ROOT/scripts/post-update.sh" migrate >/dev/null 2>&1 &
+            bash "$TOOLKIT_ROOT/scripts/post-update.sh" migrations >/dev/null 2>&1 &
             disown 2>/dev/null || true
         fi
         # Record the new version regardless, so we don't re-trigger on every session
@@ -69,7 +69,7 @@ if [[ -d "$TOOLKIT_ROOT/.git" ]] || ( cd "$TOOLKIT_ROOT" 2>/dev/null && git rev-
         fi
     fi
     if [[ -n "$_BRANCH" && -n "$_DEFAULT" && "$_BRANCH" != "$_DEFAULT" ]]; then
-        _append_ctx "WARNING: destinclaude-core toolkit is on branch '$_BRANCH' (default: '$_DEFAULT'). Switch branches before running /update unless this checkout is intentional."
+        _append_ctx "WARNING: destinclaude toolkit is on branch '$_BRANCH' (default: '$_DEFAULT'). Switch branches before running /update unless this checkout is intentional."
     fi
 fi
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# post-update.sh — Post-merge hook dispatcher for destinclaude-core
+# post-update.sh — Post-merge hook dispatcher for destinclaude
 #
 # Runs after git merge (via .git/hooks/post-merge). In the decomposed toolkit,
 # most responsibilities (hook reconciliation, MCP registration, plugin registry
@@ -17,7 +17,7 @@ set -euo pipefail
 # --- Constants ----------------------------------------------------------------
 
 CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
-TOOLKIT_ROOT="$HOME/.claude/plugins/destinclaude-core"
+TOOLKIT_ROOT="$HOME/.claude/plugins/destinclaude"
 STATE_DIR="$CLAUDE_HOME/toolkit-state"
 MIGRATION_MARKER="$STATE_DIR/last-migrated-version"
 
@@ -114,7 +114,7 @@ write_last_migrated() {
 # =============================================================================
 
 # ---- phase_self_check --------------------------------------------------------
-# Verify that the destinclaude-core package is present and structurally valid.
+# Verify that the destinclaude package is present and structurally valid.
 # Requirements (kept intentionally minimal — the app owns higher-level health):
 #   - node is on PATH (migrations + helpers need it)
 #   - TOOLKIT_ROOT exists
@@ -235,7 +235,7 @@ EOF
 # ---- phase_verify ------------------------------------------------------------
 # Confirm that every hook script settings.json references actually exists on
 # disk. Under the decomposed layout, hooks live at
-#   ~/.claude/plugins/destinclaude-core/hooks/
+#   ~/.claude/plugins/destinclaude/hooks/
 # and settings.json commands point at those absolute paths. We don't rewrite
 # settings here (the app owns that); we just flag drift.
 phase_verify() {
